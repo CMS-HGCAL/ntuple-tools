@@ -375,7 +375,7 @@ def getEffSigma( theHist, wmin=-100, wmax=100, epsilon=0.01 ):
     return 0.5*(high-low)
 
 def main():
-    
+
     relFractionE=0.001
     # set sample/tree - for pions
     pidSelected = 211
@@ -412,26 +412,26 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
     # common strings
     GEN_pTEng = "E={0:.1f} GeV".format(GEN_eng)
     GEN_partId = pidmap[pidSelected]
-    
+
     # init output stuff
     outDir = "simClusterHitsContained_ScaleResolution_"+GEN_partId+"s_"+"{0:.1f}GeV".format(GEN_eng)+"_testSpatial"
     if not os.path.exists(outDir): os.makedirs(outDir)
     histDict = {}
-    
+
     # define eta and phi bins
     etaBins = {"eta1p479to1p6":(1.479, 1.6), "eta1p6to1p8":(1.6, 1.8), "eta1p8to2p0":(1.8, 2.0), "eta2p0to2p2":(2.0, 2.2), "eta2p2to2p4":(2.2, 2.4), "eta2p4to2p6":(2.4, 2.6), "eta2p6to2p8":(2.6, 2.8), "eta2p8to3p0":(2.8, 3.0), "eta1p479to3p0":(1.479, 3.0), "eta1p6to2p8":(1.6, 2.8)}
     #phiBins = {"phi0to0p5pi":(0.*math.pi, 0.5*math.pi), "phi0p5to1p0pi":(0.5*math.pi, 1.0*math.pi), "phim1p0pitom0p5pi":(-1.0*math.pi, -0.5*math.pi), "phim0p5pito0":(-0.5*math.pi, 0.*math.pi),"phim1p0pito1p0pi":(-1.0*math.pi, 1.0*math.pi) }
     # these are to run only inclusive bins
     #etaBins = {"eta1p479to3p0":(1.479, 3.0)}
     phiBins = {"phim1p0pito1p0pi":(-1.0*math.pi, 1.0*math.pi)}
-    
+
     ## define some global lists and dictionaries
     s_all_pids = [211, 22] # pids to consider
     obj_Eng_EngRelDiff = {pid:[] for pid in s_all_pids}
     # define some global variables
     counterDivError = 0
     counterClustError = 0
-    
+
     # initialisation of GeoUtils
     gu = GeoUtil()
 
@@ -439,7 +439,7 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
     print "Total events to process (for multiClusters, ",GEN_partId,", ",GEN_pTEng,"): ", ntuple.nevents()
     hitsSelected = []
     for event in ntuple:
-        #if (event.entry()>1000): break
+        if (event.entry()>1000): break
         if (verbosityLevel>=0):
             if (event.entry()%1000 == 0): print "Event: ", event.entry()
         # get collections
@@ -453,7 +453,7 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
             if (verbosityLevel>=1): print "WARNING (Event:",iEvt,"): Sim cluster length is improper."
             counterClustError+=1
             continue
-        
+
         ### fill simhits based on rechits mapping and filtering ###
         # get rechit-simclus assoc.
         rHitsSimAssoc = getRecHitsSimAssoc(recHits, simClusters)
@@ -608,7 +608,7 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
     recHits_Filtered = [(x, y, int(filt)) for (x, y, eng, filt) in hitsSelected]
     histDictGlob = histValues2D(recHits_Filtered, histDictGlob, tag = "recHits_filteredByNoise", title = "Spatial distribution of hits filtered by noise", axunit = "x[mm]", binsBoundariesX = [3200, -1600, 1600], ayunit = "y[mm]", binsBoundariesY = [3200, -1600, 1600], weighted2D = True)
     histPrintSaveAll(histDictGlob, outDir, "_glob")
-    
+
     # print 2D eta-phi table
     print "Effect on the cluster energy (relative loss in %):"
     print "eta\phi","\t","\t".join(["[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1]) for phiBinName in phiBins])
@@ -646,4 +646,3 @@ def graphTest():
     yRes = array('f',[11.50, 6.30, 4.20, 3.10, 1.90])
     graphsAndProps[ROOT.TGraph( len(xEng), xEng, yRes )] = {"leg":"SIM clusters (noise filtered @3#sigma, realistic geometry)", "color":ROOT.kRed-6, "MarkerStyle":26, "LineStyle":1}
     drawGraphsTest(graphsAndProps, title = "Energy resolution (photons, #eta #in [1.479 - 3.0], PU=0)", tag="test_photonsResolutionComparisonGeo")
-
