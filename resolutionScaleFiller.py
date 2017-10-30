@@ -81,6 +81,7 @@ def eventLoop(ntuple, refName, objName, gun_type, pidOfInterest, GEN_engpt, hist
 
     # define some global lists and dictionaries
     # obj_Eng_EngRelDiff = {pid: [] for pid in s_all_pids}
+    resolutionScaleObjects = []
 
     # initialisation of GeoUtils
     # gu = GeoUtil()
@@ -89,8 +90,8 @@ def eventLoop(ntuple, refName, objName, gun_type, pidOfInterest, GEN_engpt, hist
     print "Total events to process (PID:", GEN_partId, ",", GEN_pTEng, "):", ntuple.nevents()
     # for event in ntuple:
     for event in ntuple:
-        # if (event.entry() > 3):
-        #     break
+        if (event.entry() > 10):
+            break
         if (verbosityLevel >= 0):
             if (event.entry() % 1 == 0):
                 print "Event: ", event.entry()
@@ -111,8 +112,8 @@ def eventLoop(ntuple, refName, objName, gun_type, pidOfInterest, GEN_engpt, hist
             referenceCollection = filterReferenceCollection(referenceCollection, pidOfInterest, refMinPt=GEN_engpt*.9)
 
         pairs = getReferencePairs(referenceCollection, collectionOfInterest)
-        resolutionScaleObjects = getResolutionScaleObjects(pairs)
-        fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict)
+        resolutionScaleObjects += getResolutionScaleObjects(pairs)
+    fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict)
 
 
 def filterReferenceCollection(referenceCollection, pidOfInterest, refMinPt=0, refMinE=0):
@@ -202,7 +203,7 @@ def fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict):
                           if ((math.fabs(x.refTLV.Eta()) >= etaBins[etaBinName][0] and math.fabs(x.refTLV.Eta()) < etaBins[etaBinName][1])
                           and (x.refTLV.Phi() >= phiBins[phiBinName][0] and x.refTLV.Phi() < phiBins[phiBinName][1]))], dtype=float)
             if len(valueLists) > 0 and verbosityLevel > 0:
-                print valueLists[:,1]
+                print valueLists[:, 1]
             # fill the hists
             if len(valueLists) > 0:
                 rangeGeV = GEN_engpt * 1.6
