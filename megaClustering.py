@@ -68,8 +68,10 @@ def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_typ
             # now we need to recalculate the layer cluster energies using associated RecHits
             for layerClusterIndex in layerClusterIndices[0]:
                 associatedRecHits = recHits.iloc[selectedLayerClusters.iloc[layerClusterIndex].rechits]
+                # find maximum energy RecHit
+                maxEnergyRecHitIndex = associatedRecHits['energy'].argmax()
                 # considering only associated RecHits within a radius of energyRadius (6 cm)
-                matchedRecHitIndices = hgcalHelpers.getIndicesWithinRadius(selectedLayerClusters.iloc[[layerClusterIndex]][['x', 'y']], associatedRecHits[['x', 'y']], energyRadius)[selectedLayerClusters.iloc[[layerClusterIndex]].index[0]]
+                matchedRecHitIndices = hgcalHelpers.getIndicesWithinRadius(associatedRecHits.loc[[maxEnergyRecHitIndex]][['x', 'y']], associatedRecHits[['x', 'y']], energyRadius)[maxEnergyRecHitIndex]
                 # sum up energies and pT
                 selectedRecHits = associatedRecHits.iloc[matchedRecHitIndices]
                 # correct energy by subdetector weights
