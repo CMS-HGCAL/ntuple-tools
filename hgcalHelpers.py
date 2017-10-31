@@ -2,6 +2,7 @@ import numpy as np
 from HGCalImagingAlgo import recHitAboveThreshold
 import math
 from scipy.spatial import cKDTree
+import pandas
 
 
 def getRecHitDetIds(rechits):
@@ -82,16 +83,42 @@ def getRecHitsSimAssocPUP(rechits_raw, simcluster, genparticles, pidSelected, GE
     return rHitsSimAssoc
 
 
+def getIndicesWithinRadius(ref_xy, obj_xy, radius=0.1):
+    '''Match all objects within given DeltaR'''
+
+    kdtree = cKDTree(obj_xy)
+    matched_indices = {}
+
+    for index, row in ref_xy.iterrows():
+        matched = kdtree.query_ball_point([row.x, row.y], radius)
+        matched_indices[index] = matched
+    return matched_indices
+
+
+def getHighestEnergyObjectIndex(ref_etaphi, obj_etaphi, obj_energy, deltaR=0.1):
+    '''Match object with highest energy within given DeltaR'''
+
+    kdtree = cKDTree(obj_etaphi)
+    matched_indices = {}
+
+    for index, row in ref_etaphi.iterrows():
+        matched = kdtree.query_ball_point([row.eta, row.phi], deltaR)
+        # Handle the -pi pi transition
+        matched_sym = kdtree.query_ball_point([row.eta, row.phi-np.sign(row.phi)*2.*math.pi], deltaR)
+        matched = np.unique(np.concatenate((matched, matched_sym))).astype(int)
+        best_match = np.argmax(obj_energy[matched])
+        matched_indices[index] = best_match
+    return matched_indices
+
+
 def getClosestObjectIndices(ref_etaphi, obj_etaphi, deltaR=0.1):
     '''Match object with smallest DeltaR'''
     kdtree = cKDTree(obj_etaphi)
     matched_indices = {}
 
     for index, row in ref_etaphi.iterrows():
-        # matched = kdtree.query_ball_point([row.eta, row.phi], deltaR)
         closest = kdtree.query([row.eta, row.phi], 1)
         # Handle the -pi pi transition, do the matching again
-        # matched_sym = kdtree.query_ball_point([row.eta, row.phi-np.sign(row.phi)*2.*math.pi], deltaR)
         closest_sym = kdtree.query([row.eta, row.phi-np.sign(row.phi)*2.*math.pi], 1)
         # keep only unique indices
         matched = [closest, closest_sym]
@@ -101,3 +128,12 @@ def getClosestObjectIndices(ref_etaphi, obj_etaphi, deltaR=0.1):
         if (best_match[0] < deltaR):
             matched_indices[index] = best_match[1]
     return matched_indices
+
+
+def convertToXY(eta, phi, z):
+    t = math.exp(-1. * eta)
+    x = z * 2. * t * math.cos(phi) / (1. - t*t)
+    y = z * 2. * t * math.sin(phi) / (1. - t*t)
+    d = {'x': [x], 'y': [y]}
+    df = pandas.DataFrame(data=d)
+    return df
