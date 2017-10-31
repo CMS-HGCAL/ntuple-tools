@@ -23,11 +23,11 @@ def getConeRadius(frontRadius, backRadius, z, maxval=9999.):
     return val
 
 
-def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_type, GEN_engpt, pidSelected, energyRadius=6, frontRadius=3, backRadius=11):
+def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_type, GEN_engpt, pidSelected, energyRadius=6, frontRadius=3, backRadius=8):
     """
     get the actual mega clusters.
     frontRadius: cone at front of EE
-    backRadius: cone at back of FH
+    backRadius: cone at back of FH (frontRadius to be added to it)
     returns a dataframe containing 4-vectors
     """
 
