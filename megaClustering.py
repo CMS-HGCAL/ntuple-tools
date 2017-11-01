@@ -34,9 +34,9 @@ def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_typ
     # use genParticles with generated pT/energy that reach EE before converting
     selectedGen = genParticles[(abs(genParticles.pid) == pidSelected) & (genParticles.reachedEE > 0)]
     if gun_type == "pt":
-        selectedGen = selectedGen[(selectedGen.pt >= GEN_engpt)]
+        selectedGen = selectedGen[(selectedGen.pt >= GEN_engpt*.999)]
     else:
-        selectedGen = selectedGen[(selectedGen.energy >= GEN_engpt)]
+        selectedGen = selectedGen[(selectedGen.energy >= GEN_engpt*.999)]
     # print selectedGen
 
     # for the mega cluster axis, take highest energy multicluster within dR = 0.1
@@ -106,10 +106,11 @@ def main():
     parser = optparse.OptionParser(usage)
 
     # input options
-    parser.add_option('', '--files', dest='fileString', type='string',  default='root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_1.root', help='comma-separated file list')
+    # parser.add_option('', '--files', dest='fileString', type='string',  default='root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_1.root', help='comma-separated file list')
+    parser.add_option('', '--files', dest='fileString', type='string',  default='/afs/cern.ch/work/e/escott/public/HGCStudies/Ntuples/partGun_Pion_Pt25_93X_PU140.root', help='comma-separated file list')
     parser.add_option('', '--gunType', dest='gunType', type='string',  default='pt', help='pt or e')
     parser.add_option('', '--pid', dest='pid', type='int',  default=211, help='pdgId int')
-    parser.add_option('', '--genValue', dest='genValue', type='float',  default=50, help='generated pT or energy')
+    parser.add_option('', '--genValue', dest='genValue', type='float',  default=25, help='generated pT or energy')
 
     # store options and arguments as global variables
     global opt, args
@@ -131,7 +132,7 @@ def main():
         ntuple = HGCalNtuple(opt.fileString)
 
         for event in ntuple:
-            if (event.entry() > 5):
+            if (event.entry() > 11):
                 break
             # get collections
             genParticles, multiClusters, layerClusters, recHits = getCollections(event)

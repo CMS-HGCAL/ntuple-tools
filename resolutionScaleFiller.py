@@ -96,13 +96,24 @@ def eventLoop(ntuple, refName, objName, gun_type, pidOfInterest, GEN_engpt, hist
                 print "Event: ", event.entry()
         # get collections
         referenceCollection = event.getDataFrame(prefix=refName)
-        collectionOfInterest = event.getDataFrame(prefix=objName)
+        collectionOfInterest = None
+        if (objName == "megacluster"):
+            genParticles, multiClusters, layerClusters, recHits = megaClustering.getCollections(event)
+            collectionOfInterest = megaClustering.getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_type, GEN_engpt, pidOfInterest)
+        else:
+            collectionOfInterest = event.getDataFrame(prefix=objName)
         # print "collections:", len(collectionOfInterest), len(referenceCollection)
         # filter reference Collection for faster matching
+        if collectionOfInterest.shape[0] == 0:
+            # continue of no collectionOfInterest entries
+            continue
         if (gun_type == "e"):
             referenceCollection = filterReferenceCollection(referenceCollection, pidOfInterest, refMinE=GEN_engpt*.999)
         else:
             referenceCollection = filterReferenceCollection(referenceCollection, pidOfInterest, refMinPt=GEN_engpt*.999)
+        if referenceCollection.shape[0] == 0:
+            # continue of no referenceCollection entries
+            continue
 
         pairs = getReferencePairs(referenceCollection, collectionOfInterest)
         resolutionScaleObjects += getResolutionScaleObjects(pairs, objName)
@@ -131,24 +142,6 @@ def getReferencePairs(referenceCollection, collectionOfInterest):
 
     # start_time = timeit.default_timer()
     referencePair = []
-    # for reference in referenceCollection.itertuples():
-    # # for reference in referenceCollection:
-    #     # first check for relevant pdgId
-    #     # if abs(reference.pid()) != pidOfInterest:
-    #     if abs(reference.pid) != pidOfInterest:
-    #         continue
-    #     # sort indices of collectionOfInterest according to the distance of
-    #     # clusters to the genParticles (index 0 is the nearest collectionOfInterest object)
-    #     nearestObjectIndex = min(range(len(collectionOfInterest)),
-    #                              key=lambda k:
-    #                              hgcalHelpers.deltaRSquared(reference, collectionOfInterest[k]))
-    #     nearestObject = collectionOfInterest[nearestObjectIndex]
-    #
-    #     # require nearest object to be reasonably matched
-    #     # if (hgcalHelpers.deltaR(reference, nearestObject) < deltaRMaxRef and nearestObject.energy() > reference.energy() * relativeFractionRef):
-    #     if (hgcalHelpers.deltaR(reference, nearestObject) < deltaRMaxRef and nearestObject.energy() > reference.energy * relativeFractionRef):
-    #         # store the pair
-    #         referencePair.append((reference, nearestObject))
     matched_indices = hgcalHelpers.getClosestObjectIndices(referenceCollection[['eta', 'phi']], collectionOfInterest[['eta', 'phi']], deltaR=deltaRMaxRef)
     for idx1, idx2 in matched_indices.iteritems():
         if collectionOfInterest.iloc[idx2].energy > referenceCollection.iloc[idx1].energy * relativeFractionRef:

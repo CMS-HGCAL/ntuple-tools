@@ -36,7 +36,7 @@ def main():
     parser.add_option('', '--outdir', dest='outDir', type='string',  default=os.getcwd(), help='output directory')
     parser.add_option('', '--gunType', dest='gunType', type='string',  default='pt', help='pt or e')
     parser.add_option('', '--pid', dest='pid', type='int',  default=22, help='pdgId int')
-    parser.add_option('', '--genValue', dest='genValue', type='float',  default=25, help='generated pT or energy')
+    parser.add_option('', '--genValue', dest='genValue', type='int',  default=25, help='generated pT or energy')
     parser.add_option('', '--tag', dest='tag', type='string',  default='noPU', help='some tag, best used for PU and other info')
     parser.add_option('', '--ref', dest='refName', type='string',  default='genpart', help='reference collection')
     parser.add_option('', '--obj', dest='objName', type='string',  default='pfcluster', help='object of interest collection')
@@ -76,7 +76,8 @@ def main():
     formatter = logging.Formatter('%(message)s')
     ch.setFormatter(formatter)
 
-    sampleName = opt.gunType + str(opt.genValue)+'_pid_'+str(opt.pid) + '_ref_'+opt.refName+'_obj_'+opt.objName
+    sampleName = "{}_{}_{}GeV_{}_{}_{}".format(opt.gunType, opt.pid, opt.genValue, opt.refName, opt.objName, opt.tag)
+    # sampleName = opt.gunType + str(opt.genValue)+'_pid_'+str(opt.pid) + '_ref_'+opt.refName+'_obj_'+opt.objName
     if not os.path.exists('./' + sampleName):
         os.makedirs('./' + sampleName)
     if not os.path.exists('./' + sampleName + '/std'):
@@ -84,7 +85,7 @@ def main():
 
     for fileIndex, filename in enumerate(onlyfiles):
         filename = opt.inputdir + filename
-        subSampleName = opt.gunType + str(opt.genValue)+'_pid_'+str(opt.pid) + '_ref_'+opt.refName+'_obj_'+opt.objName+'_'+str(fileIndex)
+        subSampleName = "{}_{}_{}GeV_{}_{}_{}_{}".format(opt.gunType, opt.pid, opt.genValue, opt.refName, opt.objName, opt.tag, fileIndex)
 
         stdOut = "./{sampleName}/std/{subSampleName}.out".format(sampleName=sampleName, subSampleName=subSampleName)
         print stdOut
