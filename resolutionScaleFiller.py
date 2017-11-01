@@ -115,7 +115,7 @@ def eventLoop(ntuple, refName, objName, gun_type, pidOfInterest, GEN_engpt, hist
             # continue of no referenceCollection entries
             continue
 
-        pairs = getReferencePairs(referenceCollection, collectionOfInterest)
+        pairs = getReferencePairs(referenceCollection, collectionOfInterest, objName)
         resolutionScaleObjects += getResolutionScaleObjects(pairs, objName)
     fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict)
 
@@ -134,7 +134,7 @@ def filterReferenceCollection(referenceCollection, pidOfInterest, refMinPt=0, re
     return referencePIDselected
 
 
-def getReferencePairs(referenceCollection, collectionOfInterest):
+def getReferencePairs(referenceCollection, collectionOfInterest, objName):
     """
     - match collectionOfInterest with closest reference (including DeltaR cut)
     - return list of pairs
@@ -144,8 +144,22 @@ def getReferencePairs(referenceCollection, collectionOfInterest):
     referencePair = []
     matched_indices = hgcalHelpers.getClosestObjectIndices(referenceCollection[['eta', 'phi']], collectionOfInterest[['eta', 'phi']], deltaR=deltaRMaxRef)
     for idx1, idx2 in matched_indices.iteritems():
-        if collectionOfInterest.iloc[idx2].energy > referenceCollection.iloc[idx1].energy * relativeFractionRef:
-            referencePair.append((referenceCollection.iloc[idx1], collectionOfInterest.iloc[idx2]))
+        objEnergy = 0
+        refEnergy = 0
+        try:
+            refEnergy = referenceCollection.iloc[idx1].energy
+            if (objName == "pfcluster"):
+                objEnergy = collectionOfInterest.iloc[idx2].correctedEnergy
+            else:
+                objEnergy = collectionOfInterest.iloc[idx2].energy
+        except IndexError:
+            print "IndexError"
+            print referenceCollection
+            print collectionOfInterest
+        else:
+            if objEnergy > refEnergy * relativeFractionRef:
+                referencePair.append((referenceCollection.iloc[idx1], collectionOfInterest.iloc[idx2]))
+
     # elapsed = timeit.default_timer() - start_time
     # print "Time:", elapsed
     return referencePair
