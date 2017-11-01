@@ -40,6 +40,10 @@ echo python resolutionScaleFiller.py --files $fileList --gunType $gunType --pid 
 python resolutionScaleFiller.py --files $fileList --gunType $gunType --pid $pid --genValue $genValue --tag $tag --ref $refName --obj $objName
 ls -l
 
+outfilename="${gunType}_${pid}_${genValue}GeV_${refName}_${objName}_${tag}.root"
+
 # copy to outDir
-mkdir -p $outDir/${sampleName%_*}
-cp $outfilename $outDir/${sampleName%_*}/
+echo "mkdir -p $outDir/${sampleName}"
+mkdir -p $outDir/${sampleName}
+echo "cp $outfilename $outDir/${sampleName}/"
+cp $outfilename $outDir/${sampleName}/

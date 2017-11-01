@@ -231,7 +231,7 @@ def main():
     parser.add_option('', '--files', dest='fileString', type='string',  default='root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_RelValSingleGammaPt25Eta1p7_2p7_CMSSW_9_3_2-PU25ns_93X_upgrade2023_realistic_v2_2023D17PU200-v1_GEN-SIM-RECO/NTUP/_RelValSingleGammaPt25Eta1p7_2p7_CMSSW_9_3_2-PU25ns_93X_upgrade2023_realistic_v2_2023D17PU200-v1_GEN-SIM-RECO_NTUP_1.root', help='comma-separated file list')
     parser.add_option('', '--gunType', dest='gunType', type='string',  default='pt', help='pt or e')
     parser.add_option('', '--pid', dest='pid', type='int',  default=22, help='pdgId int')
-    parser.add_option('', '--genValue', dest='genValue', type='float',  default=25, help='generated pT or energy')
+    parser.add_option('', '--genValue', dest='genValue', type='int',  default=25, help='generated pT or energy')
     parser.add_option('', '--tag', dest='tag', type='string',  default='noPU', help='some tag, best used for PU and other info')
     parser.add_option('', '--ref', dest='refName', type='string',  default='genpart', help='reference collection')
     parser.add_option('', '--obj', dest='objName', type='string',  default='pfcluster', help='object of interest collection')
