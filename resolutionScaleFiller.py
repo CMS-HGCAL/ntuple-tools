@@ -74,11 +74,6 @@ def eventLoop(ntuple, refName, objName, gun_type, pidOfInterest, GEN_engpt, hist
     GEN_pTEng = "{0}={1:.1f} GeV".format(gun_type, GEN_engpt)
     GEN_partId = pidmap[pidOfInterest]
 
-    # init output stuff
-    outDir = "simClusterHitsContained_ScaleResolution_" + GEN_partId + "s_" + "{0:.1f}GeV".format(GEN_engpt)
-    if not os.path.exists(outDir):
-        os.makedirs(outDir)
-
     # define some global lists and dictionaries
     # obj_Eng_EngRelDiff = {pid: [] for pid in s_all_pids}
     resolutionScaleObjects = []
