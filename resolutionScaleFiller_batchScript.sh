@@ -7,13 +7,12 @@ CMSSWARCH=${4}
 fileList=${5}
 outDir=${6}
 sampleName=${7}
-outfilename=${8}
-gunType=${9}
-pid=${10}
-genValue=${11}
-tag=${12}
-refName=${13}
-objName=${14}
+gunType=${8}
+pid=${9}
+genValue=${10}
+tag=${11}
+refName=${12}
+objName=${13}
 
 ##Create Work Area
 cd $TMPDIR || exit
@@ -37,8 +36,8 @@ cd analysis || exit
 
 #cd RecoNtuples/HGCalAnalysis/test/HGCalAnalysis
 pwd
-echo python resolutionScaleFiller.py --files $fileList --gunType $gunType --pid $pid --genValue $genValue --tag $tag --ref $refName --obj $objName --outfile $outfilename
-python resolutionScaleFiller.py --files $fileList --gunType $gunType --pid $pid --genValue $genValue --tag $tag --ref $refName --obj $objName --outfile $outfilename
+echo python resolutionScaleFiller.py --files $fileList --gunType $gunType --pid $pid --genValue $genValue --tag $tag --ref $refName --obj $objName
+python resolutionScaleFiller.py --files $fileList --gunType $gunType --pid $pid --genValue $genValue --tag $tag --ref $refName --obj $objName
 ls -l
 
 # copy to outDir

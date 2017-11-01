@@ -84,7 +84,6 @@ def main():
 
     for fileIndex, filename in enumerate(onlyfiles):
         filename = opt.inputdir + filename
-        outfilename = opt.gunType + str(opt.genValue)+'_pid_'+str(opt.pid) + '_ref_'+opt.refName+'_obj_'+opt.objName+'_'+str(fileIndex)+'.root'
         subSampleName = opt.gunType + str(opt.genValue)+'_pid_'+str(opt.pid) + '_ref_'+opt.refName+'_obj_'+opt.objName+'_'+str(fileIndex)
 
         stdOut = "./{sampleName}/std/{subSampleName}.out".format(sampleName=sampleName, subSampleName=subSampleName)
@@ -94,7 +93,7 @@ def main():
         print filename
         jobName = str(fileIndex)+'_'+str(time.time())
         tag = "{}_{}".format(opt.tag, fileIndex)
-        cmd = 'bsub -o {stdOut} -e {stdErr} -q {queue} -J {jobName} {batchScript} {p1} {p2} {p3} {p4} \"{p5}\" {p6} {p7} {p8} {p9} {p10} {p11} {p12} {p13} {p14}'.format(stdOut=stdOut, stdErr=stdErr, queue=queue, jobName=jobName, batchScript=batchScript, p1=currentDir, p2=CMSSW_BASE, p3=CMSSW_VERSION, p4=SCRAM_ARCH, p5=filename, p6=outDir, p7=sampleName, p8=outfilename, p9=opt.gunType, p10=opt.pid, p11=opt.genValue, p12=tag, p13=opt.refName, p14=opt.objName)
+        cmd = 'bsub -o {stdOut} -e {stdErr} -q {queue} -J {jobName} {batchScript} {p1} {p2} {p3} {p4} \"{p5}\" {p6} {p7} {p8} {p9} {p10} {p11} {p12} {p13}'.format(stdOut=stdOut, stdErr=stdErr, queue=queue, jobName=jobName, batchScript=batchScript, p1=currentDir, p2=CMSSW_BASE, p3=CMSSW_VERSION, p4=SCRAM_ARCH, p5=filename, p6=outDir, p7=sampleName, p8=opt.gunType, p9=opt.pid, p10=opt.genValue, p11=tag, p12=opt.refName, p13=opt.objName)
         print cmd
         processCmd(cmd)
         time.sleep(1)
