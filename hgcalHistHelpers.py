@@ -1,7 +1,6 @@
 import ROOT
 from array import array
 
-
 def histValue1D(fValues, histDict, tag="hist1D_", title="hist 1D", axunit="a.u.", binsBoundariesX=[10, -1, 1], ayunit="a.u.", verbosityLevel=0):
     """1D histograming of given list of values."""
     # sanity check for hists
@@ -130,7 +129,7 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
     return canvas
 
 
-def drawGraphsTest(graphsAndProps, title="Resolution", tag="graphTest_", verbosityLevel=0):
+def drawGraphs(graphsAndProps, outDir, title="Resolution", tag="graphTest_", verbosityLevel=0):
     # supress info messages
     ROOT.gErrorIgnoreLevel = ROOT.kInfo + 1
     # set default style values
@@ -161,8 +160,9 @@ def drawGraphsTest(graphsAndProps, title="Resolution", tag="graphTest_", verbosi
     # loop over all graphs to get max
     y_maxs = [gr.GetYaxis().GetXmax() for gr in graphsAndProps]
     y_mins = [gr.GetYaxis().GetXmin() for gr in graphsAndProps]
-    print "y_mins: ", y_mins
-    print "y_maxs: ", y_maxs
+    if (verbosityLevel >= 3):
+        print "y_mins: ", y_mins
+        print "y_maxs: ", y_maxs
     # loop over all histograms
     first = True
     for gr in graphsAndProps:
@@ -189,7 +189,7 @@ def drawGraphsTest(graphsAndProps, title="Resolution", tag="graphTest_", verbosi
     leg.Draw("same")
     # save
     for imgType in imgTypes:
-        canvas.SaveAs("{}.{}".format(tag, imgType))
+        canvas.SaveAs("{}/{}.{}".format(outDir, tag, imgType))
     return canvas
 
 # print/save all histograms
@@ -292,3 +292,15 @@ def getEffSigma(theHist, wmin=-100, wmax=100, epsilon=0.01):
                     width = wx
                     # print "width: ", width, "low: ", low, ", high: ", high, ", wx: ", wx, ", wy: ", wy,
     return 0.5 * (high - low)
+
+def getHistMeanStd(histo):
+    hEntries = histo.GetEntries()
+    gMean = histo.GetMean()
+    gMeanError = histo.GetMeanError()
+    gStd = histo.GetRMS()
+    if (hEntries > 100): # extract mean/error from fit if enough statistics
+        (histo, gMean, gStd) = fitGauss(histo)
+        gMeanError = gStd/(hEntries**0.5)
+    effSigma = getEffSigma(histo)
+    return histo, hEntries, gMean, gMeanError, gStd, effSigma
+
