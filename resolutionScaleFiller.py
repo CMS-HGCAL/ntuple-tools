@@ -11,6 +11,7 @@ import hgcalHelpers
 import hgcalHistHelpers
 import numpy as np
 import timeit
+import megaClustering
 
 # filtering parameters
 dependSensor = True
@@ -39,11 +40,14 @@ class ResolutionScaleObject:
 
     __slots__ = ['refTLV', 'objTLV']
 
-    def __init__(self, ref, obj):
+    def __init__(self, ref, obj, objName):
         self.refTLV = ROOT.TLorentzVector()
         self.refTLV.SetPtEtaPhiE(ref.pt, ref.eta, ref.phi, ref.energy)
         self.objTLV = ROOT.TLorentzVector()
-        self.objTLV.SetPtEtaPhiE(obj.pt, obj.eta, obj.phi, obj.energy)
+        if (objName == "pfcluster"):
+            self.objTLV.SetPtEtaPhiE(obj.pt, obj.eta, obj.phi, obj.correctedEnergy)
+        else:
+            self.objTLV.SetPtEtaPhiE(obj.pt, obj.eta, obj.phi, obj.energy)
 
     def deltaR(self):
         return self.refTLV.DeltaR(self.objTLV)
@@ -85,29 +89,23 @@ def eventLoop(ntuple, refName, objName, gun_type, pidOfInterest, GEN_engpt, hist
     print "Total events to process (PID:", GEN_partId, ",", GEN_pTEng, "):", ntuple.nevents()
     # for event in ntuple:
     for event in ntuple:
-        if (event.entry() > 10):
-            break
+        # if (event.entry() > 10):
+            # break
         if (verbosityLevel >= 0):
             if (event.entry() % 1 == 0):
                 print "Event: ", event.entry()
         # get collections
-        # genParticles = event.genParticles()
-        genParticles = event.getDataFrame(prefix=refName)
-        # pfClusters = event.pfClusters()
-        pfClusters = event.getDataFrame(prefix=objName)
-
-        # let's look at pfClusters compared to genParticles
-        collectionOfInterest = pfClusters
-        referenceCollection = genParticles
+        referenceCollection = event.getDataFrame(prefix=refName)
+        collectionOfInterest = event.getDataFrame(prefix=objName)
         # print "collections:", len(collectionOfInterest), len(referenceCollection)
         # filter reference Collection for faster matching
         if (gun_type == "e"):
-            referenceCollection = filterReferenceCollection(referenceCollection, pidOfInterest, refMinE=GEN_engpt*.9)
+            referenceCollection = filterReferenceCollection(referenceCollection, pidOfInterest, refMinE=GEN_engpt*.999)
         else:
-            referenceCollection = filterReferenceCollection(referenceCollection, pidOfInterest, refMinPt=GEN_engpt*.9)
+            referenceCollection = filterReferenceCollection(referenceCollection, pidOfInterest, refMinPt=GEN_engpt*.999)
 
         pairs = getReferencePairs(referenceCollection, collectionOfInterest)
-        resolutionScaleObjects += getResolutionScaleObjects(pairs)
+        resolutionScaleObjects += getResolutionScaleObjects(pairs, objName)
     fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict)
 
 
@@ -160,13 +158,13 @@ def getReferencePairs(referenceCollection, collectionOfInterest):
     return referencePair
 
 
-def getResolutionScaleObjects(referencePairs):
+def getResolutionScaleObjects(referencePairs, objName):
     """
     referencePairs: (reference, collection of interest)
     """
     objectsForHists = []
     for ref, obj in referencePairs:
-        resolutionScaleObject = ResolutionScaleObject(ref, obj)
+        resolutionScaleObject = ResolutionScaleObject(ref, obj, objName)
         if verbosityLevel > 0:
             relE = resolutionScaleObject.dEoverE()
             deltaR = resolutionScaleObject.deltaR()
