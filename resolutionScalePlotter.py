@@ -121,6 +121,24 @@ def setupResScaleScenario(gun_type, pidSelected, GEN_engpt, refName, objName, sc
                                 "ref_Energy":{'file':filePF, 'hist_prefix':"ref_Energy", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
                                 "cmp_Energy":{'file':filePF, 'hist_prefix':"obj_Energy", 'leg': "PF (non-calibrated) cluster", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file':filePF, 'hist_prefix':"obj_dPtoverPt", 'leg': "PF (calibrated) cluster", 'color': ROOT.kBlue}
+    elif (scenario == "Mega_PU200"): ## scenario: PU, resolutoin from Mega cluster, comparison "Mega vs. PF corrected.
+        # list of files and corresponding info
+        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, "pfcluster", "PU200"), "read") # info based on PF energy
+        fileMega = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, "megacluster", "PU200"), "read") # info based on PF energy
+        # map of histograms and files
+        histsFilesAndInfoMap = {"obj_Energy":{'file':fileMega, 'hist_prefix':"obj_Energy", 'leg': "Mega (non-calibrated) cluster", 'color': ROOT.kBlue}, \
+                                "ref_Energy":{'file':filePF,   'hist_prefix':"ref_Energy", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
+                                "cmp_Energy":{'file':filePF,   'hist_prefix':"obj_Energy", 'leg': "PF (calibrated) cluster", 'color': ROOT.kGreen - 6}}
+        resolutionFileAndInfoMap = {'file':filePF, 'hist_prefix':"obj_dPtoverPt", 'leg': "PF (calibrated) cluster", 'color': ROOT.kBlue}
+    elif (scenario == "Mega_noPU"): ## scenario: noPU, resolutoin from Mega cluster, comparison "Mega vs. PF corrected
+        # list of files and corresponding info
+        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, "pfcluster", "noPU"), "read") # info based on PF energy
+        fileMega = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, "megacluster", "noPU"), "read") # info based on PF energy
+        # map of histograms and files
+        histsFilesAndInfoMap = {"obj_Energy":{'file':fileMega, 'hist_prefix':"obj_Energy", 'leg': "Mega (non-calibrated) cluster", 'color': ROOT.kBlue}, \
+                                "ref_Energy":{'file':filePF,   'hist_prefix':"ref_Energy", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
+                                "cmp_Energy":{'file':filePF,   'hist_prefix':"obj_Energy", 'leg': "PF (calibrated) cluster", 'color': ROOT.kGreen - 6}}
+        resolutionFileAndInfoMap = {'file':filePF, 'hist_prefix':"obj_dPtoverPt", 'leg': "Mega (non-calibrated) cluster", 'color': ROOT.kBlue}
     else:
         print "Error: Required scenario not implemented..."
         sys.exit()
