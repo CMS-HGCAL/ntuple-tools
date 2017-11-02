@@ -4,7 +4,7 @@
 
 SAMPLEFILE=$1
 
-OUTDIR="/eos/user/c/clange/HGCal/ScaleResolution/Ilya/"
+OUTDIR="/eos/user/c/clange/HGCal/ScaleResolution/_new/Ilya/"
 PREFIX="root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/"
 GUNTYPE="pt"
 POSTFIX="NTUP"

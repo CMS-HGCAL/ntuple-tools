@@ -2,7 +2,7 @@
 
 SAMPLEFILE=$1
 
-OUTDIR="/eos/user/c/clange/HGCal/ScaleResolution/"
+OUTDIR="/eos/user/c/clange/HGCal/ScaleResolution/_new/"
 PREFIX="root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/"
 GUNTYPE="pt"
 POSTFIX="NTUP"
@@ -12,13 +12,13 @@ QUEUE="8nh"
 
 for SAMPLE in `cat $SAMPLEFILE`; do
   SAMPLEDIR="${PREFIX}${SAMPLE}/${POSTFIX}/"
-  PTVAL=`echo ${SAMPLE} | gawk 'match($0, /.*SinglePiPt(.*)Eta.*/, arr) { print arr[1] }'`
   PARTICLE=`echo ${SAMPLE} | gawk 'match($0, /.*Single(.*)Pt.*/, arr) { print arr[1] }'`
+  PTVAL=`echo ${SAMPLE} | gawk -v part=".*Single${PARTICLE}Pt(.*)Eta.*" 'match($0, part, arr) { print arr[1] }'`
   TAG=`echo ${SAMPLE} | gawk 'match($0, /.*Fall17DR-(.*)FEVT.*/, arr) { print arr[1] }'`
   PID=0
   if [ "$PARTICLE" == "Pi" ]; then
     PID=211
-  elif [ "$PARTICLE" == "Photon" ]; then
+  elif [ "$PARTICLE" == "Gamma" ]; then
     PID=22
   fi;
   for OBJNAME in $OBJNAMES; do

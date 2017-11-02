@@ -106,8 +106,9 @@ def getHighestEnergyObjectIndex(ref_etaphi, obj_etaphi, obj_energy, deltaR=0.1):
         # Handle the -pi pi transition
         matched_sym = kdtree.query_ball_point([row.eta, row.phi-np.sign(row.phi)*2.*math.pi], deltaR)
         matched = np.unique(np.concatenate((matched, matched_sym))).astype(int)
-        best_match = np.argmax(obj_energy[matched])
-        matched_indices[index] = best_match
+        if len(matched) > 0:
+            best_match = np.argmax(obj_energy[matched])
+            matched_indices[index] = best_match
     return matched_indices
 
 

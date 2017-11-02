@@ -15,6 +15,7 @@ from itertools import repeat
 maxlayer = 52
 energyWeights = list(repeat(1.02, 28)) + list(repeat(0.86, 12)) + list(repeat(1.12, 12))
 
+
 def getConeRadius(frontRadius, backRadius, z, maxval=9999.):
     depthTerm = backRadius * (abs(z)-320.7)/(407.8-320.7)
     val = frontRadius + depthTerm
@@ -39,6 +40,8 @@ def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_typ
         selectedGen = selectedGen[(selectedGen.energy >= GEN_engpt*.999)]
     # print selectedGen
 
+    if multiClusters.shape[0] == 0:
+        return pd.DataFrame(columns=['pt', 'eta', 'phi', 'energy'])
     # for the mega cluster axis, take highest energy multicluster within dR = 0.1
     bestMultiClusterIndices = hgcalHelpers.getHighestEnergyObjectIndex(selectedGen[['eta', 'phi']], multiClusters[['eta', 'phi']], multiClusters['energy'], 0.1)
     # print bestMultiClusterIndices
@@ -46,6 +49,9 @@ def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_typ
     megaClusters = []
 
     for idx, genPart in selectedGen.iterrows():
+        if idx not in bestMultiClusterIndices:
+            # this is the case if there's no match between gen and multi clusters
+            continue
         matchedMultiCluster = multiClusters.iloc[[bestMultiClusterIndices[idx]]]
         energySum = 0
         pTSum = 0
