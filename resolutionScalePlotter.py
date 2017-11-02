@@ -77,7 +77,7 @@ def plotComparisons(histsFilesAndInfoMap, resScale_values, pidSelected, GEN_engp
                 GEN_phi = "[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1])
                 print "Extracting info for phi range ",GEN_phi
             # get histograms to plot overalpped
-            histsAndProps ={histsFilesAndInfoMap[obj]['file'].Get(histsFilesAndInfoMap[obj]['hist_prefix'] + "_eta" + etaBinName + "_phi" + phiBinName) : histsFilesAndInfoMap[obj] for obj in histsFilesAndInfoMap.keys()}
+            histsAndProps ={histsFilesAndInfoMap[obj]['file'].Get(histsFilesAndInfoMap[obj]['hist_prefix'] + "_eta" + etaBinName + "_phi" + phiBinName) : histsFilesAndInfoMap[obj] for obj in histsFilesAndInfoMap.keys() if len(histsFilesAndInfoMap[obj]['file'].GetListOfKeys())>0}
             # prepare basic info and plot these histograms on top of each other
             gMeanCalibEnergy = (resScale_values[etaBinName][phiBinName]['mean']/100. + 1.) * GEN_engpt
             gMeanCalibEnergyError = (resScale_values[etaBinName][phiBinName]['meanError']/100.) * GEN_engpt
@@ -90,63 +90,76 @@ def plotComparisons(histsFilesAndInfoMap, resScale_values, pidSelected, GEN_engp
 def setupSummaryGraphs(pidSelected, GEN_engpts, resScale_values, scenarios):
     # common stuff
     graphsAndProps = {}
-    xEng = array('f', GEN_engpts)
+    #xEng = array('f', GEN_engpts)
     # buils list of graphs to be compared/plotted together, one graph for one scenario
     for scenario in scenarios:
         if (scenario == "PF_PU200"): ## for scenario PF_PU200
-            yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in GEN_engpts])
-            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "PF cluster (calibrated), PU200", "color": ROOT.kBlue, "MarkerStyle": 21, "LineStyle": 4}
+            xEng = array('f', resScale_values[scenario].keys())
+            yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in resScale_values[scenario].keys()])
+            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "PF cluster (calibrated), pile-up 200", "color": ROOT.kBlue, "MarkerStyle": 21, "LineStyle": 4}
         elif (scenario == "PF_noPU"): ## for scenario PF_noPU
-            yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in GEN_engpts])
-            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "PF cluster (calibrated), noPU", "color":ROOT.kGreen-6, "MarkerStyle":21, "LineStyle":4}
+            xEng = array('f', resScale_values[scenario].keys())
+            yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in resScale_values[scenario].keys()])
+            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "PF cluster (calibrated), no pile-up", "color":ROOT.kGreen-6, "MarkerStyle":21, "LineStyle":4}
         elif (scenario == "Mega_PU200"): ## for scenario PF_PU200
-            yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in GEN_engpts])
-            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "Megacluster (non-calibrated), PU200", "color":ROOT.kRed-6, "MarkerStyle":26, "LineStyle":1}
+            xEng = array('f', resScale_values[scenario].keys())
+            yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in resScale_values[scenario].keys()])
+            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "Megacluster (non-calibrated), pile-up 200", "color":ROOT.kRed-6, "MarkerStyle":25, "LineStyle":1}
         elif (scenario == "Mega_noPU"): ## for scenario PF_noPU
-            yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in GEN_engpts])
-            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "Megacluster (non-calibrated), noPU", "color":ROOT.kBlack, "MarkerStyle":26, "LineStyle":1}
+            xEng = array('f', resScale_values[scenario].keys())
+            yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in resScale_values[scenario].keys()])
+            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "Megacluster (non-calibrated), no pile-up", "color":ROOT.kBlack, "MarkerStyle":20, "LineStyle":1}
         else: # here implement graphs for additional scenarios...
-            print "Warning: Required scenario not implemented. Graph not added."
+            print "Warning: Required scenario ("+scenario+") not implemented. No graph added."
     return graphsAndProps
 
 # setup scenario for resolution and scale extraction and comparions
 def setupResScaleScenario(gun_type, pidSelected, GEN_engpt, refName, objName, scenario = "PF_noPU"):
     if (scenario == "PF_PU200"): ## scenario: PU, resolutoin from PF, comparison "PF vs. PF corrected.
         # list of files and corresponding info
-        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, objName, "PU200"), "read") # info based on PF energy
+        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, objName, "PU200"), "read") # info based on PF energy
         # map of histograms and files
-        histsFilesAndInfoMap = {"obj_Energy":{'file':filePF, 'hist_prefix':"obj_Energy", 'leg': "PF cluster (calibrated)", 'color': ROOT.kBlue}, \
-                                "ref_Energy":{'file':filePF, 'hist_prefix':"ref_Energy", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
-                                "cmp_Energy":{'file':filePF, 'hist_prefix':"obj_Energy", 'leg': "PF (non-calibrated) cluster", 'color': ROOT.kGreen - 6}}
+        histsFilesAndInfoMap = {"obj_Pt":{'file':filePF, 'hist_prefix':"obj_Pt", 'leg': "PF cluster (calibrated)", 'color': ROOT.kBlue}, \
+                                "ref_Pt":{'file':filePF, 'hist_prefix':"ref_Pt", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
+                                "cmp_Pt":{'file':filePF, 'hist_prefix':"obj_Pt", 'leg': "PF (non-calibrated) cluster", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file':filePF, 'hist_prefix':"obj_dPtoverPt", 'leg': "PF (calibrated) cluster", 'color': ROOT.kBlue}
     elif (scenario == "PF_noPU"): ## scenario: noPU, resolutoin from PF, comparison "PF vs. PF corrected
         # list of files and corresponding info
-        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, objName, "noPU"), "read") # info based on PF energy
+        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, objName, "noPU"), "read") # info based on PF energy
         # map of histograms and files
-        histsFilesAndInfoMap = {"obj_Energy":{'file':filePF, 'hist_prefix':"obj_Energy", 'leg': "PF cluster (calibrated)", 'color': ROOT.kBlue}, \
-                                "ref_Energy":{'file':filePF, 'hist_prefix':"ref_Energy", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
-                                "cmp_Energy":{'file':filePF, 'hist_prefix':"obj_Energy", 'leg': "PF (non-calibrated) cluster", 'color': ROOT.kGreen - 6}}
+        histsFilesAndInfoMap = {"obj_Pt":{'file':filePF, 'hist_prefix':"obj_Pt", 'leg': "PF cluster (calibrated)", 'color': ROOT.kBlue}, \
+                                "ref_Pt":{'file':filePF, 'hist_prefix':"ref_Pt", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
+                                "cmp_Pt":{'file':filePF, 'hist_prefix':"obj_Pt", 'leg': "PF (non-calibrated) cluster", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file':filePF, 'hist_prefix':"obj_dPtoverPt", 'leg': "PF (calibrated) cluster", 'color': ROOT.kBlue}
     elif (scenario == "Mega_PU200"): ## scenario: PU, resolutoin from Mega cluster, comparison "Mega vs. PF corrected.
         # list of files and corresponding info
-        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, "pfcluster", "PU200"), "read") # info based on PF energy
-        fileMega = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, "megacluster", "PU200"), "read") # info based on PF energy
+        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "pfcluster", "PU200"), "read") # info based on PF energy
+        fileMega = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "PU200"), "read") # info based on PF energy
         # map of histograms and files
-        histsFilesAndInfoMap = {"obj_Energy":{'file':fileMega, 'hist_prefix':"obj_Energy", 'leg': "Megacluster (non-calibrated)", 'color': ROOT.kBlue}, \
-                                "ref_Energy":{'file':filePF,   'hist_prefix':"ref_Energy", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
-                                "cmp_Energy":{'file':filePF,   'hist_prefix':"obj_Energy", 'leg': "PF (calibrated) cluster", 'color': ROOT.kGreen - 6}}
+        histsFilesAndInfoMap = {"obj_Pt":{'file':fileMega, 'hist_prefix':"obj_Pt", 'leg': "Megacluster (non-calibrated)", 'color': ROOT.kBlue}, \
+                                "ref_Pt":{'file':filePF,   'hist_prefix':"ref_Pt", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
+                                "cmp_Pt":{'file':filePF,   'hist_prefix':"obj_Pt", 'leg': "PF (calibrated) cluster", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file':fileMega, 'hist_prefix':"obj_dPtoverPt", 'leg': "PF (calibrated) cluster", 'color': ROOT.kBlue}
     elif (scenario == "Mega_noPU"): ## scenario: noPU, resolutoin from Mega cluster, comparison "Mega vs. PF corrected
         # list of files and corresponding info
-        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, "pfcluster", "noPU"), "read") # info based on PF energy
-        fileMega = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, GEN_engpt, refName, "megacluster", "noPU"), "read") # info based on PF energy
+        filePF = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "pfcluster", "noPU"), "read") # info based on PF energy
+        fileMega = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "noPU"), "read") # info based on PF energy
         # map of histograms and files
-        histsFilesAndInfoMap = {"obj_Energy":{'file':fileMega, 'hist_prefix':"obj_Energy", 'leg': "Megacluster (non-calibrated)", 'color': ROOT.kBlue}, \
-                                "ref_Energy":{'file':filePF,   'hist_prefix':"ref_Energy", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
-                                "cmp_Energy":{'file':filePF,   'hist_prefix':"obj_Energy", 'leg': "PF (calibrated) cluster", 'color': ROOT.kGreen - 6}}
+        histsFilesAndInfoMap = {"obj_Pt":{'file':fileMega, 'hist_prefix':"obj_Pt", 'leg': "Megacluster (non-calibrated)", 'color': ROOT.kBlue}, \
+                                "ref_Pt":{'file':filePF,   'hist_prefix':"ref_Pt", 'leg': "Sim cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
+                                "cmp_Pt":{'file':filePF,   'hist_prefix':"obj_Pt", 'leg': "PF (calibrated) cluster", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file':fileMega, 'hist_prefix':"obj_dPtoverPt", 'leg': "Mega (non-calibrated) cluster", 'color': ROOT.kBlue}
+    elif (scenario == "Mega_noPU_PU200"): ## scenario: noPU, resolutoin from Mega cluster, comparison "Mega vs. PF corrected
+        # list of files and corresponding info
+        fileMega_PU200 = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "PU200"), "read") # info based on PF energy
+        fileMega_noPU  = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "noPU"), "read") # info based on PF energy
+        # map of histograms and files
+        histsFilesAndInfoMap = {"obj_Pt":{'file':fileMega_PU200, 'hist_prefix':"obj_Pt", 'leg': "Megacluster, pile-up 200", 'color': ROOT.kBlue}, \
+                                "ref_Pt":{'file':fileMega_PU200, 'hist_prefix':"ref_Pt", 'leg': "Simulated cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
+                                "cmp_Pt":{'file':fileMega_noPU,  'hist_prefix':"obj_Pt", 'leg': "Megacluster, no pile-up", 'color': ROOT.kGreen - 6}}
+        resolutionFileAndInfoMap = {'file':fileMega_PU200, 'hist_prefix':"obj_dPtoverPt", 'leg': "Megacluster, pile-up 200", 'color': ROOT.kBlue}
     else:
-        print "Error: Required scenario not implemented..."
+        print "Error: Required scenario ("+scenario+") not implemented..."
         sys.exit()
     return histsFilesAndInfoMap, resolutionFileAndInfoMap
 
@@ -198,6 +211,7 @@ def main():
         print "Processing info for PID " + str(pidSelected)
         resScale_values[pidSelected] = {}
         for scenario in scenarios:
+            print "Processing info for scenario " + scenario + "..."
             resScale_values[pidSelected][scenario] = {}
             # prepare some basics
             outDir = "ScaleResolutionPlots_pid"+str(pidSelected)+"_"+scenario+"_"+tag
@@ -206,14 +220,17 @@ def main():
                 print "Processing info for E/Pt point " + "{0:.1f}GeV".format(GEN_engpt)
                 # setup scenario for resolution/scale/comparisons
                 (histsFilesAndInfoMap, resolutionFileAndInfoMap) = setupResScaleScenario(gun_type, pidSelected, GEN_engpt, refName, objName, scenario)
-                # extract resolution/scale info for all eta and phi bins
-                resScale_values[pidSelected][scenario][GEN_engpt] = extractResolutionScale(resolutionFileAndInfoMap)
-                # prepare/plot/save histograms for comparison (e, pt, etc.)
-                plotComparisons(histsFilesAndInfoMap, resScale_values[pidSelected][scenario][GEN_engpt], pidSelected, GEN_engpt, outDir)
-                # print the 2D eta-phi tables
-                printEtaPhiTable(resScale_values[pidSelected][scenario][GEN_engpt], type = 'mean')
-                printEtaPhiTable(resScale_values[pidSelected][scenario][GEN_engpt], type = 'effSigma')
-                printEtaPhiTable(resScale_values[pidSelected][scenario][GEN_engpt], type = 'calib')
+                if len(resolutionFileAndInfoMap['file'].GetListOfKeys())>0:
+                    # extract resolution/scale info for all eta and phi bins
+                    resScale_values[pidSelected][scenario][GEN_engpt] = extractResolutionScale(resolutionFileAndInfoMap)
+                    # prepare/plot/save histograms for comparison (e, pt, etc.)
+                    plotComparisons(histsFilesAndInfoMap, resScale_values[pidSelected][scenario][GEN_engpt], pidSelected, GEN_engpt, outDir)
+                    # print the 2D eta-phi tables
+                    printEtaPhiTable(resScale_values[pidSelected][scenario][GEN_engpt], type = 'mean')
+                    printEtaPhiTable(resScale_values[pidSelected][scenario][GEN_engpt], type = 'effSigma')
+                    printEtaPhiTable(resScale_values[pidSelected][scenario][GEN_engpt], type = 'calib')
+                else:
+                    print "Warning: Empty file. Skipping GEN_engpt point ", GEN_engpt, "..."
                 # close all the files
                 resolutionFileAndInfoMap['file'].Close()
                 for obj in histsFilesAndInfoMap.keys(): histsFilesAndInfoMap[obj]['file'].Close()
@@ -224,7 +241,10 @@ def main():
         outDir = "ScaleResolutionPlots_pid"+str(pidSelected)+"_"+tag
         if not os.path.exists(outDir): os.makedirs(outDir)
         graphsAndProps = setupSummaryGraphs(pidSelected, GEN_engpts, resScale_values[pidSelected], scenarios)
-        hgcalHistHelpers.drawGraphs(graphsAndProps, outDir, title="Energy resolution ("+pidmap[pidSelected]+", #eta #in [1.7 - 2.7])", tag="resolutionCmp_"+pidmap[pidSelected]+"_scenarios_"+"_".join(scenarios)+"_"+tag)
+        for gr in graphsAndProps:
+            (gr, stohasticTerm, constantTerm) = hgcalHistHelpers.fitResolution(gr, graphsAndProps[gr]['color'])
+            graphsAndProps[gr]['latexComment'] = "#frac{#sigma(p_{T})}{p_{T}} = #frac{" +"{0:.1f}".format(stohasticTerm) + "%}{#sqrt{p_{T}}} #oplus " + "{0:.1f}".format(constantTerm) + "%"
+        hgcalHistHelpers.drawGraphs(graphsAndProps, outDir, title="Energy resolution ("+pidmap[pidSelected]+"s, #eta #in [1.7 - 2.7])", tag="resolutionCmp_"+pidmap[pidSelected]+"_scenarios_"+"_".join(scenarios)+"_"+tag)
 
     # time stamp - end
     elapsed = timeit.default_timer() - start_time
