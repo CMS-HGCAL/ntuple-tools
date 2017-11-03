@@ -68,7 +68,7 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
     # create canvas
     canvas = ROOT.TCanvas(outDir + tag, outDir + tag, 500, 500)
     # prepare the legend
-    leg = ROOT.TLegend(0.15, 0.75, 0.62, 0.9)
+    leg = ROOT.TLegend(0.15, 0.90-len(histsAndProps)*0.07, 0.62, 0.9)
     # leg.SetHeader("Energy of the clusters before/after filtering")
     leg.SetBorderSize(0)
     leg.SetFillColor(0)
@@ -125,10 +125,13 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
             func.Draw("same goff")
     # draw the rest
     leg.Draw("same")
-    ltx.DrawLatex(0.170, 0.71, latexComment[0])
-    ltx.DrawLatex(0.170, 0.66, latexComment[1])
-    # print common header
-    ltx.DrawLatex(0.150, 0.935, "CMS Phase-2 Upgrade, #sqrt{s} = 14 TeV")
+    # print latex comments
+    ltx.SetTextColor(ROOT.kBlue)
+    for k in range(len(latexComment)):
+        ltx.DrawLatex(0.17, 0.86 - len(histsAndProps)*0.07 - k*0.07, latexComment[k])
+    # print latex header
+    ltx.SetTextColor(ROOT.kBlack)
+    ltx.DrawLatex(0.150, 0.935, "CMS Phase-2 Simulation, #sqrt{s} = 14 TeV")
     for imgType in imgTypes:
         canvas.SaveAs("{}/{}.{}".format(outDir, tag, imgType))
     return canvas
@@ -205,12 +208,14 @@ def drawGraphs(graphsAndProps, outDir, latexComment=[], title="Resolution", tag=
         ltx.SetLineColor(colour)
         ltx.SetTextColor(colour)
         if (len(graphsAndProps)>2): ltx.SetTextSize(0.02)
-        ltx.DrawLatex(0.45, 0.80-len(graphsAndProps)*0.07 - k*0.09, graphsAndProps[gr]['latexComment'])
+        if 'latexComment' in graphsAndProps[gr].keys():
+            ltx.DrawLatex(0.45, 0.80-len(graphsAndProps)*0.07 - k*0.09, graphsAndProps[gr]['latexComment'])
         k+=1
     # draw the rest
     leg.Draw("same")
     # print common header
-    ltx.DrawLatex(0.120, 0.935, "CMS Phase-2 Upgrade, #sqrt{s} = 14 TeV")
+    ltx.SetTextColor(ROOT.kBlack)
+    ltx.DrawLatex(0.120, 0.935, "CMS Phase-2 Simulation, #sqrt{s} = 14 TeV")
     # save
     for imgType in imgTypes:
         canvas.SaveAs("{}/{}.{}".format(outDir, tag, imgType))

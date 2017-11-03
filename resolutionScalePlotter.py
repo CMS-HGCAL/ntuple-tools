@@ -81,7 +81,7 @@ def plotComparisons(histsFilesAndInfoMap, resScale_values, pidSelected, GEN_engp
             # prepare basic info and plot these histograms on top of each other
             gMeanCalibEnergy = (resScale_values[etaBinName][phiBinName]['mean']/100. + 1.) * GEN_engpt
             gMeanCalibEnergyError = (resScale_values[etaBinName][phiBinName]['meanError']/100.) * GEN_engpt
-            plotComments = ["E_{fit} = " + "{0:.2f}".format(gMeanCalibEnergy) + " #pm " + "{0:.2f}".format(gMeanCalibEnergyError) + " GeV", "#sigma_{eff} = " + "{0:.1f}".format(resScale_values[etaBinName][phiBinName]['effSigma']) + " %"]
+            plotComments = ["p_{T,fit} = " + "{0:.2f}".format(gMeanCalibEnergy) + " #pm " + "{0:.2f}".format(gMeanCalibEnergyError) + " GeV", "#frac{#sigma_{eff}}{p_{T,GEN}} = " + "{0:.1f}".format(resScale_values[etaBinName][phiBinName]['effSigma']) + " %"]
             plotFileTag = "obj_histsOverlayed_" + etaBinName + "_" + phiBinName + "_pid" + str(pidSelected) + "_engpt" + str(int(GEN_engpt))
             # plot and save comparison hists
             hgcalHistHelpers.histsPrintSaveSameCanvas(histsAndProps, outDir, tag=plotFileTag, latexComment=plotComments)
@@ -96,19 +96,19 @@ def setupSummaryGraphs(pidSelected, GEN_engpts, resScale_values, scenarios):
         if (scenario == "PF_PU200"): ## for scenario PF_PU200
             xEng = array('f', resScale_values[scenario].keys())
             yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in resScale_values[scenario].keys()])
-            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "PF cluster (calibrated), pile-up 200", "color": ROOT.kBlue, "MarkerStyle": 21, "LineStyle": 4}
+            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "PF cluster, pile-up 200", "color": ROOT.kBlue, "MarkerStyle": 21, "LineStyle": 4}
         elif (scenario == "PF_noPU"): ## for scenario PF_noPU
             xEng = array('f', resScale_values[scenario].keys())
             yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in resScale_values[scenario].keys()])
-            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "PF cluster (calibrated), no pile-up", "color":ROOT.kGreen-6, "MarkerStyle":21, "LineStyle":4}
+            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "PF cluster, no pile-up", "color":ROOT.kGreen-6, "MarkerStyle":21, "LineStyle":4}
         elif (scenario == "Mega_PU200"): ## for scenario PF_PU200
             xEng = array('f', resScale_values[scenario].keys())
             yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in resScale_values[scenario].keys()])
-            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "Megacluster (non-calibrated), pile-up 200", "color":ROOT.kRed-6, "MarkerStyle":25, "LineStyle":1}
+            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "Megacluster, pile-up 200", "color":ROOT.kRed-6, "MarkerStyle":25, "LineStyle":1}
         elif (scenario == "Mega_noPU"): ## for scenario PF_noPU
             xEng = array('f', resScale_values[scenario].keys())
             yRes = array('f', [resScale_values[scenario][engpt]['eta1p479to3p0']['phim1p0pito1p0pi']['effSigma'] for engpt in resScale_values[scenario].keys()])
-            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "Megacluster (non-calibrated), no pile-up", "color":ROOT.kBlack, "MarkerStyle":20, "LineStyle":1}
+            graphsAndProps[ROOT.TGraph(len(xEng), xEng, yRes)] = {"leg": "Megacluster, no pile-up", "color":ROOT.kBlack, "MarkerStyle":20, "LineStyle":1}
         else: # here implement graphs for additional scenarios...
             print "Warning: Required scenario ("+scenario+") not implemented. No graph added."
     return graphsAndProps
@@ -155,7 +155,6 @@ def setupResScaleScenario(gun_type, pidSelected, GEN_engpt, refName, objName, sc
         fileMega_noPU  = ROOT.TFile.Open("{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "noPU"), "read") # info based on PF energy
         # map of histograms and files
         histsFilesAndInfoMap = {"obj_Pt":{'file':fileMega_PU200, 'hist_prefix':"obj_Pt", 'leg': "Megacluster, pile-up 200", 'color': ROOT.kBlue}, \
-                                "ref_Pt":{'file':fileMega_PU200, 'hist_prefix':"ref_Pt", 'leg': "Simulated cluster (" + gun_type+"={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed}, \
                                 "cmp_Pt":{'file':fileMega_noPU,  'hist_prefix':"obj_Pt", 'leg': "Megacluster, no pile-up", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file':fileMega_PU200, 'hist_prefix':"obj_dPtoverPt", 'leg': "Megacluster, pile-up 200", 'color': ROOT.kBlue}
     else:
@@ -243,7 +242,7 @@ def main():
         graphsAndProps = setupSummaryGraphs(pidSelected, GEN_engpts, resScale_values[pidSelected], scenarios)
         for gr in graphsAndProps:
             (gr, stohasticTerm, constantTerm) = hgcalHistHelpers.fitResolution(gr, graphsAndProps[gr]['color'])
-            graphsAndProps[gr]['latexComment'] = "#frac{#sigma(p_{T})}{p_{T}} = #frac{" +"{0:.1f}".format(stohasticTerm) + "%}{#sqrt{p_{T}}} #oplus " + "{0:.1f}".format(constantTerm) + "%"
+            #graphsAndProps[gr]['latexComment'] = "#frac{#sigma(p_{T})}{p_{T}} = #frac{" +"{0:.1f}".format(stohasticTerm) + "%}{#sqrt{p_{T}}} #oplus " + "{0:.1f}".format(constantTerm) + "%"
         hgcalHistHelpers.drawGraphs(graphsAndProps, outDir, title="Energy resolution ("+pidmap[pidSelected]+"s, #eta #in [1.7 - 2.7])", tag="resolutionCmp_"+pidmap[pidSelected]+"_scenarios_"+"_".join(scenarios)+"_"+tag)
 
     # time stamp - end
