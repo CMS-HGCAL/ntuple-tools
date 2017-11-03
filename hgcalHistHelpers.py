@@ -68,7 +68,7 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
     # create canvas
     canvas = ROOT.TCanvas(outDir + tag, outDir + tag, 500, 500)
     # prepare the legend
-    leg = ROOT.TLegend(0.15, 0.75, 0.62, 0.9)
+    leg = ROOT.TLegend(0.15, 0.90-len(histsAndProps)*0.07, 0.62, 0.9)
     # leg.SetHeader("Energy of the clusters before/after filtering")
     leg.SetBorderSize(0)
     leg.SetFillColor(0)
@@ -80,19 +80,21 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
     ltx.SetTextFont(42)
     ltx.SetTextSize(0.03)
     # set image extensions
-    imgTypes = ["pdf", "png"]
+    imgTypes = ["pdf", "png", "root"]
     if (verbosityLevel >= 3):
         print "histsAndProps: ", histsAndProps
         print "funcsAndProps: ", funcsAndProps
     # loop over all histograms to get max
-    y_maxs = [1.]
+    y_maxs = [0.01]
     for hist in histsAndProps:
         # do not print/save empty histograms
         if (type(hist) == ROOT.TH1F) or (type(hist) == ROOT.TH2F) or (type(hist) == ROOT.TH3F):
             if hist.GetEntries() == 0:
                 continue
+        hist.Scale(1./hist.Integral())
+        hist.GetYaxis().SetTitle("a.u.")
         curr_max = hist.GetMaximum()
-        if (curr_max < hist.GetEntries() / 2.):
+        if (curr_max < 1./3.): # temp. fix for hists with very different y_max
             y_maxs.append(curr_max)
     # print "y_maxs: ", y_maxs
     # loop over all histograms
@@ -103,6 +105,7 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
             if hist.GetEntries() == 0:
                 continue
         # print and save
+        hist.SetTitle("")
         if type(hist) == ROOT.TH1F:
             hist.SetLineColor(histsAndProps[hist]["color"])
             leg.AddEntry(hist, histsAndProps[hist]["leg"], "L")
@@ -122,14 +125,19 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
             func.Draw("same goff")
     # draw the rest
     leg.Draw("same")
-    ltx.DrawLatex(0.170, 0.71, latexComment[0])
-    ltx.DrawLatex(0.170, 0.66, latexComment[1])
+    # print latex comments
+    ltx.SetTextColor(ROOT.kBlue)
+    for k in range(len(latexComment)):
+        ltx.DrawLatex(0.17, 0.86 - len(histsAndProps)*0.07 - k*0.07, latexComment[k])
+    # print latex header
+    ltx.SetTextColor(ROOT.kBlack)
+    ltx.DrawLatex(0.150, 0.935, "CMS Phase-2 Simulation, #sqrt{s} = 14 TeV")
     for imgType in imgTypes:
         canvas.SaveAs("{}/{}.{}".format(outDir, tag, imgType))
     return canvas
 
 
-def drawGraphs(graphsAndProps, outDir, title="Resolution", tag="graphTest_", verbosityLevel=0):
+def drawGraphs(graphsAndProps, outDir, latexComment=[], title="Resolution", tag="graphTest_", verbosityLevel=0):
     # supress info messages
     ROOT.gErrorIgnoreLevel = ROOT.kInfo + 1
     # set default style values
@@ -141,8 +149,8 @@ def drawGraphs(graphsAndProps, outDir, title="Resolution", tag="graphTest_", ver
     ROOT.gStyle.SetPadRightMargin(0.05)
     # create canvas
     canvas = ROOT.TCanvas(tag, tag, 800, 600)
-    # prepare the legend
-    leg = ROOT.TLegend(0.55, 0.45, 0.9, 0.9)
+    # prepare the legend (according to the number of entries)
+    leg = ROOT.TLegend(0.40, 0.85-len(graphsAndProps)*0.07, 0.95, 0.9)
     leg.SetHeader(title)
     leg.SetBorderSize(0)
     leg.SetFillColor(0)
@@ -155,6 +163,11 @@ def drawGraphs(graphsAndProps, outDir, title="Resolution", tag="graphTest_", ver
     ltx.SetTextSize(0.03)
     # set image extensions
     imgTypes = ["pdf", "png", "root"]
+    # prepare latex comment
+    ltx = ROOT.TLatex()
+    ltx.SetNDC(ROOT.kTRUE)
+    ltx.SetTextFont(42)
+    ltx.SetTextSize(0.03)
     if (verbosityLevel >= 3):
         print "graphsAndProps: ", graphsAndProps
     # loop over all graphs to get max
@@ -165,9 +178,15 @@ def drawGraphs(graphsAndProps, outDir, title="Resolution", tag="graphTest_", ver
         print "y_maxs: ", y_maxs
     # loop over all histograms
     first = True
+    k = 0
     for gr in graphsAndProps:
-        gr.GetXaxis().SetTitle('E[GeV]')
+        gr.SetTitle("")
+        gr.GetXaxis().SetTitle('p_{T}[GeV]')
+        gr.GetXaxis().SetTitleSize(0.05)
+        gr.GetXaxis().SetTitleOffset(0.9)
         gr.GetYaxis().SetTitle('#sigma_{eff}[%]')
+        gr.GetYaxis().SetTitleSize(0.05)
+        gr.GetYaxis().SetTitleOffset(0.8)
         colour = graphsAndProps[gr]["color"]
         gr.SetLineColor(colour)
         gr.SetLineWidth(1)
@@ -179,22 +198,30 @@ def drawGraphs(graphsAndProps, outDir, title="Resolution", tag="graphTest_", ver
         gr.SetFillStyle(0)
         leg.AddEntry(gr, graphsAndProps[gr]["leg"])
         if (first):
-            gr.SetMaximum(max(y_maxs) * 1.5)
-            gr.SetMinimum(0)
+            gr.SetMaximum(max(y_maxs) * 1.3)
+            gr.SetMinimum(4.)
+            gr.SetTitle("")
             gr.Draw("AP goff")
             first = False
         else:
             gr.Draw("P same goff")
-    # legend
+        ltx.SetLineColor(colour)
+        ltx.SetTextColor(colour)
+        if (len(graphsAndProps)>2): ltx.SetTextSize(0.02)
+        if 'latexComment' in graphsAndProps[gr].keys():
+            ltx.DrawLatex(0.45, 0.80-len(graphsAndProps)*0.07 - k*0.09, graphsAndProps[gr]['latexComment'])
+        k+=1
+    # draw the rest
     leg.Draw("same")
+    # print common header
+    ltx.SetTextColor(ROOT.kBlack)
+    ltx.DrawLatex(0.120, 0.935, "CMS Phase-2 Simulation, #sqrt{s} = 14 TeV")
     # save
     for imgType in imgTypes:
         canvas.SaveAs("{}/{}.{}".format(outDir, tag, imgType))
     return canvas
 
 # print/save all histograms
-
-
 def histPrintSaveAll(histDict, outDir, tag="_test", verbosityLevel=0):
     # supress info messages
     ROOT.gErrorIgnoreLevel = ROOT.kInfo + 1
@@ -254,11 +281,24 @@ def fitGauss(hist, paramRangeFactor=1.8):
     hist.Fit(fGauss, "Q", "", meanLimitDn, meanLimitUp)
     gaussMean = fGauss.GetParameter(1)
     gaussStd = fGauss.GetParameter(2)
-    # print "hist ent.: ", hist.GetEntries()
-    # print "hist mean: ", hist.GetMean(), ", hist std: ", hist.GetRMS()
-    # print "gaussMean: ", gaussMean,      ", gaussStd: ", gaussStd
     return (hist, gaussMean, gaussStd)
 
+def fitResolution(graph, fitLineColor = ROOT.kBlue, rangeLimitDn = 5., rangeLimitUp = 100.):
+    # define the range of the fit from the hist mean and RMS
+    stohasticTermLimitDn = 0
+    stohasticTermLimitUp = 300
+    constantTermLimitDn = 0
+    constantTermLimitUp = 10
+    # define the fitting gausian and range of its parameters
+    fResolution = ROOT.TF1("f", "sqrt([1]*[1] + [0]*[0]/x)", rangeLimitDn, rangeLimitUp)
+    fResolution.SetParLimits(0, stohasticTermLimitDn, stohasticTermLimitUp) # stohastic term
+    fResolution.SetParLimits(1, constantTermLimitDn, constantTermLimitUp) # constant term
+    fResolution.SetLineColor(fitLineColor)
+    # perform fit and extract params
+    graph.Fit(fResolution, "Q", "", rangeLimitDn, rangeLimitUp)
+    stohasticTerm = fResolution.GetParameter(0)
+    constantTerm = fResolution.GetParameter(1)
+    return (graph, stohasticTerm, constantTerm)
 
 def getEffSigma(theHist, wmin=-100, wmax=100, epsilon=0.01):
     """taken from Hgg framework (by Ed)"""
@@ -274,8 +314,6 @@ def getEffSigma(theHist, wmin=-100, wmax=100, epsilon=0.01):
         weight += theHist.GetBinContent(i)
         if weight / thesum > epsilon:
             points.append([theHist.GetBinCenter(i), weight / thesum])
-#    print "thesum: ", thesum
-#    print "points: ", points
     # initialise
     low = wmin
     high = wmax
@@ -290,7 +328,6 @@ def getEffSigma(theHist, wmin=-100, wmax=100, epsilon=0.01):
                     low = points[i][0]
                     high = points[j][0]
                     width = wx
-                    # print "width: ", width, "low: ", low, ", high: ", high, ", wx: ", wx, ", wy: ", wy,
     return 0.5 * (high - low)
 
 def getHistMeanStd(histo):
