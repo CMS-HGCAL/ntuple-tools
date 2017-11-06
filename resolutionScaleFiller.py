@@ -61,11 +61,17 @@ class ResolutionScaleObject:
     def scale(self):
         return
 
+    def dE(self):
+        return (self.objTLV.E() - self.refTLV.E())
+
+    def dPt(self):
+        return (self.objTLV.Pt() - self.refTLV.Pt())
+
     def dEoverE(self):
-        return (self.objTLV.E() - self.refTLV.E()) / self.refTLV.E()
+        return (self.dE() / self.refTLV.E())
 
     def dPtoverPt(self):
-        return (self.objTLV.Pt() - self.refTLV.Pt()) / self.refTLV.Pt()
+        return (self.dPt() / self.refTLV.Pt())
 
 
 def eventLoop(ntuple, refName, objName, gun_type, pidOfInterest, GEN_engpt, histDict):
@@ -198,7 +204,7 @@ def fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict):
             # print some info, fill dE/E values for current eta/phi bin
             # print "Mean dE/E (%)", "\t", "\t", "eta", "\t\t", "phi"
             # get the 1D lists
-            valueLists = np.array([(x.refTLV.E(), x.refTLV.Pt(), x.objTLV.E(), x.objTLV.Pt(), x.dEoverE(), x.dPtoverPt())
+            valueLists = np.array([(x.refTLV.E(), x.refTLV.Pt(), x.objTLV.E(), x.objTLV.Pt(), x.dEoverE(), x.dPtoverPt(), x.dE(), x.dPt())
                           for x in resolutionScaleObjects
                           if ((math.fabs(x.refTLV.Eta()) >= etaBins[etaBinName][0] and math.fabs(x.refTLV.Eta()) < etaBins[etaBinName][1])
                           and (x.refTLV.Phi() >= phiBins[phiBinName][0] and x.refTLV.Phi() < phiBins[phiBinName][1]))], dtype=float)
@@ -219,10 +225,14 @@ def fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict):
                 histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 2], histDict[etaBinName][phiBinName], tag="obj_Energy_eta" + etaBinName + "_phi" + phiBinName, title="Energy of object of interest, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")",   axunit="E [GeV]", binsBoundariesX=binsBoundariesX_eng, ayunit="N(clusters)")
                 # object of interest Pt
                 histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 3], histDict[etaBinName][phiBinName], tag="obj_Pt_eta" + etaBinName + "_phi" + phiBinName, title="Pt of object of interest, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")",   axunit="p_{T} [GeV]", binsBoundariesX=binsBoundariesX_eng, ayunit="N(clusters)")
-                # resolution
-                binsBoundariesX_engDiff = [[800, -100, 60], [650, -80, 50]]["1p" in etaBinName]
-                histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 4]*100, histDict[etaBinName][phiBinName], tag="obj_dEoverE_eta" + etaBinName + "_phi" + phiBinName, title="dEoverE, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")", axunit="#Delta E_{clust}/E_{clust}[%]", binsBoundariesX=binsBoundariesX_engDiff, ayunit="N(clusters)")
-                histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 5]*100, histDict[etaBinName][phiBinName], tag="obj_dPtoverPt_eta" + etaBinName + "_phi" + phiBinName, title="dPtoverPt, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")", axunit="#Delta p_{T, clust}/p_{T, clust}[%]", binsBoundariesX=binsBoundariesX_engDiff, ayunit="N(clusters)")
+                # response
+                binsBoundariesX_relDiff = [[800, -100, 60], [650, -80, 50]]["1p" in etaBinName]
+                histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 4]*100, histDict[etaBinName][phiBinName], tag="obj_dEoverE_eta" + etaBinName + "_phi" + phiBinName, title="dEoverE, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")", axunit="#Delta E_{clust}/E_{clust}[%]", binsBoundariesX=binsBoundariesX_relDiff, ayunit="N(clusters)")
+                histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 5]*100, histDict[etaBinName][phiBinName], tag="obj_dPtoverPt_eta" + etaBinName + "_phi" + phiBinName, title="dPtoverPt, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")", axunit="#Delta p_{T, clust}/p_{T, clust}[%]", binsBoundariesX=binsBoundariesX_relDiff, ayunit="N(clusters)")
+                # for resolution
+                binsBoundariesX_engDiff = [[1000, -350, 150], [1000, -350, 150]]["1p" in etaBinName]
+                histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 6], histDict[etaBinName][phiBinName], tag="obj_dE_eta" + etaBinName + "_phi" + phiBinName, title="dE, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")", axunit="#Delta E_{clust} [GeV]", binsBoundariesX=binsBoundariesX_engDiff, ayunit="N(clusters)")
+                histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 7], histDict[etaBinName][phiBinName], tag="obj_dPt_eta" + etaBinName + "_phi" + phiBinName, title="dPt, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")", axunit="#Delta p_{T, clust} [GeV]", binsBoundariesX=binsBoundariesX_engDiff, ayunit="N(clusters)")
 
 
 def main():
@@ -279,6 +289,8 @@ def main():
                 histDict[etaBinName][phiBinName]["obj_Pt_eta" + etaBinName + "_phi" + phiBinName].Write()
                 histDict[etaBinName][phiBinName]["obj_dEoverE_eta" + etaBinName + "_phi" + phiBinName].Write()
                 histDict[etaBinName][phiBinName]["obj_dPtoverPt_eta" + etaBinName + "_phi" + phiBinName].Write()
+                histDict[etaBinName][phiBinName]["obj_dE_eta" + etaBinName + "_phi" + phiBinName].Write()
+                histDict[etaBinName][phiBinName]["obj_dPt_eta" + etaBinName + "_phi" + phiBinName].Write()
 
     f.Write()
     f.Close()
