@@ -184,7 +184,7 @@ def drawGraphs(graphsAndProps, outDir, latexComment=[], title="Resolution", tag=
         gr.GetXaxis().SetTitle('p_{T}[GeV]')
         gr.GetXaxis().SetTitleSize(0.05)
         gr.GetXaxis().SetTitleOffset(0.9)
-        gr.GetYaxis().SetTitle('#sigma_{eff}[%]')
+        gr.GetYaxis().SetTitle('#sigma_{eff}(E)/E [%]')
         gr.GetYaxis().SetTitleSize(0.05)
         gr.GetYaxis().SetTitleOffset(0.8)
         colour = graphsAndProps[gr]["color"]
@@ -289,16 +289,20 @@ def fitResolution(graph, fitLineColor = ROOT.kBlue, rangeLimitDn = 5., rangeLimi
     stohasticTermLimitUp = 300
     constantTermLimitDn = 0
     constantTermLimitUp = 10
+    noiseTermLimitDn = 0
+    noiseTermLimitUp = 30
     # define the fitting gausian and range of its parameters
-    fResolution = ROOT.TF1("f", "sqrt([1]*[1] + [0]*[0]/x)", rangeLimitDn, rangeLimitUp)
+    fResolution = ROOT.TF1("f", "sqrt([1]*[1] + [0]*[0]/x + [2]*[2]/(x*x))", rangeLimitDn, rangeLimitUp)
     fResolution.SetParLimits(0, stohasticTermLimitDn, stohasticTermLimitUp) # stohastic term
     fResolution.SetParLimits(1, constantTermLimitDn, constantTermLimitUp) # constant term
+    # fResolution.SetParLimits(2, noiseTermLimitDn, noiseTermLimitUp) # noise term
     fResolution.SetLineColor(fitLineColor)
     # perform fit and extract params
-    graph.Fit(fResolution, "Q", "", rangeLimitDn, rangeLimitUp)
+    graph.Fit(fResolution, "", "", rangeLimitDn, rangeLimitUp)
     stohasticTerm = fResolution.GetParameter(0)
     constantTerm = fResolution.GetParameter(1)
-    return (graph, stohasticTerm, constantTerm)
+    noiseTerm = fResolution.GetParameter(2)
+    return (graph, stohasticTerm, constantTerm, noiseTerm)
 
 def getEffSigma(theHist, wmin=-100, wmax=100, epsilon=0.01):
     """taken from Hgg framework (by Ed)"""
@@ -340,4 +344,3 @@ def getHistMeanStd(histo):
         gMeanError = gStd/(hEntries**0.5)
     effSigma = getEffSigma(histo)
     return histo, hEntries, gMean, gMeanError, gStd, effSigma
-
