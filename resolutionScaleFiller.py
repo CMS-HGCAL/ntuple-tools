@@ -45,7 +45,7 @@ class ResolutionScaleObject:
         self.refTLV.SetPtEtaPhiE(ref.pt, ref.eta, ref.phi, ref.energy)
         self.objTLV = ROOT.TLorentzVector()
         if (objName == "pfcluster"):
-            self.objTLV.SetPtEtaPhiE(obj.pt, obj.eta, obj.phi, obj.correctedEnergy)
+            self.objTLV.SetPtEtaPhiE(obj.pt*obj.correctedEnergy/obj.energy, obj.eta, obj.phi, obj.correctedEnergy)
         else:
             self.objTLV.SetPtEtaPhiE(obj.pt, obj.eta, obj.phi, obj.energy)
 
