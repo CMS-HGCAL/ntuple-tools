@@ -9,7 +9,7 @@ from NtupleDataFormat import HGCalNtuple
 # import math
 import hgcalHelpers
 # import hgcalHistHelpers
-# import numpy as np
+import numpy as np
 import pandas as pd
 from itertools import repeat
 maxlayer = 52
@@ -24,7 +24,39 @@ def getConeRadius(frontRadius, backRadius, z, maxval=9999.):
     return val
 
 
-def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_type, GEN_engpt, pidSelected, energyRadius=6, frontRadius=3, backRadius=8):
+def pileupSubtraction(matchedMultiCluster, selectedLayerClusters, recHits, layer, energyRadius, frontRadius, backRadius):
+    """For now, the code is the same as in getMegaClusters, but the phi coordinate is changed by pi."""
+
+    pTSum = 0
+    energySum = 0
+    # take first layer cluster z value
+    layer_z = selectedLayerClusters.head(1).z.item()
+    # get multi cluster x and y coordinates
+    matchedMultiCluster_phi = float(matchedMultiCluster.phi) - np.pi
+    if (matchedMultiCluster_phi < -np.pi):
+        matchedMultiCluster_phi += 2*np.pi
+    multiClusPosDF = hgcalHelpers.convertToXY(matchedMultiCluster.eta, matchedMultiCluster_phi, layer_z)
+    # calculate radius based on current layer's z position
+    coneRadius = getConeRadius(frontRadius, backRadius, layer_z)
+    # mind that we need only the first index since there is only one multiCluster
+    layerClusterIndices = hgcalHelpers.getIndicesWithinRadius(multiClusPosDF[['x', 'y']], selectedLayerClusters[['x', 'y']], coneRadius)
+    # now we need to recalculate the layer cluster energies using associated RecHits
+    for layerClusterIndex in layerClusterIndices[0]:
+        associatedRecHits = recHits.iloc[selectedLayerClusters.iloc[layerClusterIndex].rechits]
+        # find maximum energy RecHit
+        maxEnergyRecHitIndex = associatedRecHits['energy'].argmax()
+        # considering only associated RecHits within a radius of energyRadius (6 cm)
+        matchedRecHitIndices = hgcalHelpers.getIndicesWithinRadius(associatedRecHits.loc[[maxEnergyRecHitIndex]][['x', 'y']], associatedRecHits[['x', 'y']], energyRadius)[maxEnergyRecHitIndex]
+        # sum up energies and pT
+        selectedRecHits = associatedRecHits.iloc[matchedRecHitIndices]
+        # correct energy by subdetector weights
+        energySum += selectedRecHits[["energy"]].sum()[0]*energyWeights[layer-1]*1.38
+        pTSum += selectedRecHits[["pt"]].sum()[0]*energyWeights[layer-1]*1.38
+
+    return (energySum, pTSum)
+
+
+def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_type, GEN_engpt, pidSelected, energyRadius=6, frontRadius=3, backRadius=8, doPileupSubtraction=True):
     """
     get the actual mega clusters.
     frontRadius: cone at front of EE
@@ -81,8 +113,12 @@ def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_typ
                 # sum up energies and pT
                 selectedRecHits = associatedRecHits.iloc[matchedRecHitIndices]
                 # correct energy by subdetector weights
-                energySum += selectedRecHits[["energy"]].sum()[0]*energyWeights[layer-1]
-                pTSum += selectedRecHits[["pt"]].sum()[0]*energyWeights[layer-1]
+                energySum += selectedRecHits[["energy"]].sum()[0]*energyWeights[layer-1]*1.38
+                pTSum += selectedRecHits[["pt"]].sum()[0]*energyWeights[layer-1]*1.38
+            if (doPileupSubtraction):
+                (pu_energySum, pu_pTSum) = pileupSubtraction(matchedMultiCluster, selectedLayerClusters, recHits, layer, energyRadius, frontRadius, backRadius)
+                energySum -= pu_energySum
+                pTSum -= pu_pTSum
 
         # use as coordinates eta and phi of matched multi cluster
         megaCluster = [pTSum, matchedMultiCluster['eta'].item(), matchedMultiCluster['phi'].item(), energySum]

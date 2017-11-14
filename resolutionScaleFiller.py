@@ -220,6 +220,8 @@ def fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict):
             # fill the hists
             if len(valueLists) > 0:
                 rangeGeV = GEN_engpt * 1.6
+                if (GEN_engpt < 30):
+                    rangeGeV = GEN_engpt * 5
                 nbins = int(rangeGeV)
                 if (rangeGeV < 50.):
                     nbins = int(10 * rangeGeV)
@@ -233,7 +235,7 @@ def fillComparisonHistograms(resolutionScaleObjects, GEN_engpt, histDict):
                 # object of interest Pt
                 histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 3], histDict[etaBinName][phiBinName], tag="obj_Pt_eta" + etaBinName + "_phi" + phiBinName, title="Pt of object of interest, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")",   axunit="p_{T} [GeV]", binsBoundariesX=binsBoundariesX_eng, ayunit="N(clusters)")
                 # response
-                binsBoundariesX_relDiff = [[800, -100, 60], [650, -80, 50]]["1p" in etaBinName]
+                binsBoundariesX_relDiff = [800, -100, 60]
                 histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 4]*100, histDict[etaBinName][phiBinName], tag="obj_dEoverE_eta" + etaBinName + "_phi" + phiBinName, title="dEoverE, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")", axunit="#Delta E_{clust}/E_{clust}[%]", binsBoundariesX=binsBoundariesX_relDiff, ayunit="N(clusters)")
                 histDict[etaBinName][phiBinName] = hgcalHistHelpers.histValue1D(valueLists[:, 5]*100, histDict[etaBinName][phiBinName], tag="obj_dPtoverPt_eta" + etaBinName + "_phi" + phiBinName, title="dPtoverPt, #eta=" + GEN_eta + ", #phi=" + GEN_phi + ")", axunit="#Delta p_{T, clust}/p_{T, clust}[%]", binsBoundariesX=binsBoundariesX_relDiff, ayunit="N(clusters)")
                 # for resolution
@@ -254,10 +256,11 @@ def main():
     parser = optparse.OptionParser(usage)
 
     # input options
-    parser.add_option('', '--files', dest='fileString', type='string',  default='root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_RelValSingleGammaPt25Eta1p7_2p7_CMSSW_9_3_2-PU25ns_93X_upgrade2023_realistic_v2_2023D17PU200-v1_GEN-SIM-RECO/NTUP/_RelValSingleGammaPt25Eta1p7_2p7_CMSSW_9_3_2-PU25ns_93X_upgrade2023_realistic_v2_2023D17PU200-v1_GEN-SIM-RECO_NTUP_1.root', help='comma-separated file list')
+    # parser.add_option('', '--files', dest='fileString', type='string',  default='root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_1_0.root', help='comma-separated file list')
+    parser.add_option('', '--files', dest='fileString', type='string',  default='root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-PU200FEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-PU200FEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_2.root', help='comma-separated file list')
     parser.add_option('', '--gunType', dest='gunType', type='string',  default='pt', help='pt or e')
-    parser.add_option('', '--pid', dest='pid', type='int',  default=22, help='pdgId int')
-    parser.add_option('', '--genValue', dest='genValue', type='int',  default=25, help='generated pT or energy')
+    parser.add_option('', '--pid', dest='pid', type='int',  default=211, help='pdgId int')
+    parser.add_option('', '--genValue', dest='genValue', type='int',  default=50, help='generated pT or energy')
     parser.add_option('', '--tag', dest='tag', type='string',  default='noPU', help='some tag, best used for PU and other info')
     parser.add_option('', '--ref', dest='refName', type='string',  default='genpart', help='reference collection')
     parser.add_option('', '--obj', dest='objName', type='string',  default='pfcluster', help='object of interest collection')
