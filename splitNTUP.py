@@ -23,7 +23,7 @@ def splitFile(inDir, oldFileName):
         # Create a new file + a clone of old tree in new file
         index = 0
         for i in range(0, nentries, eventsPerFile):
-            print i
+            print "Event", i, "of", nentries
             newfile = ROOT.TFile("{}/{}/{}_{}.root".format(prefix, inDir, newFileName, index), "recreate")
             newfile.mkdir(dirname)
             newfile.cd(dirname)
@@ -33,7 +33,8 @@ def splitFile(inDir, oldFileName):
             newfile.Close()
             index += 1
 
-        # os.remove("{}/{}".format(inDir, oldFileName))
+        print "Deleting {}/{}".format(inDir, oldFileName)
+        os.remove("{}/{}".format(inDir, oldFileName))
     else:
         print "No need to split", oldFileFullName
 
