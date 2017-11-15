@@ -86,11 +86,13 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
         print "funcsAndProps: ", funcsAndProps
     # loop over all histograms to get max
     y_maxs = [0.01]
+    x_maxs = [1.]
     for hist in histsAndProps:
         # do not print/save empty histograms
         if (type(hist) == ROOT.TH1F) or (type(hist) == ROOT.TH2F) or (type(hist) == ROOT.TH3F):
             if hist.GetEntries() == 0:
                 continue
+        x_maxs.append(hist.GetBinCenter(hist.FindLastBinAbove(1)))
         hist.Scale(1./hist.Integral())
         hist.GetYaxis().SetTitle("a.u.")
         curr_max = hist.GetMaximum()
@@ -113,6 +115,7 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
             hist.GetYaxis().SetTitleOffset(hist.GetYaxis().GetTitleOffset() * 3.0)
             if (first):
                 hist.GetYaxis().SetRangeUser(0, max(y_maxs) * 1.4)
+                hist.GetXaxis().SetRangeUser(0, max(x_maxs) * 1.0)
                 hist.Draw("hist0 goff")
                 first = False
             else:
