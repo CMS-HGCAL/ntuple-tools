@@ -137,7 +137,7 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
     return canvas
 
 
-def drawGraphs(graphsAndProps, outDir, latexComment=[], title="Resolution", tag="graphTest_", verbosityLevel=0):
+def drawGraphs(graphsAndProps, grOptions, outDir, latexComment=[], tag="graphTest_", verbosityLevel=0):
     # supress info messages
     ROOT.gErrorIgnoreLevel = ROOT.kInfo + 1
     # set default style values
@@ -150,8 +150,10 @@ def drawGraphs(graphsAndProps, outDir, latexComment=[], title="Resolution", tag=
     # create canvas
     canvas = ROOT.TCanvas(tag, tag, 800, 600)
     # prepare the legend (according to the number of entries)
-    leg = ROOT.TLegend(0.40, 0.85-len(graphsAndProps)*0.07, 0.95, 0.9)
-    leg.SetHeader(title)
+    legLowerBoundary = 0.85-len(graphsAndProps)*0.07
+    if (legLowerBoundary<0.45): legLowerBoundary = 0.45
+    leg = ROOT.TLegend(0.40, legLowerBoundary, 0.95, 0.9)
+    leg.SetHeader(grOptions['title'])
     leg.SetBorderSize(0)
     leg.SetFillColor(0)
     leg.SetFillStyle(0)
@@ -181,10 +183,10 @@ def drawGraphs(graphsAndProps, outDir, latexComment=[], title="Resolution", tag=
     k = 0
     for gr in graphsAndProps:
         gr.SetTitle("")
-        gr.GetXaxis().SetTitle('p_{T}[GeV]')
+        gr.GetXaxis().SetTitle(grOptions['Xaxis'])
         gr.GetXaxis().SetTitleSize(0.05)
         gr.GetXaxis().SetTitleOffset(0.9)
-        gr.GetYaxis().SetTitle('#sigma_{eff}(E)/E [%]')
+        gr.GetYaxis().SetTitle(grOptions['Yaxis'])
         gr.GetYaxis().SetTitleSize(0.05)
         gr.GetYaxis().SetTitleOffset(0.8)
         colour = graphsAndProps[gr]["color"]
@@ -198,7 +200,7 @@ def drawGraphs(graphsAndProps, outDir, latexComment=[], title="Resolution", tag=
         gr.SetFillStyle(0)
         leg.AddEntry(gr, graphsAndProps[gr]["leg"])
         if (first):
-            gr.SetMaximum(max(y_maxs) * 1.3)
+            gr.SetMaximum(max(y_maxs) * 1.5)
             gr.SetMinimum(4.)
             gr.SetTitle("")
             gr.Draw("AP goff")
@@ -209,7 +211,8 @@ def drawGraphs(graphsAndProps, outDir, latexComment=[], title="Resolution", tag=
         ltx.SetTextColor(colour)
         if (len(graphsAndProps)>2): ltx.SetTextSize(0.02)
         if 'latexComment' in graphsAndProps[gr].keys():
-            ltx.DrawLatex(0.45, 0.80-len(graphsAndProps)*0.07 - k*0.09, graphsAndProps[gr]['latexComment'])
+            ltxCommentSize = (legLowerBoundary - 0.2)/len(graphsAndProps)
+            ltx.DrawLatex(0.45, legLowerBoundary - k*ltxCommentSize, graphsAndProps[gr]['latexComment'])
         k+=1
     # draw the rest
     leg.Draw("same")
@@ -283,7 +286,7 @@ def fitGauss(hist, paramRangeFactor=1.8):
     gaussStd = fGauss.GetParameter(2)
     return (hist, gaussMean, gaussStd)
 
-def fitResolution(graph, fitLineColor = ROOT.kBlue, rangeLimitDn = 5., rangeLimitUp = 100.):
+def fitResolution(graph, fitLineColor = ROOT.kBlue, fitLineStyle = 1, rangeLimitDn = 5., rangeLimitUp = 100.):
     # define the range of the fit from the hist mean and RMS
     stohasticTermLimitDn = 0
     stohasticTermLimitUp = 300
@@ -297,6 +300,7 @@ def fitResolution(graph, fitLineColor = ROOT.kBlue, rangeLimitDn = 5., rangeLimi
     fResolution.SetParLimits(1, constantTermLimitDn, constantTermLimitUp) # constant term
     # fResolution.SetParLimits(2, noiseTermLimitDn, noiseTermLimitUp) # noise term
     fResolution.SetLineColor(fitLineColor)
+    fResolution.SetLineStyle(fitLineStyle)
     # perform fit and extract params
     graph.Fit(fResolution, "", "", rangeLimitDn, rangeLimitUp)
     stohasticTerm = fResolution.GetParameter(0)
