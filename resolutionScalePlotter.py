@@ -16,11 +16,11 @@ verbosityLevel = 0  # 0 - only basic info (default); 1 - additional info; 2 - de
 # names and pid mapping
 pidmap = {11: "electron", 13: "muon", 22: "photon", 211: "pion"}
 
-etaBins = {"eta1p6to1p8": (1.6, 1.8), "eta1p8to2p0": (1.8, 2.0), "eta2p0to2p2": (2.0, 2.2), "eta2p2to2p4": (2.2, 2.4), "eta2p4to2p6": (2.4, 2.6), "eta2p6to2p8": (2.6, 2.8), "eta1p6to2p8": (1.6, 2.8)}
+# etaBins = {"eta1p6to1p8": (1.6, 1.8), "eta1p8to2p0": (1.8, 2.0), "eta2p0to2p2": (2.0, 2.2), "eta2p2to2p4": (2.2, 2.4), "eta2p4to2p6": (2.4, 2.6), "eta2p6to2p8": (2.6, 2.8), "eta1p6to2p8": (1.6, 2.8)}
 # phiBins = {"phi0to0p5pi":(0.*math.pi, 0.5*math.pi), "phi0p5to1p0pi":(0.5*math.pi, 1.0*math.pi), "phim1p0pitom0p5pi":(-1.0*math.pi, -0.5*math.pi), "phim0p5pito0":(-0.5*math.pi, 0.*math.pi),"phim1p0pito1p0pi":(-1.0*math.pi, 1.0*math.pi) }
 
 # these are to run only inclusive bins
-# etaBins = {"eta1p6to2p8": (1.6, 2.8)}
+etaBins = {"eta1p6to2p8": (1.6, 2.8)}
 phiBins = {"phim1p0pito1p0pi": (-1.0 * math.pi, 1.0 * math.pi)}
 
 
@@ -186,7 +186,7 @@ def setupResScaleScenario(inputdir, gun_type, pidSelected, GEN_engpt, refName, s
                                 "cmp_Pt": {'file': filePF,   'hist_prefix': "obj_Pt", 'leg': "PF (calibrated) cluster", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file': fileMega, 'hist_prefix': "obj_dEoverE", 'leg': "Mega (non-calibrated) cluster", 'color': ROOT.kBlue,
                                     'renormNoPU': {'file': fileRenormNoPU,  'hist_prefix': "obj_Pt"}}
-    elif (scenario == "Mega_noPU_PU200"):  # scenario: noPU, resolutoin from Mega cluster, comparison "Mega vs. PF corrected
+    elif (scenario == "Mega_noPU_PU200"):  # scenario: noPU and PU200, resolutoin from Mega cluster, comparison "Mega vs. PF corrected
         # list of files and corresponding info
         fileMega_PU200 = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "PU200"), "read")  # info based on megacluster energy
         fileMega_noPU = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "noPU"), "read")  # info based on megacluster energy
@@ -194,6 +194,18 @@ def setupResScaleScenario(inputdir, gun_type, pidSelected, GEN_engpt, refName, s
         # map of histograms and files
         histsFilesAndInfoMap = {"obj_Pt": {'file': fileMega_PU200, 'hist_prefix': "obj_Pt", 'leg': "Megacluster, pile-up 200", 'color': ROOT.kBlue},
                                 "cmp_Pt": {'file': fileMega_noPU,  'hist_prefix': "obj_Pt", 'leg': "Megacluster, no pile-up", 'color': ROOT.kGreen - 6}}
+        resolutionFileAndInfoMap = {'file': fileMega_PU200, 'hist_prefix': "obj_dEoverE", 'leg': "Megacluster, pile-up 200", 'color': ROOT.kBlue,
+                                    'renormNoPU': {'file': fileRenormNoPU,  'hist_prefix': "obj_Pt"}}
+    elif (scenario == "Mega_noPU_PU200_PU200nosub"):  # scenario: noPU and PU200, resolutoin from Mega cluster, comparison "noPU vs. PU200 with substraction vs. PU200 without substraction
+        # list of files and corresponding info
+        fileMega_PU200      = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "PU200"), "read")  # info based on megacluster energy
+        fileMega_PU200nosub = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "PU200nosub"), "read")  # info based on megacluster energy
+        fileMega_noPU       = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "noPU"), "read")  # info based on megacluster energy
+        fileRenormNoPU      = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "noPU"), "read")  # info based on megacluster energy, noPU
+        # map of histograms and files
+        histsFilesAndInfoMap = {"obj_Pt": {'file': fileMega_PU200,       'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, PU 200, PU subtracted",     'color': ROOT.kBlue},
+                                "cmp1_Pt": {'file': fileMega_PU200nosub, 'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, PU 200, no PU subtraction", 'color': ROOT.kRed},
+                                "cmp2_Pt": {'file': fileMega_noPU,       'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, no pile-up", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file': fileMega_PU200, 'hist_prefix': "obj_dEoverE", 'leg': "Megacluster, pile-up 200", 'color': ROOT.kBlue,
                                     'renormNoPU': {'file': fileRenormNoPU,  'hist_prefix': "obj_Pt"}}
     else:
