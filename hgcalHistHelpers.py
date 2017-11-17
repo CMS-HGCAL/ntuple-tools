@@ -68,7 +68,7 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
     # create canvas
     canvas = ROOT.TCanvas(outDir + tag, outDir + tag, 500, 500)
     # prepare the legend
-    leg = ROOT.TLegend(0.15, 0.90-len(histsAndProps)*0.07, 0.62, 0.9)
+    leg = ROOT.TLegend(0.15, 0.90-len(histsAndProps)*0.07, 0.82, 0.9)
     # leg.SetHeader("Energy of the clusters before/after filtering")
     leg.SetBorderSize(0)
     leg.SetFillColor(0)
@@ -92,6 +92,8 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
         if (type(hist) == ROOT.TH1F) or (type(hist) == ROOT.TH2F) or (type(hist) == ROOT.TH3F):
             if hist.GetEntries() == 0:
                 continue
+            if (type(hist) == ROOT.TH1F):
+                hist.Rebin()
         x_maxs.append(hist.GetBinCenter(hist.FindLastBinAbove(1)))
         hist.Scale(1./hist.Integral())
         hist.GetYaxis().SetTitle("a.u.")
@@ -110,8 +112,10 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
         hist.SetTitle("")
         if type(hist) == ROOT.TH1F:
             hist.SetLineColor(histsAndProps[hist]["color"])
+            hist.SetLineWidth(2)
             leg.AddEntry(hist, histsAndProps[hist]["leg"], "L")
             hist.GetXaxis().SetTitleOffset(hist.GetXaxis().GetTitleOffset() * 1.2)
+            hist.GetXaxis().SetTitle("E_{meas}/E_{true}")
             hist.GetYaxis().SetTitleOffset(hist.GetYaxis().GetTitleOffset() * 3.0)
             if (first):
                 hist.GetYaxis().SetRangeUser(0, max(y_maxs) * 1.4)
@@ -291,25 +295,25 @@ def fitGauss(hist, paramRangeFactor=1.8):
 
 def fitResolution(graph, fitLineColor = ROOT.kBlue, fitLineStyle = 1, rangeLimitDn = 5., rangeLimitUp = 100.):
     # define the range of the fit from the hist mean and RMS
-    stohasticTermLimitDn = 0
-    stohasticTermLimitUp = 300
+    stochasticTermLimitDn = 0
+    stochasticTermLimitUp = 300
     constantTermLimitDn = 0
     constantTermLimitUp = 10
     noiseTermLimitDn = 0
     noiseTermLimitUp = 30
     # define the fitting gausian and range of its parameters
     fResolution = ROOT.TF1("f", "sqrt([1]*[1] + [0]*[0]/x + [2]*[2]/(x*x))", rangeLimitDn, rangeLimitUp)
-    fResolution.SetParLimits(0, stohasticTermLimitDn, stohasticTermLimitUp) # stohastic term
-    fResolution.SetParLimits(1, constantTermLimitDn, constantTermLimitUp) # constant term
+    fResolution.SetParLimits(0, stochasticTermLimitDn, stochasticTermLimitUp)  # stochastic term
+    fResolution.SetParLimits(1, constantTermLimitDn, constantTermLimitUp)  # constant term
     # fResolution.SetParLimits(2, noiseTermLimitDn, noiseTermLimitUp) # noise term
     fResolution.SetLineColor(fitLineColor)
     fResolution.SetLineStyle(fitLineStyle)
     # perform fit and extract params
     graph.Fit(fResolution, "", "", rangeLimitDn, rangeLimitUp)
-    stohasticTerm = fResolution.GetParameter(0)
+    stochasticTerm = fResolution.GetParameter(0)
     constantTerm = fResolution.GetParameter(1)
     noiseTerm = fResolution.GetParameter(2)
-    return (graph, stohasticTerm, constantTerm, noiseTerm)
+    return (graph, stochasticTerm, constantTerm, noiseTerm)
 
 def getEffSigma(theHist, wmin=-100, wmax=100, epsilon=0.01):
     """taken from Hgg framework (by Ed)"""

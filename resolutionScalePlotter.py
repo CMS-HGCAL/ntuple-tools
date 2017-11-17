@@ -9,6 +9,8 @@ import math
 import hgcalHistHelpers
 import timeit
 
+ROOT.gROOT.SetBatch(1)
+
 # verbosity etc.
 verbosityLevel = 0  # 0 - only basic info (default); 1 - additional info; 2 - detailed info printed, histograms produced
 
@@ -22,6 +24,13 @@ pidmap = {11: "electron", 13: "muon", 22: "photon", 211: "pion"}
 # these are to run only inclusive bins
 etaBins = {"eta1p6to2p8": (1.6, 2.8)}
 phiBins = {"phim1p0pito1p0pi": (-1.0 * math.pi, 1.0 * math.pi)}
+
+colourBlindColours = {}
+colourBlindColours[0] = ROOT.TColor(10000, 0, 0.4470588235, 0.6980392157)
+colourBlindColours[1] = ROOT.TColor(10001, 0.337254902, 0.7058823529, 0.9137254902)
+colourBlindColours[2] = ROOT.TColor(10002, 0.8, 0.4745098039, 0.6549019608)
+colourBlindColours[3] = ROOT.TColor(10003, 0, 0.6196078431, 0.4509803922)
+colourBlindColours[4] = ROOT.TColor(10004, 0.8352941176, 0.368627451, 0)
 
 
 # format entries for the 2D eta-phi tables
@@ -96,8 +105,8 @@ def plotComparisons(histsFilesAndInfoMap, resScale_values, pidSelected, GEN_engp
             # prepare basic info and plot these histograms on top of each other
             gMeanCalibEnergy = (resScale_values[etaBinName][phiBinName]['mean'] / 100. + 1.) * GEN_engpt
             gMeanCalibEnergyError = (resScale_values[etaBinName][phiBinName]['meanError'] / 100.) * GEN_engpt
-            plotComments = ["p_{T,fit} = " + "{0:.2f}".format(gMeanCalibEnergy) + " #pm " + "{0:.2f}".format(gMeanCalibEnergyError) + " GeV",
-                            "#frac{#sigma_{eff}}{p_{T,Mean}} = " + "{0:.1f}".format(resScale_values[etaBinName][phiBinName]['effSigma']) + " %"]
+            # plotComments = ["p_{T,fit} = " + "{0:.2f}".format(gMeanCalibEnergy) + " #pm " + "{0:.2f}".format(gMeanCalibEnergyError) + " GeV",
+            plotComments = []
             plotFileTag = "obj_histsOverlayed_" + etaBinName + "_" + phiBinName + "_pid" + str(pidSelected) + "_engpt" + str(int(GEN_engpt))
             # plot and save comparison hists
             hgcalHistHelpers.histsPrintSaveSameCanvas(histsAndProps, outDir, tag=plotFileTag, latexComment=plotComments)
@@ -203,9 +212,14 @@ def setupResScaleScenario(inputdir, gun_type, pidSelected, GEN_engpt, refName, s
         fileMega_noPU       = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "noPU"), "read")  # info based on megacluster energy
         fileRenormNoPU      = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "megacluster", "noPU"), "read")  # info based on megacluster energy, noPU
         # map of histograms and files
-        histsFilesAndInfoMap = {"obj_Pt": {'file': fileMega_PU200,       'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, PU 200, PU subtracted",     'color': ROOT.kBlue},
-                                "cmp1_Pt": {'file': fileMega_PU200nosub, 'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, PU 200, no PU subtraction", 'color': ROOT.kRed},
-                                "cmp2_Pt": {'file': fileMega_noPU,       'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, no pile-up", 'color': ROOT.kGreen - 6}}
+        histsFilesAndInfoMap = {
+                                #"obj_Pt": {'file': fileMega_PU200,       'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, PU 200, PU subtracted",     'color': ROOT.kBlue},
+                                #"cmp1_Pt": {'file': fileMega_PU200nosub, 'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, PU 200, no PU subtraction", 'color': ROOT.kRed},
+                                #"cmp2_Pt": {'file': fileMega_noPU,       'hist_prefix': "obj_PtoverPtRef", 'leg': "Megacluster, no pile-up", 'color': ROOT.kGreen - 6},
+                                "obj_E": {'file': fileMega_PU200,       'hist_prefix': "obj_EoverERef", 'leg': "Megacluster, PU 200, PU subtracted",     'color': 10000},
+                                "cmp1_E": {'file': fileMega_PU200nosub, 'hist_prefix': "obj_EoverERef", 'leg': "Megacluster, PU 200, no PU subtraction", 'color': 10004},
+                                "cmp2_E": {'file': fileMega_noPU,       'hist_prefix': "obj_EoverERef", 'leg': "Megacluster, no pile-up", 'color': 10003}
+                                }
         resolutionFileAndInfoMap = {'file': fileMega_PU200, 'hist_prefix': "obj_dEoverE", 'leg': "Megacluster, pile-up 200", 'color': ROOT.kBlue,
                                     'renormNoPU': {'file': fileRenormNoPU,  'hist_prefix': "obj_Pt"}}
     else:
