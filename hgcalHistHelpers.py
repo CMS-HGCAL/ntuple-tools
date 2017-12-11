@@ -92,8 +92,8 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag="hists1D_", latexComment
         if (type(hist) == ROOT.TH1F) or (type(hist) == ROOT.TH2F) or (type(hist) == ROOT.TH3F):
             if hist.GetEntries() == 0:
                 continue
-            if (type(hist) == ROOT.TH1F):
-                hist.Rebin()
+            # if (type(hist) == ROOT.TH1F):
+            #     hist.Rebin()
         x_maxs.append(hist.GetBinCenter(hist.FindLastBinAbove(1)))
         hist.Scale(1./hist.Integral())
         hist.GetYaxis().SetTitle("a.u.")
@@ -298,14 +298,14 @@ def fitResolution(graph, fitLineColor = ROOT.kBlue, fitLineStyle = 1, rangeLimit
     stochasticTermLimitDn = 0
     stochasticTermLimitUp = 300
     constantTermLimitDn = 0
-    constantTermLimitUp = 10
+    constantTermLimitUp = 100
     noiseTermLimitDn = 0
-    noiseTermLimitUp = 30
+    noiseTermLimitUp = 500
     # define the fitting gausian and range of its parameters
     fResolution = ROOT.TF1("f", "sqrt([1]*[1] + [0]*[0]/x + [2]*[2]/(x*x))", rangeLimitDn, rangeLimitUp)
     fResolution.SetParLimits(0, stochasticTermLimitDn, stochasticTermLimitUp)  # stochastic term
     fResolution.SetParLimits(1, constantTermLimitDn, constantTermLimitUp)  # constant term
-    # fResolution.SetParLimits(2, noiseTermLimitDn, noiseTermLimitUp) # noise term
+    fResolution.SetParLimits(2, noiseTermLimitDn, noiseTermLimitUp) # noise term
     fResolution.SetLineColor(fitLineColor)
     fResolution.SetLineStyle(fitLineStyle)
     # perform fit and extract params

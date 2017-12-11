@@ -74,8 +74,12 @@ def getMegaClusters(genParticles, multiClusters, layerClusters, recHits, gun_typ
 
     if multiClusters.shape[0] == 0:
         return pd.DataFrame(columns=['pt', 'eta', 'phi', 'energy'])
-    # for the mega cluster axis, take highest energy multicluster within dR = 0.1
-    bestMultiClusterIndices = hgcalHelpers.getHighestEnergyObjectIndex(selectedGen[['eta', 'phi']], multiClusters[['eta', 'phi']], multiClusters['energy'], 0.1)
+    # for the mega cluster axis, take highest energy multicluster within dR = 0.1, 0.2 for 7 GeV guns
+    bestMultiClusterIndices = None
+    if GEN_engpt <= 7.5:
+        bestMultiClusterIndices = hgcalHelpers.getHighestEnergyObjectIndex(selectedGen[['eta', 'phi']], multiClusters[['eta', 'phi']], multiClusters['energy'], 0.2)
+    else:
+        bestMultiClusterIndices = hgcalHelpers.getHighestEnergyObjectIndex(selectedGen[['eta', 'phi']], multiClusters[['eta', 'phi']], multiClusters['energy'], 0.1)
     # print bestMultiClusterIndices
 
     megaClusters = []

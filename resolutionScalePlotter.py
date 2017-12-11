@@ -105,8 +105,8 @@ def plotComparisons(histsFilesAndInfoMap, resScale_values, pidSelected, GEN_engp
             # prepare basic info and plot these histograms on top of each other
             gMeanCalibEnergy = (resScale_values[etaBinName][phiBinName]['mean'] / 100. + 1.) * GEN_engpt
             gMeanCalibEnergyError = (resScale_values[etaBinName][phiBinName]['meanError'] / 100.) * GEN_engpt
-            # plotComments = ["p_{T,fit} = " + "{0:.2f}".format(gMeanCalibEnergy) + " #pm " + "{0:.2f}".format(gMeanCalibEnergyError) + " GeV",
-            plotComments = []
+            plotComments = ["p_{T,fit} = " + "{0:.2f}".format(gMeanCalibEnergy) + " #pm " + "{0:.2f}".format(gMeanCalibEnergyError) + " GeV"]
+            # plotComments = []
             plotFileTag = "obj_histsOverlayed_" + etaBinName + "_" + phiBinName + "_pid" + str(pidSelected) + "_engpt" + str(int(GEN_engpt))
             # plot and save comparison hists
             hgcalHistHelpers.histsPrintSaveSameCanvas(histsAndProps, outDir, tag=plotFileTag, latexComment=plotComments)
@@ -172,6 +172,18 @@ def setupResScaleScenario(inputdir, gun_type, pidSelected, GEN_engpt, refName, s
                                 "ref_Pt": {'file': filePF, 'hist_prefix': "ref_Pt", 'leg': "GEN particle (" + gun_type + "={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed},
                                 "cmp_Pt": {'file': filePFuncalib, 'hist_prefix': "obj_Pt", 'leg': "PF (non-calibrated) cluster", 'color': ROOT.kGreen - 6}}
         resolutionFileAndInfoMap = {'file': filePF, 'hist_prefix': "obj_dEoverE", 'leg': "PF (calibrated) cluster", 'color': ROOT.kBlue,
+                                    'renormNoPU': {'file': fileRenormNoPU,  'hist_prefix': "obj_Pt"}}
+    elif (scenario == "PC_noPU"):  # scenario: noPU, resolutoin from PC
+        # list of files and corresponding info
+        filePF = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "pfcandidate", "noPU"), "read")  # info based on PF energy
+        # filePFuncalib = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "pfcluster_uncalib", "PU200"), "read")  # info based on PF energy
+        fileRenormNoPU = ROOT.TFile.Open(inputdir + "/{}_{}_{}GeV_{}_{}_{}.root".format(gun_type, pidSelected, int(GEN_engpt), refName, "pfcandidate", "noPU"), "read")  # info based on megacluster energy, noPU
+        # map of histograms and files
+        histsFilesAndInfoMap = {"obj_Pt": {'file': filePF, 'hist_prefix': "obj_Pt", 'leg': "PF candidate", 'color': ROOT.kBlue},
+                                # "ref_Pt": {'file': filePF, 'hist_prefix': "ref_Pt", 'leg': "GEN particle (" + gun_type + "={0:.1f} GeV".format(GEN_engpt) + ")", 'color': ROOT.kRed},
+                                # "cmp_Pt": {'file': filePFuncalib, 'hist_prefix': "obj_Pt", 'leg': "PF (non-calibrated) cluster", 'color': ROOT.kGreen - 6}
+                                }
+        resolutionFileAndInfoMap = {'file': filePF, 'hist_prefix': "obj_dEoverE", 'leg': "PF candidate", 'color': ROOT.kBlue,
                                     'renormNoPU': {'file': fileRenormNoPU,  'hist_prefix': "obj_Pt"}}
     elif (scenario == "Mega_PU200"):  # scenario: PU, resolutoin from Mega cluster, comparison "Mega vs. PF corrected.
         # list of files and corresponding info
