@@ -2,6 +2,9 @@
 # import collections
 
 import ROOT
+import numpy as np
+import pandas as pd
+import root_numpy as rnp
 
 
 class _Collection(object):
@@ -240,6 +243,15 @@ class Event(object):
     def electrons(self, prefix="ecalDrivenGsfele"):
         """Returns Electrons object."""
         return Electrons(self._tree, prefix)
+
+    def getDataFrame(self, prefix):
+        branches = [br.GetName() for br in self._tree.GetListOfBranches() if br.GetName().startswith(prefix+'_')]
+        names = [br.split('_')[1] for br in branches]
+        nd_array = rnp.tree2array(self._tree, branches=branches, start=self._entry, stop=self._entry+1)
+        df = pd.DataFrame()
+        for idx in range(0, len(branches)):
+            df[names[idx]] = nd_array[branches[idx]][0]
+        return df
 
 ##########
 class PrimaryVertex(object):
@@ -584,4 +596,3 @@ class Electrons(_Collection):
                 prefix -- TBranch prefix
                 """
                 super(Electrons, self).__init__(tree, prefix + "_pt", Electron, prefix)
-
