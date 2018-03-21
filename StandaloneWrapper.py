@@ -15,17 +15,11 @@ class SACevent:
 		if hasattr(self, "genParticles"):
 			return self.genId, self.genEn, self.genEt, self.genEta, self.genPhi
 		self.genParticles = self.hgcEvent.getDataFrame(prefix="genpart")
-		self.genId = []
-		self.genEta = []
-		self.genEt = []
-		self.genEn = []
-		self.genPhi = []
-		for gen in self.genParticles:
-			self.genId.append(gen.pid)
-			self.genEta.append(gen.eta)
-			self.genPhi.append(gen.phi)
-			self.genEt.append(gen.pt) #pt vs Et ?!
-			self.genEn.append(gen.energy)
+		self.genId = self.genParticles.pid
+		self.genEta = self.genParticles.eta
+		self.genEt = self.genParticles.pt
+		self.genEn = self.genParticles.energy
+		self.genPhi = self.genParticles.phi
 		return self.genId, self.genEn, self.genEt, self.genEta, self.genPhi
 	def getRecHitInfo(self):
 		if hasattr(self, "recHits"):
@@ -34,26 +28,26 @@ class SACevent:
 		self.layers = []
 		self.si_sim_sumen = []
 		self.sci_sim_sumen = []
-		for rechit in self.recHits:
-			isSi = (rechit.thickness == 100 | rechit.thickness == 200 | rechit.thickness == 300)
-			if not rechit.layer in self.layers:
-				self.layers.append(rechit.layer)
+		for iRecHit in range (0,len(self.recHits)):
+			isSi = (int(self.recHits.thickness[iRecHit]) == 100 or int(self.recHits.thickness[iRecHit]) == 200 or int(self.recHits.thickness[iRecHit]) == 300)
+			if not self.recHits.layer[iRecHit] in self.layers:
+				self.layers.append(self.recHits.layer[iRecHit])
 				self.si_sim_sumen.append(0)
 				self.sci_sim_sumen.append(0)
-			index = self.layers.index(rechit.layer)
+			index = self.layers.index(self.recHits.layer[iRecHit])
 			if isSi:
-				self.si_sim_sumen[index]+=rechit.energy
+				self.si_sim_sumen[index]+=self.recHits.energy[iRecHit]
 			else:
-				self.sci_sim_sumen[index]+=rechit.energy
+				self.sci_sim_sumen[index]+=self.recHits.energy[iRecHit]
 		return self.si_sim_sumen, self.sci_sim_sumen
 
 	def Print(self):
 		self.getGenInfo()
 		self.getRecHitInfo()
-		for gen in len(self.genId):
+		for gen in range(0,len(self.genId)):
 			print "gen id = %f, energy = %f, Et = %f, eta = %f, phi = %f" %(self.genId[gen], self.genEn[gen], self.genEt[gen], self.genEta[gen], self.genPhi[gen])
-		for l in len(self.layers):
-			print "Layer number %f: Si energy sum = %f, Sci energy sum = %f" %(self.layers[gen], self.si_sim_sumen[l], self.sci_sim_sumen[l])
+		for l in range(0,len(self.layers)):
+			print "Layer number %f: Si energy sum = %f, Sci energy sum = %f" %(self.layers[l], self.si_sim_sumen[l], self.sci_sim_sumen[l])
 
 
 
@@ -94,6 +88,7 @@ def main():
                 break
             SACEvt = SACevent(event)
             SACEvt.Print()
+
 
 
 if __name__ == '__main__':
