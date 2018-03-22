@@ -122,7 +122,6 @@ def main():
             SACEvt = SACevent(event)
             SACEvt.Print()
 
-            break
 
 if __name__ == '__main__':
     main()
