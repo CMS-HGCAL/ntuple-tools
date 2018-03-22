@@ -7,6 +7,7 @@ import hgcalHelpers
 import numpy as np
 import pandas as pd
 from itertools import repeat
+from ROOT import TLorentzVector
 
 class SACevent:
 	def __init__(self, event):
@@ -21,7 +22,22 @@ class SACevent:
 		self.genEn = self.genParticles.energy
 		self.genPhi = self.genParticles.phi
 		return self.genId, self.genEn, self.genEt, self.genEta, self.genPhi
+
+	def isNoise(self, iRecHit):
+		myrechit = TLorentzVector()
+		IsNoise = True
+		myrechit.SetPtEtaPhiE(self.recHits.pt[iRecHit],self.recHits.eta[iRecHit],self.recHits.phi[iRecHit], self.recHits.energy[iRecHit])
+		for iGen in range(0, len(self.genParticles)):
+			mygen = TLorentzVector()
+			mygen.SetPtEtaPhiE(self.genParticles.pt[iGen],self.genParticles.eta[iGen],self.genParticles.phi[iGen], self.genParticles.energy[iGen])
+			if myrechit.DeltaR(mygen) < 0.5:
+				IsNoise = False
+				break
+		return IsNoise
+
 	def getRecHitInfo(self):
+		if not hasattr(self,"genParticles"):
+			self.getGenInfo()
 		if hasattr(self, "recHits"):
 			return self.si_sim_sumen, self.sci_sim_sumen
 		self.recHits = self.hgcEvent.getDataFrame(prefix="rechit")
@@ -29,6 +45,8 @@ class SACevent:
 		self.si_sim_sumen = []
 		self.sci_sim_sumen = []
 		for iRecHit in range (0,len(self.recHits)):
+			if self.isNoise(iRecHit):
+				continue
 			isSi = (int(self.recHits.thickness[iRecHit]) == 100 or int(self.recHits.thickness[iRecHit]) == 200 or int(self.recHits.thickness[iRecHit]) == 300)
 			if not self.recHits.layer[iRecHit] in self.layers:
 				self.layers.append(self.recHits.layer[iRecHit])
@@ -89,7 +107,7 @@ def main():
             SACEvt = SACevent(event)
             SACEvt.Print()
 
-
+            break
 
 if __name__ == '__main__':
     main()
