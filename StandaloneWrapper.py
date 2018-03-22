@@ -28,44 +28,59 @@ class SACevent:
 		IsNoise = True
 		myrechit.SetPtEtaPhiE(self.recHits.pt[iRecHit],self.recHits.eta[iRecHit],self.recHits.phi[iRecHit], self.recHits.energy[iRecHit])
 		for iGen in range(0, len(self.genParticles)):
-			mygen = TLorentzVector()
-			mygen.SetPtEtaPhiE(self.genParticles.pt[iGen],self.genParticles.eta[iGen],self.genParticles.phi[iGen], self.genParticles.energy[iGen])
-			if myrechit.DeltaR(mygen) < 0.5:
+			if isMatched(iRecHit, iGen, 0.5):
 				IsNoise = False
 				break
 		return IsNoise
+
+	def isMatched(self, iRecHit, iGen, DR = 0.5):
+		myrechit = TLorentzVector()
+		belong_ = False
+		myrechit.SetPtEtaPhiE(self.recHits.pt[iRecHit],self.recHits.eta[iRecHit],self.recHits.phi[iRecHit], self.recHits.energy[iRecHit])
+		mygen = TLorentzVector()
+		mygen.SetPtEtaPhiE(self.genParticles.pt[iGen],self.genParticles.eta[iGen],self.genParticles.phi[iGen], self.genParticles.energy[iGen])
+		if myrechit.DeltaR(mygen) < DR:
+			belong_ = True
+		return belong_
 
 	def getRecHitInfo(self):
 		if not hasattr(self,"genParticles"):
 			self.getGenInfo()
 		if hasattr(self, "recHits"):
-			return self.si_sim_sumen, self.sci_sim_sumen
+			return self.array_si_sim_sumen, self.array_sci_sim_sumen, self.array_layers
 		self.recHits = self.hgcEvent.getDataFrame(prefix="rechit")
-		self.layers = []
-		self.si_sim_sumen = []
-		self.sci_sim_sumen = []
-		for iRecHit in range (0,len(self.recHits)):
-			if self.isNoise(iRecHit):
-				continue
-			isSi = (int(self.recHits.thickness[iRecHit]) == 100 or int(self.recHits.thickness[iRecHit]) == 200 or int(self.recHits.thickness[iRecHit]) == 300)
-			if not self.recHits.layer[iRecHit] in self.layers:
-				self.layers.append(self.recHits.layer[iRecHit])
-				self.si_sim_sumen.append(0)
-				self.sci_sim_sumen.append(0)
-			index = self.layers.index(self.recHits.layer[iRecHit])
-			if isSi:
-				self.si_sim_sumen[index]+=self.recHits.energy[iRecHit]
-			else:
-				self.sci_sim_sumen[index]+=self.recHits.energy[iRecHit]
-		return self.si_sim_sumen, self.sci_sim_sumen
+		self.array_layers = []
+		self.array_si_sim_sumen = []
+		self.array_sci_sim_sumen = []
+		for iGen in range(0, len(self.genParticles)):
+			layers = []
+			si_sim_sumen = []
+			sci_sim_sumen = []
+			for iRecHit in range (0,len(self.recHits)):
+				if not self.isMatched(iRecHit,iGen):
+					continue
+				isSi = (int(self.recHits.thickness[iRecHit]) == 100 or int(self.recHits.thickness[iRecHit]) == 200 or int(self.recHits.thickness[iRecHit]) == 300)
+				if not self.recHits.layer[iRecHit] in layers:
+					layers.append(self.recHits.layer[iRecHit])
+					si_sim_sumen.append(0)
+					sci_sim_sumen.append(0)
+				index = layers.index(self.recHits.layer[iRecHit])
+				if isSi:
+					si_sim_sumen[index]+=self.recHits.energy[iRecHit]
+				else:
+					sci_sim_sumen[index]+=self.recHits.energy[iRecHit]
+			self.array_si_sim_sumen.append(si_sim_sumen)
+			self.array_sci_sim_sumen.append(sci_sim_sumen)	
+			self.array_layers.append(layers)
+		return self.array_si_sim_sumen, self.array_sci_sim_sumen,self.array_layers
 
 	def Print(self):
 		self.getGenInfo()
 		self.getRecHitInfo()
 		for gen in range(0,len(self.genId)):
-			print "gen id = %f, energy = %f, Et = %f, eta = %f, phi = %f" %(self.genId[gen], self.genEn[gen], self.genEt[gen], self.genEta[gen], self.genPhi[gen])
-		for l in range(0,len(self.layers)):
-			print "Layer number %f: Si energy sum = %f, Sci energy sum = %f" %(self.layers[l], self.si_sim_sumen[l], self.sci_sim_sumen[l])
+			print "gen id = %d, energy = %f, Et = %f, eta = %f, phi = %f" %(self.genId[gen], self.genEn[gen], self.genEt[gen], self.genEta[gen], self.genPhi[gen])
+			for l in range(0,len(self.array_layers[gen])):
+				print "Layer number %d: Si energy sum = %f, Sci energy sum = %f" %(self.array_layers[gen][l], self.array_si_sim_sumen[gen][l], self.array_sci_sim_sumen[gen][l])
 
 
 
