@@ -7,80 +7,86 @@ import hgcalHelpers
 import numpy as np
 import pandas as pd
 from itertools import repeat
-from ROOT import TLorentzVector
+from collections import defaultdict
+from ROOT import TVector2,TMath
+
+class MatchedGenHits:
+        """A wrapper with the same format as the trees used for calibration in the standalone setup"""
+        def __init__(self,genId,en,pt,eta,phi,si_sumen=[],sci_sumen=[]):
+                self.genId=genId
+                self.genEta=eta
+                self.genEt=pt
+                self.genEn=en
+                self.genPhi=phi
+                self.si_sumen=[x for x in si_sumen]
+                self.sci_sumen=[x for x in sci_sumen]
 
 class SACevent:
-	def __init__(self, event):
+        """Parses the reco-ntuples, associates the recHits to the genParticles, stores info as used in the standalone calibration setup"""
+	def __init__(self, event,nlayers):
 		self.hgcEvent = event
-	def getGenInfo(self):
-		if hasattr(self, "genParticles"):
-			return self.genId, self.genEn, self.genEt, self.genEta, self.genPhi
-		self.genParticles = self.hgcEvent.getDataFrame(prefix="genpart")
-		self.genId = self.genParticles.pid
-		self.genEta = self.genParticles.eta
-		self.genEt = self.genParticles.pt
-		self.genEn = self.genParticles.energy
-		self.genPhi = self.genParticles.phi
-		return self.genId, self.genEn, self.genEt, self.genEta, self.genPhi
+                self.nlayers=nlayers
+                self.matchedHitSums = self.getMatchedRecHitSums()
 
-	def isNoise(self, iRecHit):
-		myrechit = TLorentzVector()
-		IsNoise = True
-		myrechit.SetPtEtaPhiE(self.recHits.pt[iRecHit],self.recHits.eta[iRecHit],self.recHits.phi[iRecHit], self.recHits.energy[iRecHit])
-		for iGen in range(0, len(self.genParticles)):
-			if isMatched(iRecHit, iGen, 0.5):
-				IsNoise = False
-				break
-		return IsNoise
+	def isNoise(self, iRecHit,recHits,genParticles):
+		iMatch=self.isMatched(recHits.eta[iRecHit],recHits.phi[iRecHit],genParticles,xrange(0,len(genParticles)))
+                return True if iMatch<0 else False
 
-	def isMatched(self, iRecHit, iGen, DR = 0.5):
-		myrechit = TLorentzVector()
-		belong_ = False
-		myrechit.SetPtEtaPhiE(self.recHits.pt[iRecHit],self.recHits.eta[iRecHit],self.recHits.phi[iRecHit], self.recHits.energy[iRecHit])
-		mygen = TLorentzVector()
-		mygen.SetPtEtaPhiE(self.genParticles.pt[iGen],self.genParticles.eta[iGen],self.genParticles.phi[iGen], self.genParticles.energy[iGen])
-		if myrechit.DeltaR(mygen) < DR:
-			belong_ = True
-		return belong_
+	def isMatched(self, eta,phi, genParticles, gpIdx=[],minDR = 0.5):
+		belong = -1
+                for iGen in gpIdx:
+                        geta,gphi=genParticles.eta[iGen],genParticles.phi[iGen]
+                        deta=geta-eta
+                        dphi=TVector2.Phi_mpi_pi(gphi-phi)
+                        dR=TMath.Sqrt(deta**2+dphi**2)
+                        if dR<minDR:
+                                belong=iGen
+                                break
+                return belong
 
-	def getRecHitInfo(self):
-		if not hasattr(self,"genParticles"):
-			self.getGenInfo()
-		if hasattr(self, "recHits"):
-			return self.array_si_sim_sumen, self.array_sci_sim_sumen, self.array_layers
-		self.recHits = self.hgcEvent.getDataFrame(prefix="rechit")
-		self.array_layers = []
-		self.array_si_sim_sumen = []
-		self.array_sci_sim_sumen = []
-		for iGen in range(0, len(self.genParticles)):
-			layers = []
-			si_sim_sumen = []
-			sci_sim_sumen = []
-			for iRecHit in range (0,len(self.recHits)):
-				if not self.isMatched(iRecHit,iGen):
-					continue
-				isSi = (int(self.recHits.thickness[iRecHit]) == 100 or int(self.recHits.thickness[iRecHit]) == 200 or int(self.recHits.thickness[iRecHit]) == 300)
-				if not self.recHits.layer[iRecHit] in layers:
-					layers.append(self.recHits.layer[iRecHit])
-					si_sim_sumen.append(0)
-					sci_sim_sumen.append(0)
-				index = layers.index(self.recHits.layer[iRecHit])
-				if isSi:
-					si_sim_sumen[index]+=self.recHits.energy[iRecHit]
-				else:
-					sci_sim_sumen[index]+=self.recHits.energy[iRecHit]
-			self.array_si_sim_sumen.append(si_sim_sumen)
-			self.array_sci_sim_sumen.append(sci_sim_sumen)	
-			self.array_layers.append(layers)
-		return self.array_si_sim_sumen, self.array_sci_sim_sumen,self.array_layers
+	def getMatchedRecHitSums(self):
+                matchedHitSums=[]
+		genParticles = self.hgcEvent.getDataFrame(prefix="genpart")
+		recHits      = self.hgcEvent.getDataFrame(prefix="rechit")
+
+                #filter gen particles for those reaching endcap
+                #and not suffering nuclear interactions in the tracker
+                gpIdx=[]
+		for iGen in range(0, len(genParticles)):
+                        if genParticles.reachedEE[iGen]==0: continue
+                        if genParticles.gen[iGen]<0 : continue                        
+                        gpIdx.append(iGen)
+                if len(gpIdx)==0 : return matchedHitSums
+                        
+                #associate the rec hits to each selected genParticle by deltaR
+                si_sumen=defaultdict(lambda: [0.] * self.nlayers)
+                sci_sumen=defaultdict(lambda: [0.] * self.nlayers)
+                for iRecHit in range (0,len(recHits)):
+                        iMatch = self.isMatched(recHits.eta[iRecHit],recHits.phi[iRecHit],genParticles,gpIdx)
+                        if iMatch<0 : continue
+                        isSi = True if int(recHits.thickness[iRecHit]) in [100,200,300] else False
+                        layerIdx=recHits.layer[iRecHit]-1
+                        if layerIdx>=self.nlayers: continue 
+                        if isSi:
+                                si_sumen[iMatch][layerIdx]+=recHits.energy[iRecHit]
+                        else:
+                                sci_sumen[iMatch][layerIdx]+=recHits.energy[iRecHit]
+
+                #finalize list of matched hit sums
+		for iGen in gpIdx:
+                        genId=genParticles.pid[iGen]
+                        en=genParticles.energy[iGen]
+                        pt=genParticles.pt[iGen]
+                        eta=genParticles.eta[iGen]
+                        phi=genParticles.phi[iGen]
+                        matchedHitSums.append(  MatchedGenHits(genId,en,pt,eta,phi,si_sumen[iGen],sci_sumen[iGen]) )
+                return matchedHitSums
 
 	def Print(self):
-		self.getGenInfo()
-		self.getRecHitInfo()
-		for gen in range(0,len(self.genId)):
-			print "gen id = %d, energy = %f, Et = %f, eta = %f, phi = %f" %(self.genId[gen], self.genEn[gen], self.genEt[gen], self.genEta[gen], self.genPhi[gen])
-			for l in range(0,len(self.array_layers[gen])):
-				print "Layer number %d: Si energy sum = %f, Sci energy sum = %f" %(self.array_layers[gen][l], self.array_si_sim_sumen[gen][l], self.array_sci_sim_sumen[gen][l])
+                for h in self.matchedHitSums:
+			print "gen id = %d, energy = %f, Et = %f, eta = %f, phi = %f" %(h.genId, h.genEn, h.genEt, h.genEta, h.genPhi)
+			for l in range(0,len(h.si_sumen)):
+				print "Layer number %d: Si energy sum = %f, Sci energy sum = %f" %(l,h.si_sumen[l],h.sci_sumen[l])
 
 
 
@@ -91,8 +97,7 @@ def main():
     parser = optparse.OptionParser(usage)
 
     # input options
-    # parser.add_option('', '--files', dest='fileString', type='string',  default='root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SinglePiPt50Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_1.root', help='comma-separated file list')
-    parser.add_option('', '--files', dest='fileString', type='string',  default='/afs/cern.ch/work/e/escott/public/HGCStudies/Ntuples/partGun_Pion_Pt25_93X_PU140.root', help='comma-separated file list')
+    parser.add_option('', '--files', dest='fileString', type='string',  default='/eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/FlatRandomPtGunProducer_SinglePiPt2Eta1p6_2p8_Fall17DR-NoPUFEVT_clange_20180129/NTUP/partGun_PDGid211_x60_Pt2.0To2.0_NTUP_6.root', help='comma-separated file list')
     parser.add_option('', '--gunType', dest='gunType', type='string',  default='pt', help='pt or e')
     parser.add_option('', '--pid', dest='pid', type='int',  default=211, help='pdgId int')
     parser.add_option('', '--genValue', dest='genValue', type='float',  default=25, help='generated pT or energy')
@@ -119,7 +124,7 @@ def main():
         for event in ntuple:
             if (event.entry() > 11):
                 break
-            SACEvt = SACevent(event)
+            SACEvt = SACevent(event,60)
             SACEvt.Print()
 
 
