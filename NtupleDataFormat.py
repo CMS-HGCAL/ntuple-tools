@@ -246,7 +246,7 @@ class Event(object):
 
     def getDataFrame(self, prefix):
         branches = [br.GetName() for br in self._tree.GetListOfBranches() if br.GetName().startswith(prefix+'_')]
-        names = [br.split('_')[1] for br in branches]
+        names = ['_'.join(br.split('_')[1:]) for br in branches]
         nd_array = rnp.tree2array(self._tree, branches=branches, start=self._entry, stop=self._entry+1)
         df = pd.DataFrame()
         for idx in range(0, len(branches)):
