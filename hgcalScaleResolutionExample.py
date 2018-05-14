@@ -43,13 +43,13 @@ def getRecHitsSimAssoc(rechits_raw, simcluster):
     # get list of rechist associated to simhits
     rHitsSimAssoc = [[] for k in range(0,nSimClus)]
     for simClusIndex, simCl in enumerate(simcluster):
-        if (verbosityLevel>=1): print "Sim-cluster index: ",simClusIndex, ", pT: ",simCl.pt(), ", E: ",simCl.energy(), ", phi: ",simCl.phi(), ", eta: ",simCl.eta()
+        if (verbosityLevel>=1): print("Sim-cluster index: ",simClusIndex, ", pT: ",simCl.pt(), ", E: ",simCl.energy(), ", phi: ",simCl.phi(), ", eta: ",simCl.eta())
         # loop over sim clusters and then rechits
         rHitsSimAssocTemp = []
         for hitIndexArray in simClusHitAssoc[simClusIndex]:
             for hitIndex in hitIndexArray:
                 thisHit = rechits_raw[hitIndex]
-                if(not recHitAboveTreshold(thisHit, ecut, dependSensor)[1]): continue
+                if(not recHitAboveThreshold(thisHit, ecut, dependSensor)[1]): continue
                 # independent of sim cluster, after cleaning
                 rHitsSimAssocTemp.append(thisHit)
         rHitsSimAssoc[simClusIndex]= rHitsSimAssocTemp
@@ -69,7 +69,7 @@ def histValue1D(fValues, histDict, tag = "hist1D_", title = "hist 1D", axunit = 
     # set some properties
     histDict[tag].GetYaxis().SetTitleOffset(histDict[tag].GetYaxis().GetTitleOffset()*3.0)
     # loop over all values
-    if (verbosityLevel>=3): print "tag: ", tag, ", fValues: ", fValues
+    if (verbosityLevel>=3): print("tag: ", tag, ", fValues: ", fValues)
     for value in fValues:
         histDict[tag].Fill(value)
     return histDict
@@ -90,7 +90,7 @@ def histValues2D(fValues, histDict, tag = "hist2D_", title = "hist 2D", axunit =
     histDict[tag].GetXaxis().SetTitleOffset(histDict[tag].GetXaxis().GetTitleOffset()*1.0)
     histDict[tag].GetYaxis().SetTitleOffset(histDict[tag].GetYaxis().GetTitleOffset()*3.0)
     # loop over all values
-    if (verbosityLevel>=3): print "tag: ", tag, ", fValues: ", fValues
+    if (verbosityLevel>=3): print("tag: ", tag, ", fValues: ", fValues)
     if (not weighted2D):
         for (valueX, valueY) in fValues:
             histDict[tag].Fill(valueX, valueY)
@@ -172,8 +172,8 @@ def histsPrintSaveSameCanvas(histsAndProps, outDir, tag = "hists1D_", latexComme
     # set image extensions
     imgTypes = ["pdf","png"]
     if (verbosityLevel>=3):
-        print "histsAndProps: ", histsAndProps
-        print "funcsAndProps: ", funcsAndProps
+        print("histsAndProps: ", histsAndProps)
+        print("funcsAndProps: ", funcsAndProps)
     # loop over all histograms to get max
     y_maxs = [1.]
     for hist in histsAndProps:
@@ -245,12 +245,12 @@ def drawGraphsTest(graphsAndProps, title = "Resolution" , tag = "graphTest_"):
     # set image extensions
     imgTypes = ["pdf","png","root"]
     if (verbosityLevel>=3):
-        print "graphsAndProps: ", graphsAndProps
+        print("graphsAndProps: ", graphsAndProps)
     # loop over all graphs to get max
     y_maxs = [gr.GetYaxis().GetXmax() for gr in graphsAndProps]
     y_mins = [gr.GetYaxis().GetXmin() for gr in graphsAndProps]
-    print "y_mins: ", y_mins
-    print "y_maxs: ", y_maxs
+    print("y_mins: ", y_mins)
+    print("y_maxs: ", y_maxs)
     # loop over all histograms
     first = True
     for gr in graphsAndProps:
@@ -286,7 +286,7 @@ def histPrintSaveAll(histDict, outDir, tag = "_test"):
     ROOT.gErrorIgnoreLevel = ROOT.kInfo+1
     # set image extensions
     imgType = "pdf"
-    if (verbosityLevel>=3): print "histDict.items(): ", histDict.items()
+    if (verbosityLevel>=3): print("histDict.items(): ", histDict.items())
     for key, item in histDict.items():
         # do not save empty histograms
         if (type(item) == ROOT.TH1F) or (type(item) == ROOT.TH2F) or (type(item) == ROOT.TH3F):
@@ -402,6 +402,7 @@ def main():
 #    ntuple = HGCalNtuple("/eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/FlatRandomEGunProducer_pdgid22_E100_cmssw93X_withPRs_20170817/NTUP/partGun_PDGid22_x100_E100.0To100.0_NTUP.root")
 #    GEN_eng = 300.
 #    ntuple = HGCalNtuple("/eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/FlatRandomEGunProducer_pdgid22_E300_cmssw93X_withPRs_20170817/NTUP/partGun_PDGid22_x100_E300.0To300.0_NTUP.root")
+#    ntuple = HGCalNtuple("../data/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_1.root")
 
     runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE)
 
@@ -436,12 +437,12 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
     gu = GeoUtil()
 
     # loop over the events
-    print "Total events to process (for multiClusters, ",GEN_partId,", ",GEN_pTEng,"): ", ntuple.nevents()
+    print("Total events to process (for multiClusters, ",GEN_partId,", ",GEN_pTEng,"): ", ntuple.nevents())
     hitsSelected = []
     for event in ntuple:
         if (event.entry()>1000): break
         if (verbosityLevel>=0):
-            if (event.entry()%1000 == 0): print "Event: ", event.entry()
+            if (event.entry()%1000 == 0): print("Event: ", event.entry())
         # get collections
         genParticles = event.genParticles()
         simClusters  = event.simClusters()
@@ -450,7 +451,7 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
         recHits = event.recHits()
         # check for cases where number of Sim clusters is incorrect
         if (len(simClusters)==0 or len(simClusters)>2): # skip if no sim clusters or skip if more then 2 sim clusters
-            if (verbosityLevel>=1): print "WARNING (Event:",iEvt,"): Sim cluster length is improper."
+            if (verbosityLevel>=1): print("WARNING (Event:",iEvt,"): Sim cluster length is improper.")
             counterClustError+=1
             continue
 
@@ -461,7 +462,7 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
         simClusters_energyAboveThresholdContained = []
         simClusters_energyAll = []
         # store the rechit info
-        hitsSelected.extend([(10*rechit.x(), 10*rechit.y(), rechit.energy(), recHitAboveTreshold(rechit, ecut, dependSensor)[1]) for k in range(len(simClusters)) for rechit in rHitsSimAssoc[k]])
+        hitsSelected.extend([(10*rechit.x(), 10*rechit.y(), rechit.energy(), recHitAboveThreshold(rechit, ecut, dependSensor)[1]) for k in range(len(simClusters)) for rechit in rHitsSimAssoc[k]])
         # store in list the energy with filtering of simi hits
         for k in range(len(simClusters)):
             sum_simHitsEnergyAll = 0
@@ -471,10 +472,10 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
                 # energy for rechits above noise
                 sum_simHitsEnergyAll += rechit.energy()
                 # energy for rechits above noise
-                if recHitAboveTreshold(rechit, ecut, dependSensor)[1]:
+                if recHitAboveThreshold(rechit, ecut, dependSensor)[1]:
                     sum_simHitsEnergyAbove += rechit.energy()
                 # energy of rechits above noise and after masking
-                if (recHitAboveTreshold(rechit, ecut, dependSensor)[1] and (rechit.layer()>35 or (rechit.layer()<=35 and gu.planes[rechit.layer()-1].contains(10*rechit.x(), 10*rechit.y())))):
+                if (recHitAboveThreshold(rechit, ecut, dependSensor)[1] and (rechit.layer()>35 or (rechit.layer()<=35 and gu.planes[rechit.layer()-1].contains(10*rechit.x(), 10*rechit.y())))):
                     sum_simHitsEnergyContained += rechit.energy()
             simClusters_energyAll.append(sum_simHitsEnergyAll)
             simClusters_energyAboveThreshold.append(sum_simHitsEnergyAbove)
@@ -482,17 +483,17 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
 
         # loop over the gen particles in current event
         objectsToCalibrate = simClusters # or objectsToCalibrate = pfClusters # or objectsToCalibrate = multiClusters or ...
-        if (verbosityLevel>=1): print "PDG ID", "\t", "Sim E(GeV)", "\t", "GEN E(GeV)", "\t", "Eng.Loss (%)", "\t", "DR(GEN, Sim)"
+        if (verbosityLevel>=1): print("PDG ID", "\t", "Sim E(GeV)", "\t", "GEN E(GeV)", "\t", "Eng.Loss (%)", "\t", "DR(GEN, Sim)")
         for genParticle in genParticles:
             # sort indecies of PF clusters according to the distance of clusters to the GEN particles (index 0 is the nearest PF cluster)
             pfs = sorted(range(len(objectsToCalibrate)), key=lambda k: math.sqrt( math.fabs(genParticle.eta()-objectsToCalibrate[k].eta())**2 + math.fabs(genParticle.phi()-objectsToCalibrate[k].phi())**2 ), reverse=False)
             # check patological cases
             if (len(objectsToCalibrate) != len(simClusters)):
-                if (verbosityLevel>=1): print "ERROR (Event:",event.entry(),"): multiClusters != simClusters."
+                if (verbosityLevel>=1): print("ERROR (Event:",event.entry(),"): multiClusters != simClusters.")
                 counterClustError+=1
                 continue
             if (simClusters[pfs[0]].energy() == 0.):
-                if (verbosityLevel>=1): print "ERROR (Event:",event.entry(),"): simClusters[pfs[0]].energy() == 0."
+                if (verbosityLevel>=1): print("ERROR (Event:",event.entry(),"): simClusters[pfs[0]].energy() == 0.")
                 counterDivError+=1
                 continue
             # prepare some observables and store it for every eta/phi
@@ -506,11 +507,11 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
             relDiff_sim = (energy_to_calibrate - simulated_energy)/simulated_energy # relative diff. in energy between Sim clusters with/without filtering
             DR_gen_sim = math.sqrt( (genParticle.eta() - objectsToCalibrate[pfs[0]].eta())**2 + (genParticle.phi() - objectsToCalibrate[pfs[0]].phi())**2 )
             # print some info
-            if (verbosityLevel>=2): print genParticle.pid(), "\t", energy_to_calibrate, "\t", genParticle.energy(), "\t", relDiff_sim, "\t", DR_gen_sim
+            if (verbosityLevel>=2): print(genParticle.pid(), "\t", energy_to_calibrate, "\t", genParticle.energy(), "\t", relDiff_sim, "\t", DR_gen_sim)
             # store info in lists for cases where gen particles and Sim cluster are matched, and where reco. E for Sim cluster is close to the GEN-one
             if (math.fabs(DR_gen_sim) < 0.1 and energy_to_calibrate > simulated_energy/20. and simulated_energy >= (1-relFractionE)*GEN_eng and simulated_energy <= (1+relFractionE)*GEN_eng):
                 if (abs(genParticle.pid()) in s_all_pids):
-                    if (verbosityLevel==1): print genParticle.pid(), "\t", energy_to_calibrate, "\t", genParticle.energy(), "\t", relDiff_sim, "\t", DR_gen_sim
+                    if (verbosityLevel==1): print(genParticle.pid(), "\t", energy_to_calibrate, "\t", genParticle.energy(), "\t", relDiff_sim, "\t", DR_gen_sim)
                     obj_Eng_EngRelDiff[abs(genParticle.pid())].append((simClusters[pfs[0]].phi(), simClusters[pfs[0]].eta(), simulated_energy, energy_to_compare, energy_to_calibrate, 100*relDiff_sim ))
 
     # prepare lists for individual eta/phi bins
@@ -518,16 +519,16 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
     dEOverE_pidSelected_values = {}
     for etaBinName in etaBins:
         GEN_eta = "[{0:.3f} - {1:.1f}]".format(etaBins[etaBinName][0],etaBins[etaBinName][1])
-        print "Exrtacting info for eta range ",GEN_eta
+        print("Exrtacting info for eta range ",GEN_eta)
         histDict[etaBinName] = {}
         dEOverE_pidSelected_values[etaBinName] = {}
         for phiBinName in phiBins:
             GEN_phi = "[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1])
-            print "Exrtacting info for phi range ",GEN_phi
+            print("Exrtacting info for phi range ",GEN_phi)
             histDict[etaBinName][phiBinName] = {}
             dEOverE_pidSelected_values[etaBinName][phiBinName] = {}
             # histograms per pid, print some info, fill dE/E values for current eta/phi bin
-            print "PDG ID", "\t", "Mean dE/E (%)", "\t", "\t", "eta", "\t\t", "phi"
+            print("PDG ID", "\t", "Mean dE/E (%)", "\t", "\t", "eta", "\t\t", "phi")
             for pid in s_all_pids:
                 if (pid==211 or pid==22 or pid==11 or pid==13):
                     ### get the 1D lists
@@ -564,7 +565,7 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
                         gMeanError = gStd/(hEntries**0.5)
                     effSigma = getEffSigma(h_tempEdiff)
                     #print table for rel.diff.
-                    print pid, "\t", "{0:.2f}".format(gMean) + " +/- " + "{0:.2f}".format(gMeanError), "\t", GEN_eta, "\t", GEN_phi, "\t", "(pf clusters: "+str(int(hEntries))+")", "\t", "effSigma: ", effSigma, "\t", "gStd: ", gStd
+                    print(pid, "\t", "{0:.2f}".format(gMean) + " +/- " + "{0:.2f}".format(gMeanError), "\t", GEN_eta, "\t", GEN_phi, "\t", "(pf clusters: "+str(int(hEntries))+")", "\t", "effSigma: ", effSigma, "\t", "gStd: ", gStd)
                     # for pidSelected only: overlap hists together, fill list with phi, eta and dE/E values
                     if (pid == pidSelected):
                         # overlap three hists together
@@ -610,22 +611,22 @@ def runCalibrationScaleResolution(pidSelected, GEN_eng, ntuple, relFractionE):
     histPrintSaveAll(histDictGlob, outDir, "_glob")
 
     # print 2D eta-phi table
-    print "Effect on the cluster energy (relative loss in %):"
-    print "eta\phi","\t","\t".join(["[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1]) for phiBinName in phiBins])
+    print("Effect on the cluster energy (relative loss in %):")
+    print("eta\phi","\t","\t".join(["[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1]) for phiBinName in phiBins]))
     for etaBinName in etaBins:
-        print "[{0:.3f} - {1:.1f}]".format(etaBins[etaBinName][0],etaBins[etaBinName][1]), "\t", "\t".join(["{0:.2f}".format(dEOverE_pidSelected_values[etaBinName][phiBinName]['mean']) + " +/- " + "{0:.2f}".format(dEOverE_pidSelected_values[etaBinName][phiBinName]['meanError']) for phiBinName in phiBins])
+        print("[{0:.3f} - {1:.1f}]".format(etaBins[etaBinName][0],etaBins[etaBinName][1]), "\t", "\t".join(["{0:.2f}".format(dEOverE_pidSelected_values[etaBinName][phiBinName]['mean']) + " +/- " + "{0:.2f}".format(dEOverE_pidSelected_values[etaBinName][phiBinName]['meanError']) for phiBinName in phiBins]))
 
     # print 2D eta-phi table
-    print "Effect on the cluster energy (sigma effective in %):"
-    print "eta\phi","\t","\t".join(["[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1]) for phiBinName in phiBins])
+    print("Effect on the cluster energy (sigma effective in %):")
+    print("eta\phi","\t","\t".join(["[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1]) for phiBinName in phiBins]))
     for etaBinName in etaBins:
-        print "[{0:.3f} - {1:.1f}]".format(etaBins[etaBinName][0],etaBins[etaBinName][1]), "\t", "\t".join(["{0:.2f}".format(dEOverE_pidSelected_values[etaBinName][phiBinName]['effSigma']) for phiBinName in phiBins])
+        print("[{0:.3f} - {1:.1f}]".format(etaBins[etaBinName][0],etaBins[etaBinName][1]), "\t", "\t".join(["{0:.2f}".format(dEOverE_pidSelected_values[etaBinName][phiBinName]['effSigma']) for phiBinName in phiBins]))
 
     # print 2D eta-phi table
-    print "Effect on the cluster energy (value of calibration const.):"
-    print "eta\phi","\t","\t".join(["[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1]) for phiBinName in phiBins])
+    print("Effect on the cluster energy (value of calibration const.):")
+    print("eta\phi","\t","\t".join(["[{0:.2f} - {1:.2f}]".format(phiBins[phiBinName][0],phiBins[phiBinName][1]) for phiBinName in phiBins]))
     for etaBinName in etaBins:
-        print "[{0:.3f} - {1:.1f}]".format(etaBins[etaBinName][0],etaBins[etaBinName][1]), "\t", "\t".join(["{0:.2f}".format(1/(1+dEOverE_pidSelected_values[etaBinName][phiBinName]['mean']/100.)) + " -/+ " + "{0:.2f}".format((1/((1+dEOverE_pidSelected_values[etaBinName][phiBinName]['mean']/100.)**2)) * dEOverE_pidSelected_values[etaBinName][phiBinName]['meanError']) for phiBinName in phiBins])
+        print("[{0:.3f} - {1:.1f}]".format(etaBins[etaBinName][0],etaBins[etaBinName][1]), "\t", "\t".join(["{0:.2f}".format(1/(1+dEOverE_pidSelected_values[etaBinName][phiBinName]['mean']/100.)) + " -/+ " + "{0:.2f}".format((1/((1+dEOverE_pidSelected_values[etaBinName][phiBinName]['mean']/100.)**2)) * dEOverE_pidSelected_values[etaBinName][phiBinName]['meanError']) for phiBinName in phiBins]))
 
 if __name__ == '__main__':
     main()

@@ -50,14 +50,14 @@ class GeoUtil:
         self.planes = self.read_planes()
     # get the layer indecies with basic information
     def _get_plane_indices(self, geometry_file_path):
-        indices = {line_no: line for line_no, line in enumerate(geometry_file_path) if re.search('[a-zA-Z]+', line) is None}
+        indices = {line_no: line for line_no, line in enumerate(geometry_file_path) if re.search('[a-zA-Z]+', line.decode()) is None}
         return indices
     # pairs of iterables
     def _pairwise(self, iterable):
         "s -> (s0,s1), (s1,s2), (s2, s3), ..."
         a, b = itertools.tee(iterable)
         next(b, None)
-        return list(itertools.izip(a, b))
+        return list(zip(a, b))
     # extract info about one plan from the geometry description, and return the plane (with necessary information)
     def _read_plane(self, plane_details, start, end):
         # read in the plane id, max and min radia
@@ -97,7 +97,7 @@ class GeoUtil:
             # read in individual layers from the geometry description
             planes = [self._read_plane(planes_indices[start], start, end) for start, end in pairs]
         # return the list
-        print "Number of planes loaded: ",len(planes)
+        print("Number of planes loaded: ",len(planes))
         return planes
     # check if a point (x, y) is contained in the polygon defined with hexagon vertecies for the chosen plane
     def point_inside_plane(self, plane_num, p_x, p_y):

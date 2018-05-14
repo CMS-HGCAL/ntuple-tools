@@ -57,7 +57,7 @@ def getRecHitsSimAssoc(rechits_raw, simcluster):
         for hitIndexArray in simClusHitAssoc[simClusIndex]:
             for hitIndex in hitIndexArray:
                 thisHit = rechits_raw[hitIndex]
-                if(not recHitAboveTreshold(thisHit, ecut, dependSensor)[1]): continue
+                if(not recHitAboveThreshold(thisHit, ecut, dependSensor)[1]): continue
                 # independent of sim cluster, after cleaning
                 rHitsSimAssocTemp.append(thisHit)
         rHitsSimAssoc[simClusIndex]= rHitsSimAssocTemp
@@ -187,6 +187,7 @@ def main():
     ntuple = HGCalNtuple("root://eoscms.cern.ch//eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/FlatRandomEGunProducer_pdgid211_E20_cmssw93X_withPRs_20170817/NTUP/partGun_PDGid211_x100_E20.0To20.0_NTUP_1.root") # CMSSW_9_3_0_pre3 with some pre4 PRs on top
     #ntuple = HGCalNtuple("/eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/FlatRandomPtGunProducer_predragm_PDGid22_nPart1_Pt20to100_Eta2p3to2p5_cmssw921_20170605/NTUP/partGun_PDGid22_x400_Pt20.0To100.0_NTUP_1.root") # cmssw921 with all recent fixes as of June 12
     #ntuple = HGCalNtuple("/eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/FlatRandomPtGunProducer_predragm_PDGid22_id211_id11_id15_id130_nPart1_Pt20to100_Eta2p3to2p5_cmssw921_20170606/NTUP/partGun_PDGid22_id211_id11_id15_id130_x400_Pt20.0To100.0_NTUP_1.root")# cmssw921 with all recent fixes as of June 12
+#    ntuple = HGCalNtuple("../data/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_1.root");
 
     # prepare some lists for comparions
     multiClusters_nClust2DDiff = []
@@ -210,7 +211,7 @@ def main():
         # get flat list of rechist associated to sim-cluster hits
         rHitsSimAssoc = getRecHitsSimAssoc(recHitsRaw, simClusters)
         # get flat list of raw rechits which satisfy treshold condition
-        rHitsCleaned = [rechit for rechit in recHitsRaw if recHitAboveTreshold(rechit, ecut, dependSensor)[1]]
+        rHitsCleaned = [rechit for rechit in recHitsRaw if recHitAboveThreshold(rechit, ecut, dependSensor)[1]]
 
         ### Imaging algo run at RECO step (CMSSW)
         # get flat list of all clusters 2D produced with algo at RECO step (CMSSW)
