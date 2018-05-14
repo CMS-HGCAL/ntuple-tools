@@ -28,7 +28,7 @@ def main():
     for event in ntuple:
         if event.entry() >= maxEvents:
             break
-        print "Event", event.entry()+1
+        print("Event", event.entry()+1)
         tot_nevents += 1
         genParts = event.genParticles()
         tot_genpart += len(genParts)
@@ -50,17 +50,17 @@ def main():
         tot_track += len(tracks)
 
         # for genPart in genParts:
-        #     print tot_nevents, "genPart pt:", genPart.pt()
+        #     print(tot_nevents, "genPart pt:", genPart.pt()
 
-    print "Processed %d events" % tot_nevents
-    print "On average %f generator particles" % (float(tot_genpart) / tot_nevents)
-    print "On average %f reconstructed hits" % (float(tot_rechit) / tot_nevents)
-    print "On average %f layer clusters" % (float(tot_cluster2d) / tot_nevents)
-    print "On average %f multi-clusters" % (float(tot_multiclus) / tot_nevents)
-    print "On average %f sim-clusters" % (float(tot_simcluster) / tot_nevents)
-    print "On average %f PF clusters" % (float(tot_pfcluster) / tot_nevents)
-    print "On average %f calo particles" % (float(tot_calopart) / tot_nevents)
-    print "On average %f tracks" % (float(tot_track) / tot_nevents)
+    print("Processed %d events" % tot_nevents)
+    print("On average %f generator particles" % (float(tot_genpart) / tot_nevents))
+    print("On average %f reconstructed hits" % (float(tot_rechit) / tot_nevents))
+    print("On average %f layer clusters" % (float(tot_cluster2d) / tot_nevents))
+    print("On average %f multi-clusters" % (float(tot_multiclus) / tot_nevents))
+    print("On average %f sim-clusters" % (float(tot_simcluster) / tot_nevents))
+    print("On average %f PF clusters" % (float(tot_pfcluster) / tot_nevents))
+    print("On average %f calo particles" % (float(tot_calopart) / tot_nevents))
+    print("On average %f tracks" % (float(tot_track) / tot_nevents))
 
 
 if __name__ == "__main__":
