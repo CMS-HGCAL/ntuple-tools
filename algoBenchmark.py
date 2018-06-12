@@ -18,6 +18,9 @@ minClusters = 3 # request at least minClusters+1 2D clusters
 # cut on energy (also passed to HGCalImagingAlgo):
 energyMin = 3 # relative to the noise
 
+# other cuts
+clusterAcceptScale = 1.0 # for E_sim vs. E_rec, accept only sim clusters with clusterAcceptScale*clusterRadius
+
 # test only within this layers range:
 minLayer=0
 maxLayer=40
@@ -84,7 +87,7 @@ def getRecHitsPerHexel(hits, hexels):
     if hexel.clusterIndex not in clusterIndices:
       clusterIndices.append(hexel.clusterIndex)
     hexelDetIDs.append(hexel.detid)
-  
+
   hitDetIDs = hitsAboveNoice["detid"]
   hexelToHitID = np.nonzero(np.in1d(hitDetIDs, hexelDetIDs))
 
@@ -111,12 +114,12 @@ def getRecClustersFromImagingAlgo(recHitsRaw):
   return hexelsClustered_rerun
 
 # check is two circles overlap
-def circlesOverlap(x1,y1,r1,x2,y2,r2):
-  return (r1+r2)**2 >= (x1-x2)**2 + (y1-y2)**2
+def circlesOverlap(x1,y1,r1,x2,y2,r2,scale=1.0):
+  return (scale*(r1+r2))**2 >= (x1-x2)**2 + (y1-y2)**2
 
 # check if point is within a circle
-def pointWithinCircle(px,py,x,y,r):
-  return r**2 >= (px-x)**2 + (py-y)**2
+def pointWithinCircle(px,py,x,y,r,scale=1.0):
+  return (scale*r)**2 >= (px-x)**2 + (py-y)**2
 
 
 def main():
@@ -131,21 +134,23 @@ def main():
     for event in ntuple:
       startEvent = time.time()
       eventID = event.entry()
-      eventDir = outDir+"/ntup{}/event{}".format(ntupleNumber,eventID)
-      if not os.path.exists(eventDir): os.makedirs(eventDir)
-
+      startEvent = time.time()
+      
       print("\nCurrent event: ", eventID)
 
       # check if particles reached EE
       genParticles = event.genParticles()
       skipEvent = False
       for particle in genParticles:
-        if not particle.reachedEE:
-          print("particle didn't reach EE -- skipping the event!!")
+        if not particle.reachedEE():
+#          print("particle didn't reach EE -- skipping the event!!")
           skipEvent = True
+          break
       if skipEvent: continue
     
-
+      eventDir = outDir+"/ntup{}/event{}".format(ntupleNumber,eventID)
+      if not os.path.exists(eventDir): os.makedirs(eventDir)
+    
       # get raw rec hits
       print("\n\npreparing raw recHits...",end='')
       start = time.time()
@@ -224,7 +229,8 @@ def main():
 #              if circlesOverlap(recClusterX,recClusterY,recClusterR,simClusterX,simClusterY,simClusterR):
 #                energyComparisonOverlapHist.Fill(recEnergy,simEnergy)
 
-            if pointWithinCircle(simClusterX,simClusterY,recClusterX,recClusterY,recClusterR):
+            if pointWithinCircle(simClusterX,simClusterY,recClusterX,recClusterY,recClusterR,clusterAcceptScale):
+#            if circlesOverlap(recClusterX,recClusterY,recClusterR,simClusterX,simClusterY,simClusterR,clusterAcceptScale):
               assocSimEnergy += simEnergy
             
           if recEnergy*assocSimEnergy != 0:
