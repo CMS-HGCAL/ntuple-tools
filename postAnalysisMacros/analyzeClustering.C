@@ -18,10 +18,34 @@ using namespace std;
 const int nLayers = 40;
 const int nClusters = 40;
 
+// include particles decaying before EE:
+//string baseDir = "clusteringResults/noReachedEE_centerWithinRecCluster/";
+
+// play with rec cluster radius:
+//string baseDir = "clusteringResults/reachedEE_centerWithin_80pc_RecCluster/";
+//string baseDir = "clusteringResults/reachedEE_centerWithin_90pc_RecCluster/";
+//string baseDir = "clusteringResults/reachedEE_centerWithinRecCluster/";
+//string baseDir = "clusteringResults/reachedEE_centerWithin_120pc_RecCluster/";
+//string baseDir = "clusteringResults/reachedEE_centerWithin_130pc_RecCluster/";
+
+// play with energy threshold:
+//string baseDir = "clusteringResults/reachedEE_centerWithinRecCluster_noice5s/";
+//string baseDir = "clusteringResults/reachedEE_centerWithinRecCluster_noice1s/";
+
+// play with overlapping circles:
+//string baseDir = "clusteringResults/reachedEE_centersOverlap/";
+
+
+//string baseDir = "clusteringResults/reachedEE_centerWithinRecCluster_inverted/";
+//string baseDir = "clusteringResults/reachedEE_centerWithin_80pc_RecCluster_inverted/";
+
+// from C++ version
+string baseDir = "clusteringResults/cppCompare";
+
 vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
 {
   vector<TH2D*> result;
-  string baseDir = "clusteringResults";
+  
   TSystemDirectory mainDir(baseDir.c_str(),baseDir.c_str());
   TList *ntupleDirsList = mainDir.GetListOfFiles();
   
@@ -59,14 +83,12 @@ void analyzeClustering()
 {
   vector<TH2D*> inputEnergyComparisonHists = getHistsWithName("energyComparisonHist","energy comparison");
   TH2D *mergedEnergyComparisonHist = new TH2D(*inputEnergyComparisonHists[0]);
-  
-  vector<TH2D*> inputEnergyComparisonOverlapHists = getHistsWithName("energyComparisonOverlapHist","energy comparison overlap.");
-  TH2D *mergedEnergyComparisonOverlapHist = new TH2D(*inputEnergyComparisonOverlapHists[0]);
-  
   for(int iter=1;iter<inputEnergyComparisonHists.size();iter++){
     mergedEnergyComparisonHist->Add(inputEnergyComparisonHists[iter]);
   }
   
+  vector<TH2D*> inputEnergyComparisonOverlapHists = getHistsWithName("energyComparisonOverlapHist","energy comparison overlap.");
+  TH2D *mergedEnergyComparisonOverlapHist = new TH2D(*inputEnergyComparisonOverlapHists[0]);
   for(int iter=1;iter<inputEnergyComparisonOverlapHists.size();iter++){
     mergedEnergyComparisonOverlapHist->Add(inputEnergyComparisonOverlapHists[iter]);
   }
@@ -76,18 +98,18 @@ void analyzeClustering()
   
   canvas->cd(1);
   mergedEnergyComparisonHist->Draw("colz");
-  mergedEnergyComparisonHist->GetXaxis()->SetTitle("E_{rec}");
-  mergedEnergyComparisonHist->GetYaxis()->SetTitle("E_{sim}");
-  mergedEnergyComparisonHist->GetZaxis()->SetRangeUser(0,100);
+  mergedEnergyComparisonHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
+  mergedEnergyComparisonHist->GetYaxis()->SetTitle("E_{sim} (Gev)");
+  mergedEnergyComparisonHist->GetZaxis()->SetRangeUser(0,500);
   
   TF1 *fun = new TF1("fun","x",0,100);
   fun->Draw("same");
   
   canvas->cd(2);
   mergedEnergyComparisonOverlapHist->Draw("colz");
-  mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitle("E_{rec}");
-  mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitle("E_{sim}");
-  mergedEnergyComparisonOverlapHist->GetZaxis()->SetRangeUser(0,100);
+  mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
+  mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitle("E_{sim} (GeV)");
+  mergedEnergyComparisonOverlapHist->GetZaxis()->SetRangeUser(0,30);
   
   fun->Draw("same");
   
