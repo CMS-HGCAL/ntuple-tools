@@ -335,9 +335,9 @@ int main()
             if(pointWithinCircle(simClusterX,simClusterY,recClusterX,recClusterY,recClusterR)){
               assocSimEnergy += simEnergy;
             }
-            if(recEnergy*assocSimEnergy != 0){
-              energyComparisonOverlapHist->Fill(recEnergy,assocSimEnergy);
-            }
+          }
+          if(recEnergy*assocSimEnergy != 0){
+            energyComparisonOverlapHist->Fill(recEnergy,assocSimEnergy);
           }
         }
       }
