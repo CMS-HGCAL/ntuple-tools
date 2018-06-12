@@ -123,7 +123,6 @@ class HGCalImagingAlgo:
         self.dependSensor = False
         if dependSensor is not None:
             self.dependSensor = dependSensor
-        print("depend sensor:",dependSensor)
 
         # (multi)clustering parameters
         if not dependSensor:  # (no sensor dependence, eta/phi coordinates for multi-clustering)
@@ -330,19 +329,15 @@ class HGCalImagingAlgo:
             ecut = self.ecut
         # init 2D hexels
         points = [[] for i in range(0, 2 * (self.maxlayer + 1))]  # initialise list of per-layer-lists of hexels
-        print("N hits:",len(rHitsCollection))
-        skipIter=0
-        skipIter2=0
+        
         # loop over all hits and create the Hexel structure, skip energies below ecut
         if usePandas:
           for index, rHit in rHitsCollection.iterrows():
             if (rHit["layer"] > self.maxlayer):
-              skipIter += 1
               continue  # current protection
             # energy treshold dependent on sensor
             sigmaNoise, aboveThreshold = recHitAboveThreshold(rHit, ecut, self.dependSensor, usePandas)
             if not aboveThreshold:
-              skipIter2+=1
               continue
             # organise layers accoring to the sgn(z)
             layerID = rHit["layer"] + (rHit["z"] > 0) * (self.maxlayer + 1)  # +1 - yes or no?
@@ -359,9 +354,6 @@ class HGCalImagingAlgo:
             layerID = rHit.layer() + (rHit.z() > 0) * (self.maxlayer + 1)  # +1 - yes or no?
             points[layerID].append(Hexel(rHit, sigmaNoise, usePandas))
 
-        print("Skipped:",skipIter)
-        print("Skipped2:",skipIter2)
-        print("N points in populate:",len(points))
         return points
 
     # make 2D clusters out of rechits (need to introduce class with input params: delta_c, kappa, ecut, ...)
@@ -393,8 +385,6 @@ class HGCalImagingAlgo:
 
     # get basic clusters from the list of 2D clusters
     def getClusters(self, clusters, verbosityLevel=None):
-        print("Get clusrters n clusters:",len(clusters))
-        print("Get clusrters n clusters 2nd:",len(clusters[0]))
         # adjust verbosityLevel if necessary
         if verbosityLevel is None:
             verbosityLevel = self.verbosityLevel
@@ -402,18 +392,15 @@ class HGCalImagingAlgo:
         clusters_v = []
         # loop over all layers and all clusters in each layer
         layer = 0
-        notHalo = 0
         for clist_per_layer in clusters:
             index = 0
             for cluster in clist_per_layer:
                 position = calculatePosition(cluster)
                 if (position == ROOT.Math.XYZPoint()):
-                    print("skip")
                     continue  # skip the clusters where position could not be computed (either all weights are 0, or all hexels are tagged as Halo)
                 energy = 0
                 for iNode in cluster:
                     if (not iNode.isHalo):
-                        notHalo += 1
                         energy += iNode.weight
                 if (verbosityLevel >= 1):
                     layerActual = layer - (cluster[0].z > 0) * (self.maxlayer + 1)
@@ -426,7 +413,6 @@ class HGCalImagingAlgo:
                 index += 1
             layer += 1
             clusters_v.sort(key=getEnergy, reverse=True)
-        print("Not halo:",notHalo)
         
         return clusters_v
 

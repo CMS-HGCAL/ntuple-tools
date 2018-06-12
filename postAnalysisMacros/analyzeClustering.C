@@ -40,7 +40,7 @@ const int nClusters = 40;
 //string baseDir = "clusteringResults/reachedEE_centerWithin_80pc_RecCluster_inverted/";
 
 // from C++ version
-string baseDir = "clusteringResults/cppCompare";
+string baseDir = "clusteringResultsCXX/pythonCompare";
 
 vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
 {

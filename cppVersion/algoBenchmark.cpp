@@ -3,9 +3,9 @@
 #include <iostream>
 #include <algorithm>
 
-#include "HGEvent.hpp"
+#include "Event.hpp"
 #include "RecHitCalibration.hpp"
-#include "HGCalImagineAlgo.hpp"
+#include "ImagineAlgo.hpp"
 
 #include <TROOT.h>
 #include <TFile.h>
@@ -21,7 +21,7 @@ double deltac[3] = {2., 2., 5.}; // in cartesian coordiantes in cm, per detector
 double multiclusterRadii[3] = {2., 5., 5.}; // in cartesian coordiantes in cm, per detector
 int minClusters = 3; // request at least minClusters+1 2D clusters
 
-// cut on energy (also passed to HGCalImagingAlgo):
+// cut on energy (also passed to ImagingAlgo):
 double energyMin = 3; // relative to the noise
 
 // test only within this layers range:
@@ -56,10 +56,10 @@ vector<Hexel*>* GetHexelsInCluster(vector<Hexel*> &hexels,int clusterIndex)
 }
 
 // get pandas mask of hits above noice threshold
-HGRecHits* GetHitsInLayer(HGRecHits *hits,int layer)
+RecHits* GetHitsInLayer(RecHits *hits,int layer)
 {
-  HGRecHits *hitsInLayer = new HGRecHits();
-  HGRecHit *hit = nullptr;
+  RecHits *hitsInLayer = new RecHits();
+  RecHit *hit = nullptr;
   
   for(int iHit=0;iHit<hits->N();iHit++){
     hit = hits->GetHit(iHit);
@@ -71,15 +71,15 @@ HGRecHits* GetHitsInLayer(HGRecHits *hits,int layer)
   return hitsInLayer;
 }
 
-HGRecHits* GetHitsAboveNoice(HGRecHits *hits,double ecut)
+RecHits* GetHitsAboveNoice(RecHits *hits,double ecut)
 {
   double sigmaNoise = 1.;
   double thickIndex = -1;
   
-  HGRecHits *hitsAboveNoice = new HGRecHits();
+  RecHits *hitsAboveNoice = new RecHits();
   
   RecHitCalibration *recHitCalib = new RecHitCalibration();
-  HGRecHit *hit;
+  RecHit *hit;
   
   for(int iHit=0;iHit<hits->N();iHit++){
     hit = hits->GetHit(iHit);
@@ -103,12 +103,10 @@ HGRecHits* GetHitsAboveNoice(HGRecHits *hits,double ecut)
 }
 
 // groups hits into array of clusters
-void getHitsPerCluster(vector<HGRecHits*> &hitsPerCluster, HGRecHits *hits,HGSimClusters *clusters)
+void getHitsPerCluster(vector<RecHits*> &hitsPerCluster, RecHits *hits,SimClusters *clusters)
 {
-  HGRecHits *hitsAboveNoice = GetHitsAboveNoice(hits, energyMin);
+  RecHits *hitsAboveNoice = GetHitsAboveNoice(hits, energyMin);
   vector<unsigned int> *hitsDetIDs = hitsAboveNoice->detid;
-  
-//  vector<HGRecHits*> *hitsPerCluster = new vector<HGRecHits*>;
   
   for(int iCluster=0;iCluster<clusters->N();iCluster++){
     vector<unsigned int> hitsInClusterDetIDs = clusters->hits->at(iCluster);
@@ -121,7 +119,7 @@ void getHitsPerCluster(vector<HGRecHits*> &hitsPerCluster, HGRecHits *hits,HGSim
                      hitsInClusterDetIDs.begin(), hitsInClusterDetIDs.end(),
                      std::back_inserter(clusterToHitID));
     
-    HGRecHits *hitsInThisCluster = new HGRecHits();
+    RecHits *hitsInThisCluster = new RecHits();
     
     for(unsigned int i : clusterToHitID){
       ptrdiff_t pos = distance(hits->detid->begin(), find(hits->detid->begin(), hits->detid->end(), i));
@@ -130,13 +128,11 @@ void getHitsPerCluster(vector<HGRecHits*> &hitsPerCluster, HGRecHits *hits,HGSim
     
     hitsPerCluster.push_back(hitsInThisCluster);
   }
-  
-//  return hitsPerCluster;
 }
 
 // groups hits associated with hexels into array of clusters
-void getRecHitsPerHexel(vector<HGRecHits*> &hitsClustered, HGRecHits *hits,vector<Hexel*> hexels){
-  HGRecHits *hitsAboveNoice = GetHitsAboveNoice(hits, energyMin);
+void getRecHitsPerHexel(vector<RecHits*> &hitsClustered, RecHits *hits,vector<Hexel*> hexels){
+  RecHits *hitsAboveNoice = GetHitsAboveNoice(hits, energyMin);
   
   vector<int> clusterIndices;
   vector<unsigned int> *hitDetIDs = hitsAboveNoice->detid; //ok
@@ -164,29 +160,26 @@ void getRecHitsPerHexel(vector<HGRecHits*> &hitsClustered, HGRecHits *hits,vecto
   for(int clusterIndex=0;
       clusterIndex<= *max_element(clusterIndices.begin(),clusterIndices.end());
       clusterIndex++){
-    hitsClustered.push_back(new HGRecHits());
+    hitsClustered.push_back(new RecHits());
   }
   
   for(int iHex=0;iHex<hexels.size();iHex++){
     int hitIndex = hexelToHitID[iHex];
-    HGRecHit *hit = hits->GetHit(hitIndex);
+    RecHit *hit = hits->GetHit(hitIndex);
     hitsClustered[hexels[iHex]->clusterIndex]->AddHit(hit);
   }
 }
 // get clustered hexels by re-running the clustering algorithm
 
-void getRecClustersFromImagingAlgo(vector<Hexel*> &hexelsClustered_rerun, HGRecHits *hits)
+void getRecClustersFromImagingAlgo(vector<Hexel*> &hexelsClustered_rerun, RecHits *hits)
 {
-  HGCalImagingAlgo *algo = new HGCalImagingAlgo(energyMin, deltac, multiclusterRadii, minClusters, dependSensor, 0);
+  ImagingAlgo *algo = new ImagingAlgo(energyMin, deltac, minClusters, dependSensor, 0);
+  
   std::vector<std::vector<std::vector<Hexel*>>> clusters2D_rerun;
   algo->makeClusters(clusters2D_rerun, hits,energyMin); // nested list of "hexels", per layer, per 2D cluster
   
-  
   std::vector<BasicCluster*> clusters2DList_rerun;
-  algo->getClusters(clusters2DList_rerun, clusters2D_rerun, 0); // flat list of 2D clusters (as basic clusters)
-  
-  cout<<"N basic clusters:"<<clusters2DList_rerun.size()<<endl;
-  cout<<"Hexels in cluster [0]:"<<(clusters2DList_rerun[0]->thisCluster).size()<<endl;
+  algo->getClusters(clusters2DList_rerun, clusters2D_rerun); // flat list of 2D clusters (as basic clusters)
   
   for(BasicCluster *bClust : clusters2DList_rerun){
     for(Hexel *iNode : bClust->thisCluster){
@@ -195,14 +188,8 @@ void getRecClustersFromImagingAlgo(vector<Hexel*> &hexelsClustered_rerun, HGRecH
       }
     }
   }
-
 }
-/*
-# check is two circles overlap
-def circlesOverlap(x1,y1,r1,x2,y2,r2):
-  return (r1+r2)**2 >= (x1-x2)**2 + (y1-y2)**2
-*/
-// check if point is within a circle
+
 bool pointWithinCircle(double px,double py,double x,double y,double r){
   return pow(r,2) >= pow(px-x,2) + pow(py-y,2);
 }
@@ -239,7 +226,7 @@ int main()
     
     cout<<"\n\nLoading ntuple...";
     auto start = now();
-    HGEvent *hgCalEvent = new HGEvent(tree);
+    Event *hgCalEvent = new Event(tree);
     auto end = now();
     cout<<" done ("<<duration(start,end)<<" s)"<<endl;
     
@@ -267,13 +254,13 @@ int main()
       
       cout<<"\nCurrent event:"<<iEvent<<endl;
       
-      HGRecHits *recHitsRaw = hgCalEvent->recHits;
-      HGSimClusters *simClusters = hgCalEvent->simClusters;
+      RecHits *recHitsRaw = hgCalEvent->recHits;
+      SimClusters *simClusters = hgCalEvent->simClusters;
       
       // get simulated hits associated with a cluster
       cout<<"preparing simulated hits and clusters...";
       start = now();
-      vector<HGRecHits*> simHitsPerClusterArray;
+      vector<RecHits*> simHitsPerClusterArray;
       getHitsPerCluster(simHitsPerClusterArray, recHitsRaw, simClusters);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
@@ -283,37 +270,33 @@ int main()
       cout<<"running clustering algorithm...";
       start = now();
       std::vector<Hexel*> recClusters;
-      cout<<"\n\nN Raw rec hits:"<<recHitsRaw->N()<<endl;
       getRecClustersFromImagingAlgo(recClusters, recHitsRaw);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
       
-      cout<<"N sim clusters:"<<simHitsPerClusterArray.size()<<endl;
-      cout<<"N rec clusters:"<<recClusters.size()<<endl;
-      
       // recClusters -> array of hexel objects
       cout<<"looking for hits associated with hexels...";
       start = now();
-      vector<HGRecHits*> recHitsPerClusterArray;
+      vector<RecHits*> recHitsPerClusterArray;
       getRecHitsPerHexel(recHitsPerClusterArray, recHitsRaw, recClusters);
       end = now();
-      cout<<" done ("<<duration(start,end)<<" s)"<<endl;
-      
-      cout<<"N clusters:"<<recHitsPerClusterArray.size()<<endl;
-      cout<<"Hits in [0] cluster:"<<recHitsPerClusterArray[0]->N()<<endl;
+      cout<<" done ("<<duration(start,end)<<" s)\n"<<endl;
       
       // perform final analysis, fill in histograms and save to files
-      cout<<"\nGenerating final hists...";
-      start = now();
+      
       TH2D *energyComparisonHist = new TH2D("energy comparison","energy comparison",100,0,100,100,0,100);
       TH2D *energyComparisonOverlapHist = new TH2D("energy comparison overlap.","energy comparison overlap.",100,0,100,100,0,100);
+      
+      cout<<"\n\nGenerating final hists...\n\n";
+      start = now();
+      
       
       for(int layer=minLayer;layer<maxLayer;layer++){
 //        cout<<"layer:"<<layer<<endl;
         for(int recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
           
-          HGRecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
-          HGRecHits *recHitsInLayerInCluster = GetHitsInLayer(recCluster,layer);
+          RecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
+          RecHits *recHitsInLayerInCluster = GetHitsInLayer(recCluster,layer);
           
           if(recHitsInLayerInCluster->N()==0) continue;
           
@@ -330,8 +313,8 @@ int main()
           double assocSimEnergy = 0;
           
           for(int simClusterIndex=0;simClusterIndex<simHitsPerClusterArray.size();simClusterIndex++){
-            HGRecHits *simCluster = simHitsPerClusterArray[simClusterIndex];
-            HGRecHits *simHitsInLayerInCluster = GetHitsInLayer(simCluster,layer);
+            RecHits *simCluster = simHitsPerClusterArray[simClusterIndex];
+            RecHits *simHitsInLayerInCluster = GetHitsInLayer(simCluster,layer);
             
             if(simHitsInLayerInCluster->N()==0) continue;
             

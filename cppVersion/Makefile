@@ -5,11 +5,11 @@ CCFLAGS = `root-config --cflags` -g -c -std=c++11 -Wall -Wextra -O0 -ffast-math 
 
 all: algoBenchmark
 
-algoBenchmark: algoBenchmark.o HGEvent.o HGGenParticles.o HGRecHits.o HGSimClusters.o
+algoBenchmark: tmp/algoBenchmark.o tmp/HGEvent.o tmp/HGGenParticles.o tmp/HGRecHits.o tmp/HGSimClusters.o tmp/HGCalImagineAlgo.o tmp/Hexel.o tmp/BasicCluster.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-%.o: %.cpp
+tmp/%.o: %.cpp
 	$(CC) $^ -o $@ $(CCFLAGS)
 
 clean:
-	rm -f *.o algoBenchmark
+	rm -f tmp/*.o algoBenchmark
