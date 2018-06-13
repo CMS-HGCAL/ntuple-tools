@@ -46,6 +46,7 @@ vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
 {
   vector<TH2D*> result;
   
+
   TSystemDirectory mainDir(baseDir.c_str(),baseDir.c_str());
   TList *ntupleDirsList = mainDir.GetListOfFiles();
   
@@ -83,12 +84,15 @@ void analyzeClustering()
 {
   vector<TH2D*> inputEnergyComparisonHists = getHistsWithName("energyComparisonHist","energy comparison");
   TH2D *mergedEnergyComparisonHist = new TH2D(*inputEnergyComparisonHists[0]);
+
   for(int iter=1;iter<inputEnergyComparisonHists.size();iter++){
     mergedEnergyComparisonHist->Add(inputEnergyComparisonHists[iter]);
   }
   
+
   vector<TH2D*> inputEnergyComparisonOverlapHists = getHistsWithName("energyComparisonOverlapHist","energy comparison overlap.");
   TH2D *mergedEnergyComparisonOverlapHist = new TH2D(*inputEnergyComparisonOverlapHists[0]);
+
   for(int iter=1;iter<inputEnergyComparisonOverlapHists.size();iter++){
     mergedEnergyComparisonOverlapHist->Add(inputEnergyComparisonOverlapHists[iter]);
   }
@@ -98,18 +102,22 @@ void analyzeClustering()
   
   canvas->cd(1);
   mergedEnergyComparisonHist->Draw("colz");
+
   mergedEnergyComparisonHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
   mergedEnergyComparisonHist->GetYaxis()->SetTitle("E_{sim} (Gev)");
   mergedEnergyComparisonHist->GetZaxis()->SetRangeUser(0,500);
+
   
   TF1 *fun = new TF1("fun","x",0,100);
   fun->Draw("same");
   
   canvas->cd(2);
   mergedEnergyComparisonOverlapHist->Draw("colz");
+
   mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
   mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitle("E_{sim} (GeV)");
   mergedEnergyComparisonOverlapHist->GetZaxis()->SetRangeUser(0,30);
+
   
   fun->Draw("same");
   

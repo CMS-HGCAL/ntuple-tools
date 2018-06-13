@@ -23,7 +23,7 @@ from RecHitCalibration import RecHitCalibration
 
 class Hexel:
 
-    def __init__(self, rHit=None, sigmaNoise=None):
+    def __init__(self, rHit=None, sigmaNoise=None, usePandas=False):
         self.eta = 0
         self.phi = 0
         self.x = 0
@@ -44,6 +44,20 @@ class Hexel:
         self.sigmaNoise = 0.
         self.thickness = 0.
         if rHit is not None:
+          if usePandas:
+            self.eta = rHit["eta"]
+            self.phi = rHit["phi"]
+            self.x = rHit["x"]
+            self.y = rHit["y"]
+            self.z = rHit["z"]
+            self.weight = rHit["energy"]
+            self.detid = rHit["detid"]
+            self.layer = rHit["layer"]
+            self.isHalfCell = rHit["isHalf"]
+            self.thickness = rHit["thickness"]
+            self.time = rHit["time"]
+            self.clusterRECOIndex = rHit["cluster2d"]
+          else:
             self.eta = rHit.eta()
             self.phi = rHit.phi()
             self.x = rHit.x()
@@ -306,7 +320,7 @@ class HGCalImagingAlgo:
         return current_clusters
 
     # make list of Hexels out of rechits
-    def populate(self, rHitsCollection, ecut=None):
+    def populate(self, rHitsCollection, ecut=None, usePandas=False):
         # adjust ecut if necessary
         if ecut is None:
             ecut = self.ecut
@@ -314,21 +328,33 @@ class HGCalImagingAlgo:
         points = [[] for i in range(0, 2 * (self.maxlayer + 1))]  # initialise list of per-layer-lists of hexels
 
         # loop over all hits and create the Hexel structure, skip energies below ecut
-        for rHit in rHitsCollection:
+        if usePandas:
+          for index, rHit in rHitsCollection.iterrows():
+            if (rHit["layer"] > self.maxlayer):
+              continue  # current protection
+            # energy treshold dependent on sensor
+            sigmaNoise, aboveThreshold = recHitAboveThreshold(rHit, ecut, self.dependSensor, usePandas)
+            if not aboveThreshold:
+              continue
+            # organise layers accoring to the sgn(z)
+            layerID = rHit["layer"] + (rHit["z"] > 0) * (self.maxlayer + 1)  # +1 - yes or no?
+            points[layerID].append(Hexel(rHit, sigmaNoise, usePandas))
+        else:
+          for rHit in rHitsCollection:
             if (rHit.layer() > self.maxlayer):
                 continue  # current protection
             # energy treshold dependent on sensor
-            sigmaNoise, aboveThreshold = recHitAboveThreshold(rHit, ecut=ecut, dependSensor=self.dependSensor)
+            sigmaNoise, aboveThreshold = recHitAboveThreshold(rHit, ecut, self.dependSensor, usePandas)
             if not aboveThreshold:
                 continue
             # organise layers accoring to the sgn(z)
             layerID = rHit.layer() + (rHit.z() > 0) * (self.maxlayer + 1)  # +1 - yes or no?
-            points[layerID].append(Hexel(rHit, sigmaNoise))
+            points[layerID].append(Hexel(rHit, sigmaNoise, usePandas))
 
         return points
 
-    # make 2D clusters out of rechists (need to introduce class with input params: delta_c, kappa, ecut, ...)
-    def makeClusters(self, rHitsCollection, ecut=None):
+    # make 2D clusters out of rechits (need to introduce class with input params: delta_c, kappa, ecut, ...)
+    def makeClusters(self, rHitsCollection, ecut=None, usePandas=False):
         # adjust ecut if necessary
         if ecut is None:
             ecut = self.ecut
@@ -336,7 +362,7 @@ class HGCalImagingAlgo:
         clusters = [[] for i in range(0, 2 * (self.maxlayer + 1))]  # initialise list of per-layer-clusters
 
         # get the list of Hexels out of raw rechits
-        points = self.populate(rHitsCollection, ecut=ecut)
+        points = self.populate(rHitsCollection, ecut, usePandas)
 
         # loop over all layers, and for each layer create a list of clusters. layers are organised according to the sgn(z)
         for layerID in range(0, 2 * (self.maxlayer + 1)):
@@ -612,24 +638,34 @@ def getMultiClusterEnergy(multi_clu):
 # determine if the rechit energy is above the desired treshold
 
 
-def recHitAboveThreshold(rHit, ecut, dependSensor=True):
+def recHitAboveThreshold(rHit, ecut, dependSensor=True, usePandas=False):
     sigmaNoise = 1.
+    
+    layer = 0
+    thickness = 0
+    energy = 0
+    if usePandas:
+      layer = rHit["layer"]
+      thickness = rHit["thickness"]
+      energy = rHit["energy"]
+    else:
+      layer = rHit.layer()
+      thickness = rHit.thickness()
+      energy = rHit.energy()
+    
     if(dependSensor):
         thickIndex = -1
-        if(rHit.layer() <= HGCalImagingAlgo.lastLayerFH):  # EE + FH
-            thickness = rHit.thickness()
-            if(thickness > 99. and thickness < 101.):
-                thickIndex = 0
-            elif(thickness > 199. and thickness < 201.):
-                thickIndex = 1
-            elif(thickness > 299. and thickness < 301.):
-                thickIndex = 2
-            else:
-                print("ERROR - silicon thickness has a nonsensical value")
+        
+        if(layer <= HGCalImagingAlgo.lastLayerFH):  # EE + FH
+            if(thickness > 99. and thickness < 101.):     thickIndex = 0
+            elif(thickness > 199. and thickness < 201.):  thickIndex = 1
+            elif(thickness > 299. and thickness < 301.):  thickIndex = 2
+            else: print("ERROR - silicon thickness has a nonsensical value")
         # determine noise for each sensor/subdetector using RecHitCalibration library
+
         RecHitCalib = RecHitCalibration()
-        sigmaNoise = 0.001 * RecHitCalib.sigmaNoiseMeV(rHit.layer(), thickIndex)  # returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
-    aboveThreshold = rHit.energy() >= ecut * sigmaNoise  # this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
+        sigmaNoise = 0.001 * RecHitCalib.sigmaNoiseMeV(layer, thickIndex)  # returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
+    aboveThreshold = energy >= ecut * sigmaNoise  # this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
     return sigmaNoise, aboveThreshold
 
 
