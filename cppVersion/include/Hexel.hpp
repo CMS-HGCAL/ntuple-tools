@@ -7,21 +7,21 @@
 #ifndef Hexel_hpp
 #define Hexel_hpp
 
-#include "RecHits.hpp"
-
 class Hexel{
 public:
-  Hexel(RecHit *hit=nullptr,double _sigmaNoise=-1);
+  Hexel(double _eta=0, double _phi=0, double _x=0, double _y=0, double _z=0, double _weight=0,double _thickness=0,double _time=0,
+        int _detid=-1, int _layer=-1, int _clusterRECOindex=-1,
+        bool _isHalf = false);
   
-  bool __gt__(double _rho){return rho > _rho;}
+  // those can be read from RecHit:
+  double eta, phi, x, y, z, weight, thickness, time;
+  int layer, detid, clusterRECOIndex;
+  bool isHalf;
   
-  double eta, phi, x, y, z;
-  double time, rho;
-  double weight, fraction;
-  double delta, sigmaNoise, thickness;
-  bool isHalfCell, isBorder, isHalo;
-  int layer, detid, clusterIndex, clusterRECOIndex, nearestHigher;
-  
+  // those must be calculated and set later
+  double rho, fraction, delta, sigmaNoise;
+  bool isBorder, isHalo;
+  int clusterIndex, nearestHigher;
 };
 
 #endif /* Hexel_hpp */

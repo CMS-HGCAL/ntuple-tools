@@ -5,6 +5,7 @@
 //
 
 #include "RecHits.hpp"
+
 #include <iostream>
 
 using namespace std;
@@ -23,7 +24,7 @@ isHalf(new vector<bool>),
 time(new vector<float>),
 cluster2d(new vector<int>)
 {
-  
+  recHitCalib = new RecHitCalibration();
 }
 
 RecHits::RecHits(TTree *_tree):
@@ -39,10 +40,9 @@ thickness(nullptr),
 isHalf(nullptr),
 time(nullptr),
 cluster2d(nullptr)
-//tree(_tree)
 {
-//  cout<<"tree:"<<_tree<<endl;
-//  tree = _tree;
+  recHitCalib = new RecHitCalibration();
+  
   _tree->SetBranchAddress("rechit_eta",&eta);
   _tree->SetBranchAddress("rechit_phi",&phi);
   _tree->SetBranchAddress("rechit_energy",&energy);
@@ -64,20 +64,7 @@ RecHits::~RecHits()
 
 RecHit* RecHits::GetHit(int index)
 {
-  vector<float> &etaRef = *eta;
-  vector<float> &phiRef = *phi;
-  vector<float> &energyRef = *energy;
-  vector<float> &xRef = *x;
-  vector<float> &yRef = *y;
-  vector<float> &zRef = *z;
-  vector<int> &layerRef = *layer;
-  vector<unsigned int> &detidRef = *detid;
-  vector<float> &thicknessRef = *thickness;
-  vector<bool> &isHalfRef = *isHalf;
-  vector<float> &timeRef = *time;
-  vector<int> &cluster2dRef = *cluster2d;
-  
-  return new RecHit(etaRef[index],phiRef[index],energyRef[index],xRef[index],yRef[index],zRef[index], layerRef[index],detidRef[index],thicknessRef[index],isHalfRef[index],timeRef[index],cluster2dRef[index]);
+  return new RecHit(eta->at(index),phi->at(index),energy->at(index),x->at(index),y->at(index),z->at(index), layer->at(index),detid->at(index),thickness->at(index),isHalf->at(index),time->at(index),cluster2d->at(index));
 }
 
 void RecHits::AddHit(RecHit *hit)
@@ -122,6 +109,120 @@ double RecHits::GetYmax()
   return *max_element(y->begin(), y->end());
 }
 
+RecHits* RecHits::GetHitsAboveNoice(double ecut)
+{
+  double sigmaNoise = 1.;
+  double thickIndex = -1;
+  
+  RecHits *hitsAboveNoice = new RecHits();
+  RecHit *hit;
+  
+  for(int iHit=0;iHit<N();iHit++){
+    hit = GetHit(iHit);
+    int layer = hit->layer;
+    float thickness = hit->thickness;
+    
+    if(layer <= 40){  // EE + FH
+      if     (thickness > 99.  && thickness < 101.) thickIndex = 0;
+      else if(thickness > 199. && thickness < 201.) thickIndex = 1;
+      else if(thickness > 299. && thickness < 301.) thickIndex = 2;
+      else cout<<"ERROR - silicon thickness has a nonsensical value"<<endl;
+    }
+    // determine noise for each sensor/subdetector using RecHitCalibration library
+    sigmaNoise = 0.001 * recHitCalib->sigmaNoiseMeV(layer, thickIndex);  // returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
+    if(hit->energy >= ecut * sigmaNoise){
+      // checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
+      hitsAboveNoice->AddHit(hit);
+    }
+    delete hit;
+  }
+  return hitsAboveNoice;
+}
+
+// groups hits into array of clusters
+void RecHits::GetHitsPerCluster(vector<RecHits*> &hitsPerCluster, SimClusters *clusters, double energyMin)
+{
+  RecHits *hitsAboveNoice = GetHitsAboveNoice(energyMin);
+  vector<unsigned int> *hitsDetIDs = hitsAboveNoice->detid;
+  
+  for(int iCluster=0;iCluster<clusters->N();iCluster++){
+    vector<unsigned int> hitsInClusterDetIDs = clusters->hits->at(iCluster);
+    vector<unsigned int> clusterToHitID;
+    
+    sort(hitsDetIDs->begin(), hitsDetIDs->end());
+    sort(hitsInClusterDetIDs.begin(), hitsInClusterDetIDs.end());
+    
+    set_intersection(hitsDetIDs->begin(), hitsDetIDs->end(),
+                     hitsInClusterDetIDs.begin(), hitsInClusterDetIDs.end(),
+                     std::back_inserter(clusterToHitID));
+    
+    RecHits *hitsInThisCluster = new RecHits();
+    
+    for(unsigned int i : clusterToHitID){
+      ptrdiff_t pos = distance(detid->begin(), find(detid->begin(), detid->end(), i));
+      hitsInThisCluster->AddHit(GetHit((int)pos));
+    }
+    hitsPerCluster.push_back(hitsInThisCluster);
+  }
+}
+
+// groups hits associated with hexels into array of clusters
+void RecHits::GetRecHitsPerHexel(vector<RecHits*> &hitsClustered,vector<Hexel*> hexels, double energyMin)
+{
+  RecHits *hitsAboveNoice = GetHitsAboveNoice(energyMin);
+  
+  vector<int> clusterIndices;
+  vector<unsigned int> *hitDetIDs = hitsAboveNoice->detid; //ok
+  vector<int> hexelDetIDs;
+  
+  for(Hexel *hexel : hexels){
+    if(find(clusterIndices.begin(), clusterIndices.end(), hexel->clusterIndex) == clusterIndices.end()){
+      clusterIndices.push_back(hexel->clusterIndex);
+    }
+    hexelDetIDs.push_back(hexel->detid);//ok
+  }
+  
+  vector<int> hexelToHitID;
+  vector<int> new_vec_1 = vector<int>(hexelDetIDs);
+  std::sort(std::begin(new_vec_1), std::end(new_vec_1));
+  
+  for (int i = 0; i < hitDetIDs->size(); ++i) {
+    if (std::binary_search(std::begin(new_vec_1),
+                           std::end(new_vec_1),
+                           hitDetIDs->at(i))) {
+      hexelToHitID.push_back(i);
+    }
+  }
+  
+  for(int clusterIndex=0;
+      clusterIndex<= *max_element(clusterIndices.begin(),clusterIndices.end());
+      clusterIndex++){
+    hitsClustered.push_back(new RecHits());
+  }
+  
+  for(int iHex=0;iHex<hexels.size();iHex++){
+    int hitIndex = hexelToHitID[iHex];
+    RecHit *hit = GetHit(hitIndex);
+    hitsClustered[hexels[iHex]->clusterIndex]->AddHit(hit);
+  }
+}
+
+RecHits* RecHits::GetHitsInLayer(int layer)
+{
+  RecHits *hitsInLayer = new RecHits();
+  RecHit *hit = nullptr;
+  
+  for(int iHit=0;iHit<N();iHit++){
+    hit = GetHit(iHit);
+    if(!hit) continue;
+    if(hit->layer == layer){
+      hitsInLayer->AddHit(hit);
+    }
+    delete hit;
+  }
+  return hitsInLayer;
+}
+
 //------------------------------------------------------------------------------------------------
 // Single RecHit
 
@@ -164,6 +265,10 @@ RecHit::~RecHit()
   
 }
 
+Hexel* RecHit::GetHexel()
+{
+  return new Hexel(eta,phi,x,y,z,energy,thickness,time,detid,layer,cluster2d,isHalf);
+}
 
 
 

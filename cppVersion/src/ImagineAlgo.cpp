@@ -10,6 +10,8 @@ using namespace std;
 
 ImagingAlgo::ImagingAlgo(double _ecut,double _deltac[3],int _minClusters, int _dependSensor,int _verbosityLevel)
 {
+  recHitCalib = new RecHitCalibration();
+  
   dependSensor = _dependSensor;
   for(int i=0;i<3;i++){deltac[i] = 2.0;};
   minClusters = 3;
@@ -255,20 +257,31 @@ void ImagingAlgo::populate(vector<vector<Hexel*>> &points, RecHits *hits,double 
   for(int iLayer=0;iLayer<2*(maxlayer+1);iLayer++){
     points.push_back(vector<Hexel*>());
   }
+  RecHit *hit;
   
   // loop over all hits and create the Hexel structure, skip energies below ecut
   for(int iHit=0;iHit<hits->N();iHit++){
-    RecHit *hit = hits->GetHit(iHit);
-    
-    if (hit->layer > maxlayer) continue;  // current protection
-    
+    hit = hits->GetHit(iHit);
+    if (hit->layer > maxlayer){
+      delete hit;
+      continue;  // current protection
+    }
     // energy treshold dependent on sensor
     auto thresholdResult = recHitAboveThreshold(hit, _ecut, dependSensor);
-    if(!get<0>(thresholdResult)) continue;
-  
+    if(!get<0>(thresholdResult)){
+      delete hit;
+      continue;
+    }
     // organise layers accoring to the sgn(z)
     int layerID = hit->layer + (hit->z > 0) * (maxlayer + 1);  // +1 - yes or no?
-    points[layerID].push_back(new Hexel(hit,get<1>(thresholdResult)));
+    double sigmaNoice = get<1>(thresholdResult);
+    Hexel *hexel = hit->GetHexel();
+//    Hexel *hexel = new Hexel(hit);
+//    Hexel *hexel = new Hexel(hit->eta,hit->phi,hit->x,hit->y,hit->z,hit->energy,hit->thickness,hit->time,hit->detid,hit->layer,hit->cluster2d,hit->isHalf);
+    
+    hexel->sigmaNoise = sigmaNoice;
+    points[layerID].push_back(hexel);
+    delete hit;
   }
 }
 
@@ -383,7 +396,6 @@ tuple<bool,double> ImagingAlgo::recHitAboveThreshold(RecHit *hit,double _ecut,bo
       else cout<<"ERROR - silicon thickness has a nonsensical value"<<endl;
       // determine noise for each sensor/subdetector using RecHitCalibration library
     }
-    RecHitCalibration *recHitCalib = new RecHitCalibration();
     sigmaNoise = 0.001 * recHitCalib->sigmaNoiseMeV(layer, thickIndex);  // returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
   }
   bool aboveThreshold = energy >= _ecut * sigmaNoise;  // this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)

@@ -74,6 +74,8 @@ private:
   double ecut;
   int minClusters;
   int verbosityLevel;
+  
+  RecHitCalibration *recHitCalib;
 };
 
 

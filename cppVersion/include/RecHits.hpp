@@ -7,8 +7,11 @@
 #ifndef RecHits_hpp
 #define RecHits_hpp
 
-#include <TTree.h>
+#include "RecHitCalibration.hpp"
+#include "SimClusters.hpp"
+#include "Hexel.hpp"
 
+#include <TTree.h>
 #include <vector>
 
 class RecHit;
@@ -43,8 +46,16 @@ public:
   RecHit* GetHit(int index);
   void AddHit(RecHit *hit);
   
-private:
+  RecHits* GetHitsAboveNoice(double ecut);
+  void GetHitsPerCluster(std::vector<RecHits*> &hitsPerCluster,
+                         SimClusters *clusters, double energyMin);
   
+  void GetRecHitsPerHexel(std::vector<RecHits*> &hitsClustered,
+                          std::vector<Hexel*> hexels, double energyMin);
+  
+  RecHits* GetHitsInLayer(int layer);
+private:
+  RecHitCalibration *recHitCalib;
 };
 
 class RecHit {
@@ -52,6 +63,8 @@ public:
   RecHit();
   RecHit(float _eta, float _phi, float _energy, float _x, float _y, float _z, int _layer, unsigned int _detid, float _thickness, bool _isHalf, float _time, int _cluster2d);
   ~RecHit();
+  
+  Hexel* GetHexel();
   
   float eta;
   float phi;

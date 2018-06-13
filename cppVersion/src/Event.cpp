@@ -17,5 +17,7 @@ Event::Event(TTree* _tree) : tree(_tree)
 
 Event::~Event()
 {
-// tree should be deleted here
+  delete genParticles;
+  delete recHits;
+  delete simClusters;
 }

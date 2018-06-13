@@ -24,7 +24,7 @@ public:
   RecHits *recHits;
   SimClusters *simClusters;
 private:
-  TTree *tree; // do I need to keep this tree here?
+  TTree *tree;
   
 };
 

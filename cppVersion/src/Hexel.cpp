@@ -6,41 +6,28 @@
 
 #include "Hexel.hpp"
 
-Hexel::Hexel(RecHit *hit,double _sigmaNoise)
+Hexel::Hexel(double _eta, double _phi, double _x, double _y, double _z, double _weight,double _thickness,double _time,
+             int _detid, int _layer, int _clusterRECOindex,
+             bool _isHalf) :
+eta(_eta),
+phi(_phi),
+x(_x),
+y(_y),
+z(_z),
+weight(_weight),
+thickness(_thickness),
+time(_time),
+detid(_detid),
+layer(_layer),
+clusterRECOIndex(_clusterRECOindex),
+isHalf(_isHalf)
 {
-  eta = 0;
-  phi = 0;
-  x = 0;
-  y = 0;
-  z = 0;
-  time = -1;
-  isHalfCell = false;
-  weight = 0;
-  fraction = 1;
-  detid = -1;
   rho = 0;
+  fraction = 1;
   delta = 0;
-  nearestHigher = -1;
+  sigmaNoise = 0.;
   isBorder = false;
   isHalo = false;
+  nearestHigher = -1;
   clusterIndex = -1;
-  clusterRECOIndex = -1;
-  sigmaNoise = 0.;
-  thickness = 0.;
-  
-  if(hit){
-    eta = hit->eta;
-    phi = hit->phi;
-    x = hit->x;
-    y = hit->y;
-    z = hit->z;
-    weight = hit->energy;
-    detid = hit->detid;
-    layer = hit->layer;
-    isHalfCell = hit->isHalf;
-    thickness = hit->thickness;
-    time = hit->time;
-    clusterRECOIndex = hit->cluster2d;
-  }
-  if(_sigmaNoise>=0) sigmaNoise = _sigmaNoise;
 }

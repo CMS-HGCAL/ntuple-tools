@@ -6,7 +6,10 @@
 
 #include "BasicCluster.hpp"
 
+#include <TMath.h>
+
 using namespace std;
+using namespace TMath;
 
 BasicCluster::BasicCluster(double _energy,
                            std::tuple<double,double,double> position,
