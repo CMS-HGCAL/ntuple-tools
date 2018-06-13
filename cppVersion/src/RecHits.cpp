@@ -109,12 +109,12 @@ double RecHits::GetYmax()
   return *max_element(y->begin(), y->end());
 }
 
-RecHits* RecHits::GetHitsAboveNoice(double ecut)
+RecHits* RecHits::GetHitsAboveNoise(double ecut)
 {
   double sigmaNoise = 1.;
   double thickIndex = -1;
   
-  RecHits *hitsAboveNoice = new RecHits();
+  RecHits *hitsAboveNoise = new RecHits();
   RecHit *hit;
   
   for(int iHit=0;iHit<N();iHit++){
@@ -132,18 +132,18 @@ RecHits* RecHits::GetHitsAboveNoice(double ecut)
     sigmaNoise = 0.001 * recHitCalib->sigmaNoiseMeV(layer, thickIndex);  // returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
     if(hit->energy >= ecut * sigmaNoise){
       // checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
-      hitsAboveNoice->AddHit(hit);
+      hitsAboveNoise->AddHit(hit);
     }
     delete hit;
   }
-  return hitsAboveNoice;
+  return hitsAboveNoise;
 }
 
 // groups hits into array of clusters
 void RecHits::GetHitsPerCluster(vector<RecHits*> &hitsPerCluster, SimClusters *clusters, double energyMin)
 {
-  RecHits *hitsAboveNoice = GetHitsAboveNoice(energyMin);
-  vector<unsigned int> *hitsDetIDs = hitsAboveNoice->detid;
+  RecHits *hitsAboveNoise = GetHitsAboveNoise(energyMin);
+  vector<unsigned int> *hitsDetIDs = hitsAboveNoise->detid;
   
   for(int iCluster=0;iCluster<clusters->N();iCluster++){
     vector<unsigned int> hitsInClusterDetIDs = clusters->hits->at(iCluster);
@@ -169,10 +169,10 @@ void RecHits::GetHitsPerCluster(vector<RecHits*> &hitsPerCluster, SimClusters *c
 // groups hits associated with hexels into array of clusters
 void RecHits::GetRecHitsPerHexel(vector<RecHits*> &hitsClustered,vector<Hexel*> hexels, double energyMin)
 {
-  RecHits *hitsAboveNoice = GetHitsAboveNoice(energyMin);
+  RecHits *hitsAboveNoise = GetHitsAboveNoise(energyMin);
   
   vector<int> clusterIndices;
-  vector<unsigned int> *hitDetIDs = hitsAboveNoice->detid; //ok
+  vector<unsigned int> *hitDetIDs = hitsAboveNoise->detid; //ok
   vector<int> hexelDetIDs;
   
   for(Hexel *hexel : hexels){

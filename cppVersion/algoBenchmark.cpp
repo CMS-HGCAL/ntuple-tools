@@ -1,6 +1,6 @@
 #include "Event.hpp"
 #include "RecHitCalibration.hpp"
-#include "ImagineAlgo.hpp"
+#include "ImagingAlgo.hpp"
 #include "Helpers.hpp"
 
 #include <TROOT.h>

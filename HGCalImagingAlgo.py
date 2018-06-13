@@ -23,7 +23,7 @@ from RecHitCalibration import RecHitCalibration
 
 class Hexel:
 
-    def __init__(self, rHit=None, sigmaNoise=None, usePandas=False):
+    def __init__(self, rHit=None, sigmaNoise=None):
         self.eta = 0
         self.phi = 0
         self.x = 0
@@ -44,20 +44,6 @@ class Hexel:
         self.sigmaNoise = 0.
         self.thickness = 0.
         if rHit is not None:
-          if usePandas:
-            self.eta = rHit["eta"]
-            self.phi = rHit["phi"]
-            self.x = rHit["x"]
-            self.y = rHit["y"]
-            self.z = rHit["z"]
-            self.weight = rHit["energy"]
-            self.detid = rHit["detid"]
-            self.layer = rHit["layer"]
-            self.isHalfCell = rHit["isHalf"]
-            self.thickness = rHit["thickness"]
-            self.time = rHit["time"]
-            self.clusterRECOIndex = rHit["cluster2d"]
-          else:
             self.eta = rHit.eta()
             self.phi = rHit.phi()
             self.x = rHit.x()
@@ -180,13 +166,11 @@ class HGCalImagingAlgo:
             delta_c = self.deltac[1]
         else:
             delta_c = self.deltac[2]
-        
         for iNode in nd:
             # search in a circle of radius delta_c or delta_c*sqrt(2) (not identical to search in the box delta_c)
             found = lp.query_ball_point([iNode.x, iNode.y], delta_c)
             for j in found:
-                dist = distanceReal2(iNode, nd[j])
-                if(dist < delta_c * delta_c):
+                if(distanceReal2(iNode, nd[j]) < delta_c * delta_c):
                     iNode.rho += nd[j].weight
                     if(iNode.rho > maxdensity):
                         maxdensity = iNode.rho
@@ -194,10 +178,9 @@ class HGCalImagingAlgo:
 
     # calculate distance to the nearest hit with higher density (still does not use KDTree)
     def calculateDistanceToHigher(self, nd):
-      
         # sort vector of Hexels by decreasing local density
         rs = sorted(range(len(nd)), key=lambda k: nd[k].rho, reverse=True)
-        
+
         # intial values, and check if there are any hits
         maxdensity = 0.0
         nearestHigher = -1
@@ -234,23 +217,22 @@ class HGCalImagingAlgo:
 
     # find cluster centers that satisfy delta & maxdensity/kappa criteria, and assign coresponding hexels
     def findAndAssignClusters(self, nd, points_0, points_1, lp, maxdensity, layer, verbosityLevel=None):
-      
+
         # adjust verbosityLevel if necessary
         if verbosityLevel is None:
             verbosityLevel = self.verbosityLevel
         clusterIndex = 0
-        
         # sort Hexels by decreasing local density and by decreasing distance to higher
         rs = sorted(range(len(nd)), key=lambda k: nd[k].rho, reverse=True)  # indices sorted by decreasing rho
         ds = sorted(range(len(nd)), key=lambda k: nd[k].delta, reverse=True)  # sort in decreasing distance to higher
-        
+
         if(layer <= self.lastLayerEE):
             delta_c = self.deltac[0]
         elif(layer <= self.lastLayerFH):
             delta_c = self.deltac[1]
         else:
             delta_c = self.deltac[2]
-    
+
         for i in range(0, len(nd)):
             if(nd[ds[i]].delta < delta_c):
                 break  # no more cluster centers to be looked at
@@ -267,6 +249,7 @@ class HGCalImagingAlgo:
                 print("Adding new cluster with index ", clusterIndex)
                 print("Cluster center is hit ", ds[i], " with density rho: ", nd[ds[i]].rho, "and delta: ", nd[ds[i]].delta, "\n")
             clusterIndex += 1
+
         # at this point clusterIndex is equal to the number of cluster centers - if it is zero we are done
         if(clusterIndex == 0):
             return []
@@ -323,41 +306,29 @@ class HGCalImagingAlgo:
         return current_clusters
 
     # make list of Hexels out of rechits
-    def populate(self, rHitsCollection, ecut=None, usePandas=False):
+    def populate(self, rHitsCollection, ecut=None):
         # adjust ecut if necessary
         if ecut is None:
             ecut = self.ecut
         # init 2D hexels
         points = [[] for i in range(0, 2 * (self.maxlayer + 1))]  # initialise list of per-layer-lists of hexels
-        
+
         # loop over all hits and create the Hexel structure, skip energies below ecut
-        if usePandas:
-          for index, rHit in rHitsCollection.iterrows():
-            if (rHit["layer"] > self.maxlayer):
-              continue  # current protection
-            # energy treshold dependent on sensor
-            sigmaNoise, aboveThreshold = recHitAboveThreshold(rHit, ecut, self.dependSensor, usePandas)
-            if not aboveThreshold:
-              continue
-            # organise layers accoring to the sgn(z)
-            layerID = rHit["layer"] + (rHit["z"] > 0) * (self.maxlayer + 1)  # +1 - yes or no?
-            points[layerID].append(Hexel(rHit, sigmaNoise, usePandas))
-        else:
-          for rHit in rHitsCollection:
+        for rHit in rHitsCollection:
             if (rHit.layer() > self.maxlayer):
                 continue  # current protection
             # energy treshold dependent on sensor
-            sigmaNoise, aboveThreshold = recHitAboveThreshold(rHit, ecut, self.dependSensor, usePandas)
+            sigmaNoise, aboveThreshold = recHitAboveThreshold(rHit, ecut=ecut, dependSensor=self.dependSensor)
             if not aboveThreshold:
                 continue
             # organise layers accoring to the sgn(z)
             layerID = rHit.layer() + (rHit.z() > 0) * (self.maxlayer + 1)  # +1 - yes or no?
-            points[layerID].append(Hexel(rHit, sigmaNoise, usePandas))
+            points[layerID].append(Hexel(rHit, sigmaNoise))
 
         return points
 
-    # make 2D clusters out of rechits (need to introduce class with input params: delta_c, kappa, ecut, ...)
-    def makeClusters(self, rHitsCollection, ecut=None, usePandas=False):
+    # make 2D clusters out of rechists (need to introduce class with input params: delta_c, kappa, ecut, ...)
+    def makeClusters(self, rHitsCollection, ecut=None):
         # adjust ecut if necessary
         if ecut is None:
             ecut = self.ecut
@@ -365,8 +336,8 @@ class HGCalImagingAlgo:
         clusters = [[] for i in range(0, 2 * (self.maxlayer + 1))]  # initialise list of per-layer-clusters
 
         # get the list of Hexels out of raw rechits
-        points = self.populate(rHitsCollection, ecut, usePandas)
-        
+        points = self.populate(rHitsCollection, ecut=ecut)
+
         # loop over all layers, and for each layer create a list of clusters. layers are organised according to the sgn(z)
         for layerID in range(0, 2 * (self.maxlayer + 1)):
             if (len(points[layerID]) == 0):
@@ -413,7 +384,6 @@ class HGCalImagingAlgo:
                 index += 1
             layer += 1
             clusters_v.sort(key=getEnergy, reverse=True)
-        
         return clusters_v
 
     # make multi-clusters starting from the 2D clusters, without KDTree
@@ -642,34 +612,24 @@ def getMultiClusterEnergy(multi_clu):
 # determine if the rechit energy is above the desired treshold
 
 
-def recHitAboveThreshold(rHit, ecut, dependSensor=True, usePandas=False):
+def recHitAboveThreshold(rHit, ecut, dependSensor=True):
     sigmaNoise = 1.
-    
-    layer = 0
-    thickness = 0
-    energy = 0
-    if usePandas:
-      layer = rHit["layer"]
-      thickness = rHit["thickness"]
-      energy = rHit["energy"]
-    else:
-      layer = rHit.layer()
-      thickness = rHit.thickness()
-      energy = rHit.energy()
-    
     if(dependSensor):
         thickIndex = -1
-        
-        if(layer <= HGCalImagingAlgo.lastLayerFH):  # EE + FH
-            if(thickness > 99. and thickness < 101.):     thickIndex = 0
-            elif(thickness > 199. and thickness < 201.):  thickIndex = 1
-            elif(thickness > 299. and thickness < 301.):  thickIndex = 2
-            else: print("ERROR - silicon thickness has a nonsensical value")
+        if(rHit.layer() <= HGCalImagingAlgo.lastLayerFH):  # EE + FH
+            thickness = rHit.thickness()
+            if(thickness > 99. and thickness < 101.):
+                thickIndex = 0
+            elif(thickness > 199. and thickness < 201.):
+                thickIndex = 1
+            elif(thickness > 299. and thickness < 301.):
+                thickIndex = 2
+            else:
+                print("ERROR - silicon thickness has a nonsensical value")
         # determine noise for each sensor/subdetector using RecHitCalibration library
-
         RecHitCalib = RecHitCalibration()
-        sigmaNoise = 0.001 * RecHitCalib.sigmaNoiseMeV(layer, thickIndex)  # returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
-    aboveThreshold = energy >= ecut * sigmaNoise  # this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
+        sigmaNoise = 0.001 * RecHitCalib.sigmaNoiseMeV(rHit.layer(), thickIndex)  # returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
+    aboveThreshold = rHit.energy() >= ecut * sigmaNoise  # this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
     return sigmaNoise, aboveThreshold
 
 

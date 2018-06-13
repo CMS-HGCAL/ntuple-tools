@@ -46,7 +46,7 @@ public:
   RecHit* GetHit(int index);
   void AddHit(RecHit *hit);
   
-  RecHits* GetHitsAboveNoice(double ecut);
+  RecHits* GetHitsAboveNoise(double ecut);
   void GetHitsPerCluster(std::vector<RecHits*> &hitsPerCluster,
                          SimClusters *clusters, double energyMin);
   

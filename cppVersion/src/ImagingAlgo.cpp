@@ -4,7 +4,7 @@
 //  Created by Jeremi Niedziela on 12/06/2018.
 //
 
-#include "ImagineAlgo.hpp"
+#include "ImagingAlgo.hpp"
 
 using namespace std;
 
@@ -274,12 +274,9 @@ void ImagingAlgo::populate(vector<vector<Hexel*>> &points, RecHits *hits,double 
     }
     // organise layers accoring to the sgn(z)
     int layerID = hit->layer + (hit->z > 0) * (maxlayer + 1);  // +1 - yes or no?
-    double sigmaNoice = get<1>(thresholdResult);
+    double sigmaNoise = get<1>(thresholdResult);
     Hexel *hexel = hit->GetHexel();
-//    Hexel *hexel = new Hexel(hit);
-//    Hexel *hexel = new Hexel(hit->eta,hit->phi,hit->x,hit->y,hit->z,hit->energy,hit->thickness,hit->time,hit->detid,hit->layer,hit->cluster2d,hit->isHalf);
-    
-    hexel->sigmaNoise = sigmaNoice;
+    hexel->sigmaNoise = sigmaNoise;
     points[layerID].push_back(hexel);
     delete hit;
   }
