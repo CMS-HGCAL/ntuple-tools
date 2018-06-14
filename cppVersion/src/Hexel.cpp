@@ -31,3 +31,8 @@ isHalf(_isHalf)
   nearestHigher = -1;
   clusterIndex = -1;
 }
+
+Hexel::~Hexel()
+{
+  
+}

@@ -11,15 +11,18 @@ eta(nullptr),
 phi(nullptr),
 energy(nullptr),
 hits(nullptr)
-//tree(_tree)
 {
   _tree->SetBranchAddress("simcluster_eta",&eta);
   _tree->SetBranchAddress("simcluster_phi",&phi);
   _tree->SetBranchAddress("simcluster_energy",&energy);
   _tree->SetBranchAddress("simcluster_hits",&hits);
+  // ... more branches can be add in the future if needed
 }
 
 SimClusters::~SimClusters()
 {
-  
+  if(eta){ eta->clear(); delete eta;}
+  if(phi){ phi->clear(); delete phi;}
+  if(energy){ energy->clear(); delete energy;}
+  if(hits){ hits->clear(); delete hits;}
 }

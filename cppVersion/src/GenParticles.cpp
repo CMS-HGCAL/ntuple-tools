@@ -6,12 +6,14 @@
 
 #include "GenParticles.hpp"
 
-GenParticles::GenParticles(TTree *_tree):reachedEE(nullptr)
+GenParticles::GenParticles(TTree *_tree) :
+reachedEE(nullptr)
 {
   _tree->SetBranchAddress("genpart_reachedEE",&reachedEE);
+  //... more branches can be added if needed
 }
 
 GenParticles::~GenParticles()
 {
-  
+  if(reachedEE){ reachedEE->clear(); delete reachedEE;}
 }
