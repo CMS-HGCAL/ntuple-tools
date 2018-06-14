@@ -38,24 +38,28 @@ int maxNtuple = 11;
 string inputPath = "../../data/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_";
 
 string outDir = "../clusteringResultsCXX/pythonCompare";
+//
 //----------------------------------------------------------------------------------------
 
 
 
-// get clustered hexels by re-running the clustering algorithm
-void getRecClustersFromImagingAlgo(vector<Hexel*> &hexelsClustered, RecHits *hits, ImagingAlgo *algo)
+/// Get clustered hexels by re-running the clustering algorithm
+/// \param hexelsClustered Will be filled with non-halo hexels containing info about cluster index and layer
+/// \param hits Rec hits to be clusterized
+/// \param algo Algorithm to be used for clusterization
+void getRecClustersFromImagingAlgo(vector<shared_ptr<Hexel>> &hexelsClustered, shared_ptr<RecHits> &hits, ImagingAlgo *algo)
 {
   // get 3D array of hexels (per layer, per 2D cluster)
-  std::vector<std::vector<std::vector<Hexel*>>> clusters2D;
-  algo->makeClusters(clusters2D, hits,energyMin);
+  vector<vector<vector<std::unique_ptr<Hexel>>>> clusters2D;
+  algo->makeClusters(clusters2D, hits);
   
   // get flat list of 2D clusters (as basic clusters)
-  std::vector<BasicCluster*> clusters2Dflat;
+  std::vector<unique_ptr<BasicCluster>> clusters2Dflat;
   algo->getClusters(clusters2Dflat, clusters2D);
   
   // keep only non-halo hexels
-  for(BasicCluster *basicCluster : clusters2Dflat){
-    for(Hexel *hexel : basicCluster->thisCluster){
+  for(auto &basicCluster : clusters2Dflat){
+    for(auto hexel : basicCluster->GetHexelsInThisCluster()){
       if(!hexel->isHalo){
         hexelsClustered.push_back(hexel);
       }
@@ -96,7 +100,7 @@ int main()
   
       // check if particles reached EE
       bool skipEvent = false;
-      for(auto reachedEE : *(hgCalEvent->genParticles->reachedEE)){
+      for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
         if(reachedEE==0){
           skipEvent = true;
           break;
@@ -109,14 +113,14 @@ int main()
       
       cout<<"\nCurrent event:"<<iEvent<<endl;
       
-      RecHits *recHitsRaw = hgCalEvent->recHits;
-      SimClusters *simClusters = hgCalEvent->simClusters;
+      shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
+      SimClusters *simClusters = hgCalEvent->GetSimClusters();
       
       // get simulated hits associated with a cluster
       cout<<"preparing simulated hits and clusters...";
       start = now();
       vector<RecHits*> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerCluster(simHitsPerClusterArray, simClusters, energyMin);
+      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters, energyMin);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
       
@@ -124,7 +128,7 @@ int main()
       // re-run clustering with HGCalAlgo, save to file
       cout<<"running clustering algorithm...";
       start = now();
-      std::vector<Hexel*> recClusters;
+      std::vector<shared_ptr<Hexel>> recClusters;
       getRecClustersFromImagingAlgo(recClusters, recHitsRaw, algo);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
@@ -138,7 +142,6 @@ int main()
       cout<<" done ("<<duration(start,end)<<" s)\n"<<endl;
       
       // perform final analysis, fill in histograms and save to files
-      
       TH2D *energyComparisonHist = new TH2D("energy comparison","energy comparison",100,0,100,100,0,100);
       TH2D *energyComparisonOverlapHist = new TH2D("energy comparison overlap.","energy comparison overlap.",100,0,100,100,0,100);
       
@@ -147,11 +150,10 @@ int main()
       
       
       for(int layer=minLayer;layer<maxLayer;layer++){
-//        cout<<"layer:"<<layer<<endl;
         for(int recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
           
           RecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
-          RecHits *recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
+          unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
           
           if(recHitsInLayerInCluster->N()==0) continue;
           
@@ -169,7 +171,7 @@ int main()
           
           for(int simClusterIndex=0;simClusterIndex<simHitsPerClusterArray.size();simClusterIndex++){
             RecHits *simCluster = simHitsPerClusterArray[simClusterIndex];
-            RecHits *simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
+            unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
             
             if(simHitsInLayerInCluster->N()==0) continue;
             
@@ -203,6 +205,9 @@ int main()
       
       auto endEvent = now();
       cout<<"Total event processing time: "<<duration(startEvent,endEvent)<<" s"<<endl;
+      
+      recHitsPerClusterArray.clear();
+      simHitsPerClusterArray.clear();
       
     }
     delete tree;

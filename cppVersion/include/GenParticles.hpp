@@ -11,16 +11,21 @@
 
 #include <vector>
 
-class GenParticles {
+/// Collection of generated particles
+class GenParticles{
 public:
+  /// Default constructor
+  /// \param _tree Input tree from which generated partiles will be read
   GenParticles(TTree *_tree);
   ~GenParticles();
   
-  std::vector<int> *reachedEE;
+  void Clean();
+  
+  /// Returns pointer to vector telling for each gen particle if it reached the EE
+  inline std::vector<int>* GetReachedEE(){return reachedEE;}
   
 private:
-//  TTree *tree;
-  
+  std::vector<int> *reachedEE; ///< Info whether or not particle reached EE
 };
 
 #endif /* HGGenParticle_hpp */

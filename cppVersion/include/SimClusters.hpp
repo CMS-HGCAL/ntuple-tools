@@ -9,20 +9,25 @@
 
 #include <TTree.h>
 
+///  SimCluster keeps basic information about simulated clusters
 class SimClusters {
 public:
+  /// Default constructor
+  /// \param _tree Input tree from which sim clusters will be read
   SimClusters(TTree *_tree);
   ~SimClusters();
   
-  int N(){return (int)eta->size();}
+  /// Returns number of clusters
+  inline int N(){return (int)eta->size();}
   
-  std::vector<float> *eta;
-  std::vector<float> *phi;
-  std::vector<float> *energy;
-  std::vector<std::vector<unsigned int>> *hits;
+  /// Returns detIDs of hits grouped by cluster
+  inline std::vector<std::vector<unsigned int>>* GetHits(){return hits;}
   
 private:
-//  TTree *tree;
+  std::vector<float> *eta;    ///< Pseudorapidity values for each of the clusters
+  std::vector<float> *phi;    ///< Polar anlges values for each of the clusters
+  std::vector<float> *energy; ///< Energy values for each of the clusters (GeV)
+  std::vector<std::vector<unsigned int>> *hits; /// Vector of detIDs of hits belonging to each of the clusters
   
 };
 

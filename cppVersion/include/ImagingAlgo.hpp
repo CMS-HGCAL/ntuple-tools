@@ -3,12 +3,7 @@
 //
 //  Created by Jeremi Niedziela on 07/06/2018.
 //
-//  Copy of the python script HGCalImagineAlgo.py:
-//
-//  Implementation of (stand-alone) functionalities of HGCalImagingAlgo,
-//  HGCal3DClustering, and HGCalDepthPreClusterer based on
-//  their CMSSW implementations mainly in RecoLocalCalo/HGCalRecAlgos
-//
+//  Copy of the python script HGCalImagineAlgo.py
 
 #ifndef HGCalImagineAlgo_hpp
 #define HGCalImagineAlgo_hpp
@@ -23,59 +18,90 @@
 #include <numeric>
 #include <functional>
 
-// definition of the HGCalImagingAlgo class's methods & variables
+///  ImagingAlgo performs 2D clusterization of hits.
+///
+///  Implementation of (stand-alone) functionalities of HGCalImagingAlgo
+///  based on their CMSSW implementations mainly in RecoLocalCalo/HGCalRecAlgos.
+
 class ImagingAlgo {
 public:
+  /// Default constructor
+  /// \param _ecut Energy cut (minimum)
+  /// \param _deltac Radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector: EE, FH, BH)
+  /// \param _minClusters Request at least minClusters+1 2D clusters
+  /// \param _dependSensor Depend on the sensor type
+  /// \param _verbosityLevel Verbosity level of the algo (0 - no output, 1 - basic output, 2 - debug)
   ImagingAlgo(double _ecut=-1,double _deltac[3]=0, int _minClusters=-1, int _dependSensor=false,int _verbosityLevel=0);
+  ~ImagingAlgo();
   
-  // calculate distance to the nearest hit with higher density (still does not use KDTree)
-  void calculateDistanceToHigher(std::vector<Hexel*> &nodes);
+  /// Calculates distance to the nearest hit with higher density
+  /// \param nodes Nodes will be filled with the information about nearest higher-density hit
+  void calculateDistanceToHigher(std::vector<std::unique_ptr<Hexel>> &nodes);
  
-  // find cluster centers that satisfy delta & maxdensity/kappa criteria, and assign coresponding hexels
-  void findAndAssignClusters(std::vector<std::vector<Hexel*>> &current_clusters,
-                             std::vector<Hexel*> &nodes,
+  /// Find cluster centers that satisfy delta & maxdensity/kappa criteria, and assign coresponding hexels
+  /// \param clusters Will be filled with hexels grouped by clusters
+  /// \param nodes Input hexels (in given layer) to be assigned to clusters
+  /// \param points_0 X coordinates of hexels all hexels in this layer
+  /// \param points_1 Y coordinates of hexels all hexels in this layer
+  /// \param maxDensity Maximum local density
+  /// \param layer Current layer
+  void findAndAssignClusters(std::vector<std::vector<std::unique_ptr<Hexel>>> &clusters,
+                             std::vector<std::unique_ptr<Hexel>> &nodes,
                              std::vector<double> points_0,std::vector<double> points_1,
-                             double maxdensity,int layer);
+                             double maxDensity,int layer);
   
-  // make list of Hexels out of rechits
-  void populate(std::vector<std::vector<Hexel*>> &points, RecHits *hits,double _ecut=-1);
+  /// Make list of Hexels out of rechits
+  /// \param points Will be filled with hexels grouped by layer
+  /// \param hits Input hits to be grouped by layer
+  void populate(std::vector<std::vector<std::unique_ptr<Hexel>>> &points, std::shared_ptr<RecHits> &hits);
   
-  // make 2D clusters out of rechits (need to introduce class with input params: delta_c, kappa, ecut, ...)
-  void makeClusters(std::vector<std::vector<std::vector<Hexel*>>> &clusters, RecHits *hits,double _ecut=-1);
+  /// Make 2D clusters out of recHits (need to introduce class with input params: delta_c, kappa, ecut, ...)
+  /// \param clusters Will be filled with hits grouped by layer by cluster
+  /// \param hits Input hits to be clusterized
+  void makeClusters(std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters, std::shared_ptr<RecHits> &hits);
   
-    // get basic clusters from the list of 2D clusters
-  void getClusters(std::vector<BasicCluster*> &clusters_v,
-                   std::vector<std::vector<std::vector<Hexel*>>> &clusters);
+  /// Get flat list of BasicClusters from the list of hexels grouped by layer by cluster
+  /// \param clustersFlat Will be filled with BasicClusters
+  /// \param clusters Input hexels grouped by layer by cluster to be flatten
+  void getClusters(std::vector<std::unique_ptr<BasicCluster>> &clustersFlat,
+                   std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters);
   
-  std::tuple<double,double,double>  calculatePosition(std::vector<Hexel*> &cluster);
-  std::tuple<bool,double>           recHitAboveThreshold(RecHit *hit,double _ecut,bool dependSensor=true);
+  /// Calculates XYZ position of a cluster
+  /// \param cluster Input cluster of hexels
+  /// \return Returns a tuple containing X,Y,Z coordinates of the cluster
+  std::tuple<double,double,double>  calculatePosition(std::vector<std::unique_ptr<Hexel>> &cluster);
+    
+  /// Sorts hexels by rho
+  /// \param v Input vector of hexels to sort (will not be modified)
+  /// \return Returns vector of sorted indices
+  std::vector<int> sortIndicesRhoInverted(const std::vector<std::unique_ptr<Hexel>> &v);
   
-  std::vector<int> sortIndicesRhoInverted(const std::vector<Hexel*> &v);
-  std::vector<int> sortIndicesDeltaInverted(const std::vector<Hexel*> &v);
-  std::vector<int> query_ball_point(std::vector<double> lpX, std::vector<double> lpY, double x, double y, double r);
+  /// Sorts hexels by delta
+  /// \param v Input vector of hexels to sort (will not be modified)
+  /// \return Returns vector of sorted indices
+  std::vector<int> sortIndicesDeltaInverted(const std::vector<std::unique_ptr<Hexel>> &v);
   
-  // distance squared (in x/y) between the two objects (hexels, clusters)
-  double distanceReal2(double x1, double y1, double x2, double y2);
+  /// Calculate max local density in a 2D plane of hexels
+  /// \param hexels A vector of hexels for which max local density will be calculated
+  /// \param lpX X coordinates of all hexels in this layer
+  /// \param lpY Y coordinates of all hexels in this layer
+  /// \param layer Current layer
+  /// \return Returns max local density
+  double calculateLocalDensity(std::vector<std::unique_ptr<Hexel>> &hexels,
+                               std::vector<double> lpX, std::vector<double> lpY, int layer);
   
-  // calculate max local density in a 2D plane of hexels
-  double calculateLocalDensity(std::vector<Hexel*> &nd,std::vector<double> lpX, std::vector<double> lpY, int layer);
-  
+  /// Change verbosity level of the algorithm
   inline void SetVerbosityLevel(int level){verbosityLevel=level;}
   
 private:
-  // detector layers to consider
-  int lastLayerEE = 28;  // last layer of EE
-  int lastLayerFH = 40;  // last layer of FH
-  int maxlayer = 52;  // last layer of BH
+  bool dependSensor;     ///< Should algo depend on the sensor type
+  double deltac[3];      ///< Radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector)
+  double kappa;          ///< ??
+  double ecut;           ///< Minimum hit energy
+  int minClusters;       ///< Request at least minClusters+1 2D clusters
+  int verbosityLevel;    ///< Current verbosity level
   
-  bool dependSensor;
-  double deltac[3];
-  double kappa;
-  double ecut;
-  int minClusters;
-  int verbosityLevel;
-  
-  RecHitCalibration *recHitCalib;
+  RecHitCalibration *recHitCalib; ///< Contains calibration of rec hits
 };
 
 
