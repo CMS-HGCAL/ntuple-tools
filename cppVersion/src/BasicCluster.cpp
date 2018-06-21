@@ -4,6 +4,8 @@
 //  Created by Jeremi Niedziela on 12/06/2018.
 //
 
+#include <memory>
+
 #include "BasicCluster.hpp"
 
 #include <TMath.h>

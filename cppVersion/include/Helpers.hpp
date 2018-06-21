@@ -6,7 +6,7 @@
 
 #ifndef Helpers_h
 #define Helpers_h
-
+#include <chrono>
 
 // Define constants
 const int lastLayerEE = 28;  ///< Last layer of EE
@@ -35,8 +35,8 @@ inline double distanceReal2(double x1, double y1, double x2, double y2)
 inline std::vector<int> queryBallPoint(std::vector<double> lpX, std::vector<double> lpY, double x, double y, double r)
 {
   std::vector<int> foundIndices;
-  
-  for(int i=0;i<lpX.size();i++){
+
+  for(uint i=0;i<lpX.size();i++){
     if(pow(lpX[i]-x,2)+pow(lpY[i]-y,2) <= pow(r,2)){
       foundIndices.push_back(i);
     }
