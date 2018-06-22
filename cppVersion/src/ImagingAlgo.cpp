@@ -4,6 +4,7 @@
 //  Created by Jeremi Niedziela on 12/06/2018.
 //
 
+#include <algorithm>
 #include "ImagingAlgo.hpp"
 #include "Helpers.hpp"
 
@@ -12,11 +13,11 @@ using namespace std;
 ImagingAlgo::ImagingAlgo(double _ecut,double _deltac[3],int _minClusters, int _dependSensor,int _verbosityLevel)
 {
   recHitCalib = new RecHitCalibration();
-  
+
   dependSensor = _dependSensor;
   for(int i=0;i<3;i++){deltac[i] = 2.0;};
   minClusters = 3;
-  
+
   if(!dependSensor){// (no sensor dependence, eta/phi coordinates for multi-clustering)
     kappa = 10.;
     ecut = 0.060;   // in absolute units
@@ -29,11 +30,11 @@ ImagingAlgo::ImagingAlgo(double _ecut,double _deltac[3],int _minClusters, int _d
   if(_ecut>=0) ecut = _ecut;
   if(_deltac[0]>=0) for(int i=0;i<3;i++){deltac[i] = _deltac[i];};
   if(_minClusters>=0) minClusters = _minClusters;
-  
+
   // others
   verbosityLevel = 0;
   if(_verbosityLevel>0) verbosityLevel = _verbosityLevel;
-  
+
   // print out the setup
   if(verbosityLevel >= 1){
     cout<<"HGCalImagingAlgo setup: "<<endl;
@@ -57,11 +58,11 @@ double ImagingAlgo::calculateLocalDensity(vector<unique_ptr<Hexel>> &hexels,
 {
   double maxdensity = 0;
   double delta_c = 0;
-  
+
   if(layer <= lastLayerEE)       delta_c = deltac[0];
   else if(layer <= lastLayerFH)  delta_c = deltac[1];
   else                           delta_c = deltac[2];
-  
+
   for(unique_ptr<Hexel> &iNode : hexels){
     // search in a circle of radius delta_c or delta_c*sqrt(2) (not identical to search in the box delta_c)
     auto found = queryBallPoint(lpX, lpY, iNode->x, iNode->y, delta_c);
@@ -96,13 +97,13 @@ void ImagingAlgo::calculateDistanceToHigher(vector<unique_ptr<Hexel>> &nodes)
 {
   // sort vector of Hexels by decreasing local density
   vector<int> sortedIndices = sortIndicesRhoInverted(nodes);
-  
+
   // intial values, and check if there are any hits
   double maxdensity = 0.0;
   double nearestHigher = -1;
   if(nodes.size() > 0) maxdensity = nodes[sortedIndices[0]]->rho;
   else return;
-  
+
   //   start by setting delta for the highest density hit to the most distant hit - this is a convention
   double dist2 = 0.;
   for(auto &jNode : nodes){
@@ -111,15 +112,15 @@ void ImagingAlgo::calculateDistanceToHigher(vector<unique_ptr<Hexel>> &nodes)
   }
   nodes[sortedIndices[0]]->delta = pow(dist2, 0.5);
   nodes[sortedIndices[0]]->nearestHigher = nearestHigher;
-  
+
   // now we save the largest distance as a starting point
   double max_dist2 = dist2;
   // calculate all remaining distances to the nearest higher density
-  for(int oi=1;oi<nodes.size();oi++){  // start from second-highest density
+  for(uint oi=1;oi<nodes.size();oi++){  // start from second-highest density
     dist2 = max_dist2;
     // we only need to check up to oi since hits are ordered by decreasing density
     // and all points coming BEFORE oi are guaranteed to have higher rho and the ones AFTER to have lower rho
-    for(int oj=0;oj<oi;oj++){
+    for(uint oj=0;oj<oi;oj++){
       double tmp = distanceReal2(nodes[sortedIndices[oi]]->x,nodes[sortedIndices[oi]]->y, nodes[sortedIndices[oj]]->x,nodes[sortedIndices[oj]]->y);
       if(tmp <= dist2){  // this "<=" instead of "<" addresses the (rare) case when there are only two hits
         dist2 = tmp;
@@ -137,16 +138,16 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
                                              double maxDensity,int layer)
 {
   int clusterIndex = 0;
-  
+
   vector<int> rs = sortIndicesRhoInverted(nodes);
   vector<int> ds = sortIndicesDeltaInverted(nodes);
-  
+
   double delta_c=0;
   if(layer <= lastLayerEE)      delta_c = deltac[0];
   else if(layer <= lastLayerFH) delta_c = deltac[1];
   else                          delta_c = deltac[2];
-  
-  for(int i=0; i<nodes.size();i++){
+
+  for(uint i=0; i<nodes.size();i++){
     if(nodes[ds[i]]->delta < delta_c) break;  // no more cluster centers to be looked at
     // skip this as a potential cluster center because it fails the density cut
     if(dependSensor){
@@ -159,7 +160,7 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
     }
     // store cluster index
     nodes[ds[i]]->clusterIndex = clusterIndex;
-    
+
     if(verbosityLevel >= 2){
       cout<<"Adding new cluster with index "<<clusterIndex<<endl;
       cout<<"Cluster center is hit "<<&nodes[ds[i]]<<" with density rho: "<<nodes[ds[i]]->rho<<"and delta: "<< nodes[ds[i]]->delta<<endl;
@@ -168,27 +169,27 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   }
   // at this point clusterIndex is equal to the number of cluster centers - if it is zero we are done
   if(clusterIndex == 0) return;
-  
+
   for(int i=0;i<clusterIndex;i++){
     clusters.push_back(vector<unique_ptr<Hexel>>());
   }
-  
+
   // assign to clusters, using the nearestHigher set from previous step (always set except for top density hit that is skipped)...
-  for(int oi=1;oi<nodes.size();oi++){
+  for(uint oi=1;oi<nodes.size();oi++){
     int ci = nodes[rs[oi]]->clusterIndex;
     if(ci == -1) nodes[rs[oi]]->clusterIndex = nodes[nodes[rs[oi]]->nearestHigher]->clusterIndex;
   }
-  
+
   // assign points closer than dc to other clusters to border region and find critical border density
   double rho_b[clusterIndex];
   for(int i=0;i<clusterIndex;i++){rho_b[i]=0.;}
-  
+
   // now loop on all hits again :( and check: if there are hits from another cluster within d_c -> flag as border hit
   for(auto &iNode : nodes){
     int ci = iNode->clusterIndex;
     bool flag_isolated = true;
     if(ci != -1){// search in a circle of radius delta_c or delta_c*sqrt(2) (not identical to search in the box delta_c)
-      
+
       auto found = queryBallPoint(points_0,points_1, iNode->x, iNode->y, delta_c);
       for(int j : found){
         // check if the hit is not within d_c of another cluster
@@ -201,7 +202,7 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
           }
           // because we are using two different containers, we have to make sure that we don't unflag the
           // hit when it finds *itself* closer than delta_c
-          
+
           if(dist2 < delta_c * delta_c && dist2 != 0. && nodes[j]->clusterIndex == ci){
             // this is not an isolated hit
             flag_isolated = false;
@@ -264,24 +265,24 @@ void ImagingAlgo::makeClusters(vector<vector<vector<unique_ptr<Hexel>>>> &cluste
   for(int i=0;i<2 * (maxlayer + 1);i++){
     clusters.push_back(vector<vector<unique_ptr<Hexel>>>());
   }
-  
+
   // get the list of Hexels out of raw rechits
   vector<vector<unique_ptr<Hexel>>> points;
   populate(points, hits);
-  
+
   // loop over all layers, and for each layer create a list of clusters. layers are organised according to the sgn(z)
   for(int layerID=0;layerID<2*(maxlayer + 1);layerID++){
     if (points[layerID].size() == 0) continue;  // protection
     int layer = layerID - (points[layerID][0]->z > 0) * (maxlayer + 1);  // map back to actual layer
-    
+
     vector<double> pointX; // list of hexels'coordinate 0 for current layer
     vector<double> pointY; // list of hexels'coordinate 1 for current layer
-    
+
     for(auto &hex : points[layerID]){
       pointX.push_back(hex->x);
       pointY.push_back(hex->y);
     }
-    
+
     double maxdensity = calculateLocalDensity(points[layerID],pointX,pointY, layer);
     calculateDistanceToHigher(points[layerID]);// get distances to the nearest higher density
     vector<vector<unique_ptr<Hexel>>> tmp;
@@ -297,10 +298,10 @@ void ImagingAlgo::getClusters(vector<unique_ptr<BasicCluster>> &clustersFlat,
   for(vector<vector<unique_ptr<Hexel>>> &clustersInLayer : clusters){
     for(vector<unique_ptr<Hexel>> &cluster : clustersInLayer){
       auto position = calculatePosition(cluster);
-      
+
       // skip the clusters where position could not be computed (either all weights are 0, or all hexels are tagged as Halo)
       if(get<0>(position)==0 && get<1>(position)==0 && get<2>(position)==0) continue;
-      
+
       double energy = 0;
       vector<shared_ptr<Hexel>> sharedCluster;
       for(auto &iNode : cluster){
@@ -309,7 +310,7 @@ void ImagingAlgo::getClusters(vector<unique_ptr<BasicCluster>> &clustersFlat,
       }
       clustersFlat.push_back(unique_ptr<BasicCluster>(new BasicCluster(energy,get<0>(position),get<1>(position),get<2>(position), sharedCluster)));
     }
-    
+
     sort(clustersFlat.begin( ), clustersFlat.end( ), [ ](const unique_ptr<BasicCluster> &lhs,const  unique_ptr<BasicCluster> &rhs){
       return lhs->GetEnergy() > rhs->GetEnergy();
     });
@@ -320,7 +321,7 @@ tuple<double,double,double> ImagingAlgo::calculatePosition(vector<unique_ptr<Hex
 {
   double total_weight=0, x=0, y=0, z=0;
   bool haloOnlyCluster = true;
-  
+
   // check if haloOnlyCluster
   for(auto &iNode : cluster){
     if(!iNode->isHalo) haloOnlyCluster = false;
@@ -337,7 +338,7 @@ tuple<double,double,double> ImagingAlgo::calculatePosition(vector<unique_ptr<Hex
     if(total_weight != 0.) return make_tuple(x / total_weight, y / total_weight, z / total_weight);
     else return make_tuple(0,0,0);
   }
-  
+
   double maxenergy = -1.0;
   double maxenergy_x=0., maxenergy_y=0., maxenergy_z=0.;
   for(auto &iNode : cluster){

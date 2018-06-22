@@ -1,18 +1,21 @@
 CC  = g++
 
 LDFLAGS = `root-config --libs` -Wall -Wextra -g -O0
-CCFLAGS = `root-config --cflags` -g -c -std=c++11 -Wall -Wextra -O0 -I./include/
+CCFLAGS = `root-config --cflags` -g -c -std=c++1y -Wall -Wextra -O0 -I./include/
+
+TMP_DIR = tmp
 
 all: algoBenchmark
 
-algoBenchmark: tmp/algoBenchmark.o tmp/Event.o tmp/GenParticles.o tmp/RecHits.o tmp/SimClusters.o tmp/ImagingAlgo.o tmp/Hexel.o tmp/BasicCluster.o
+algoBenchmark: ${TMP_DIR}/algoBenchmark.o ${TMP_DIR}/Event.o ${TMP_DIR}/GenParticles.o ${TMP_DIR}/RecHits.o ${TMP_DIR}/SimClusters.o ${TMP_DIR}/ImagingAlgo.o ${TMP_DIR}/Hexel.o ${TMP_DIR}/BasicCluster.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-tmp/algoBenchmark.o: algoBenchmark.cpp
+${TMP_DIR}/algoBenchmark.o: algoBenchmark.cpp
+	@mkdir -p $(@D)
 	$(CC) $^ -o $@ $(CCFLAGS)
 
-tmp/%.o: src/%.cpp
+${TMP_DIR}/%.o: src/%.cpp
 	$(CC) $^ -o $@ $(CCFLAGS)
 
 clean:
-	rm -f tmp/*.o algoBenchmark
+	rm -f ${TMP_DIR}/*.o algoBenchmark

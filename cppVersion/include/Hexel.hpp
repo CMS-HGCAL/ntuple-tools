@@ -15,12 +15,12 @@ public:
         int _detid=-1, int _layer=-1, int _clusterRECOindex=-1,
         bool _isHalf = false);
   ~Hexel();
-  
+
   // those can be read from RecHit:
   double eta, phi, x, y, z, weight, thickness, time;
-  int layer, detid, clusterRECOIndex;
+  int detid, layer, clusterRECOIndex;
   bool isHalf;
-  
+
   // those must be calculated and set later
   double rho, fraction, delta, sigmaNoise;
   bool isBorder, isHalo;
