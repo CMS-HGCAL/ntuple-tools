@@ -12,6 +12,7 @@
 #include "RecHits.hpp"
 #include "Hexel.hpp"
 #include "BasicCluster.hpp"
+#include "ConfigurationManager.hpp"
 
 #include <iostream>
 #include <vector>
@@ -26,12 +27,8 @@
 class ImagingAlgo {
 public:
   /// Default constructor
-  /// \param _ecut Energy cut (minimum)
-  /// \param _deltac Radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector: EE, FH, BH)
-  /// \param _minClusters Request at least minClusters+1 2D clusters
-  /// \param _dependSensor Depend on the sensor type
-  /// \param _verbosityLevel Verbosity level of the algo (0 - no output, 1 - basic output, 2 - debug)
-  ImagingAlgo(double _ecut=-1,double _deltac[3]=0, int _minClusters=-1, int _dependSensor=false,int _verbosityLevel=0);
+  /// \param _configPath path to the config file with in/out paths, algo parameters etc.
+  ImagingAlgo(std::string _configPath);
   ~ImagingAlgo();
   
   /// Calculates distance to the nearest hit with higher density
@@ -101,7 +98,8 @@ private:
   int minClusters;       ///< Request at least minClusters+1 2D clusters
   int verbosityLevel;    ///< Current verbosity level
   
-  RecHitCalibration *recHitCalib; ///< Contains calibration of rec hits
+  std::unique_ptr<RecHitCalibration> recHitCalib; ///< Contains calibration of rec hits
+  std::unique_ptr<ConfigurationManager> config;   ///< Manager keeping current configuration
 };
 
 

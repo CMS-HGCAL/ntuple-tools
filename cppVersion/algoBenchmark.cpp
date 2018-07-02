@@ -2,6 +2,7 @@
 #include "RecHitCalibration.hpp"
 #include "ImagingAlgo.hpp"
 #include "Helpers.hpp"
+#include "ConfigurationManager.hpp"
 
 #include <TROOT.h>
 #include <TFile.h>
@@ -16,32 +17,6 @@
 #include <memory>
 
 using namespace std;
-
-//----------------------------------------------------------------------------------------
-// HGCal Imaging Algo parameters:
-bool dependSensor = true;
-double deltac[3] = {2., 2., 5.}; // in cartesian coordiantes in cm, per detector
-int minClusters = 3; // request at least minClusters+1 2D clusters
-
-// cut on energy (also passed to ImagingAlgo):
-double energyMin = 3; // relative to the noise
-
-// test only within this layers range:
-int minLayer=0;
-int maxLayer=40;
-
-// range of ntuples to test (will be appended to the inputPath string below):
-int minNtuple = 10;
-int maxNtuple = 11;
-
-// base input and output paths:
-string inputPath = "/eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_";
-
-string outDir = "./clusteringResultsCXX";
-//
-//----------------------------------------------------------------------------------------
-
-
 
 /// Get clustered hexels by re-running the clustering algorithm
 /// \param hexelsClustered Will be filled with non-halo hexels containing info about cluster index and layer
@@ -68,18 +43,25 @@ void getRecClustersFromImagingAlgo(vector<shared_ptr<Hexel>> &hexelsClustered, s
 }
 
 
-int main()
+int main(int argc, char* argv[])
 {
+  if(argc != 2){
+    cout<<"Usage: algoBenchmark path_to_config"<<endl;
+    exit(0);
+  }
+  string configPath(argv[1]);
+  unique_ptr<ConfigurationManager> config(new ConfigurationManager(configPath));
+  
   gROOT->ProcessLine(".L loader.C+");
 
-  std::system(("mkdir -p "+outDir).c_str());
+  std::system(("mkdir -p "+config->GetOutputPath()).c_str());
 
-  ImagingAlgo *algo = new ImagingAlgo(energyMin, deltac, minClusters, dependSensor, 0);
-
-  for(int nTupleIter=minNtuple;nTupleIter<=maxNtuple;nTupleIter++){
+  ImagingAlgo *algo = new ImagingAlgo(configPath);
+  
+  for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
 
-    TFile *inFile = TFile::Open(Form("%s%i.root",inputPath.c_str(),nTupleIter));
+    TFile *inFile = TFile::Open(Form("%s%i.root",config->GetInputPath().c_str(),nTupleIter));
     TTree *tree = (TTree*)inFile->Get("ana/hgc");
     long long nEvents = tree->GetEntries();
 
@@ -94,7 +76,7 @@ int main()
 
     // start event loop
     for(int iEvent=0;iEvent<nEvents;iEvent++){
-      if(iEvent>100) break;
+      if(iEvent>config->GetMaxEventsPerTuple()) break;
       auto startEvent = now();
       hgCalEvent->GoToEvent(iEvent);
 
@@ -108,19 +90,19 @@ int main()
       }
       if(skipEvent) continue;
 
-      string eventDir = outDir+"/ntup"+to_string(nTupleIter)+"/event"+to_string(iEvent);
+      string eventDir = config->GetOutputPath()+"/ntup"+to_string(nTupleIter)+"/event"+to_string(iEvent);
       std::system(("mkdir -p "+eventDir).c_str());
 
       cout<<"\nCurrent event:"<<iEvent<<endl;
 
       shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
-      SimClusters *simClusters = hgCalEvent->GetSimClusters();
+      shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
 
       // get simulated hits associated with a cluster
       cout<<"preparing simulated hits and clusters...";
       start = now();
       vector<RecHits*> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters, energyMin);
+      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters, config->GetEnergyMin());
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
 
@@ -137,7 +119,7 @@ int main()
       cout<<"looking for hits associated with hexels...";
       start = now();
       vector<RecHits*> recHitsPerClusterArray;
-      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters, energyMin);
+      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters, config->GetEnergyMin());
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)\n"<<endl;
 
@@ -149,7 +131,7 @@ int main()
       start = now();
 
 
-      for(int layer=minLayer;layer<maxLayer;layer++){
+      for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         for(uint recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
 
           RecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
