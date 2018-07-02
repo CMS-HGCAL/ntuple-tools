@@ -22,28 +22,24 @@ public:
   
   /// Jump to event
   inline void GoToEvent(int event){
-    if(genParticles) delete genParticles;
-    genParticles = new GenParticles(tree);
-    if(simClusters) delete simClusters;
-    simClusters = new SimClusters(tree);
     tree->GetEvent(event);
   }
   
   /// Returns collection of generated particles
-  inline GenParticles* GetGenParticles(){return genParticles;}
+  inline std::shared_ptr<GenParticles> GetGenParticles(){return genParticles;}
   
   /// Returns collection of rec hits
   inline std::shared_ptr<RecHits> GetRecHits(){return recHits;}
   
   /// Returns collection of sim clusters
-  inline SimClusters* GetSimClusters(){return simClusters;}
+  inline std::shared_ptr<SimClusters> GetSimClusters(){return simClusters;}
   
 private:
   TTree *tree;  ///< Pointer to tree containing HGCal events
   
-  GenParticles *genParticles; ///< Collection of generated particles
+  std::shared_ptr<GenParticles> genParticles; ///< Collection of generated particles
   std::shared_ptr<RecHits> recHits;           ///< Collection of rec hits
-  SimClusters *simClusters;   ///< Collection of sim clusters
+  std::shared_ptr<SimClusters> simClusters;   ///< Collection of sim clusters
 };
 
 #endif /* HGCalEvent_hpp */

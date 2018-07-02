@@ -65,7 +65,7 @@ public:
   /// \param clusters Collection of simulated clusters to which hits will be assigned
   /// \param energyMin Noise threshold - minimum energy of hit to be included
   void GetHitsPerSimCluster(std::vector<RecHits*> &hitsPerCluster,
-                            SimClusters *clusters, double energyMin);
+                            std::shared_ptr<SimClusters> clusters, double energyMin);
   
   /// Groups hits associated with hexels into array of clusters
   /// \param hitsClustered Will be filled with RecHits collections, one per each cluster
@@ -113,7 +113,7 @@ public:
   /// \param ecut Minimum energy
   /// \param dependSensor Should depend on the sensor type?
   /// \return Returns a tuple: aboveThreshold, sigmaNoise
-  std::tuple<bool,double> RecHitAboveThreshold(RecHitCalibration *calib, double ecut, double dependSensor);
+  std::tuple<bool,double> RecHitAboveThreshold(double ecut, double dependSensor);
  
  float eta;        ///< Pseudorapidity values of hit
  float phi;        ///< Polar angle values of hit
@@ -127,6 +127,10 @@ public:
  bool isHalf;      ///< Is the sensor to which hit belongs half of the full size
  float time;       ///< Time signature of the hits
  int cluster2d;    ///< Index of 2D clusters to which hit belongs
+  
+private:
+  std::unique_ptr<RecHitCalibration> recHitCalibration;
+  
 };
 
 #endif /* RecHits_hpp */

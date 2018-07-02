@@ -141,14 +141,14 @@ unique_ptr<RecHits> RecHits::GetHitsAboveNoise(double ecut)
 
   for(int iHit=0;iHit<N();iHit++){
     hit = GetHit(iHit);
-    if(get<0>(hit->RecHitAboveThreshold(recHitCalib, ecut, true))){
+    if(get<0>(hit->RecHitAboveThreshold(ecut, true))){
       hitsAboveNoise->AddHit(hit);
     }
   }
   return hitsAboveNoise;
 }
 
-void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster, SimClusters *clusters, double energyMin)
+void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<SimClusters> clusters, double energyMin)
 {
   unique_ptr<RecHits> hitsAboveNoise = GetHitsAboveNoise(energyMin);
   vector<unsigned int> *hitsDetIDs = hitsAboveNoise->detid;
@@ -262,7 +262,7 @@ isHalf(_isHalf),
 time(_time),
 cluster2d(_cluster2d)
 {
-
+  recHitCalibration = unique_ptr<RecHitCalibration>(new RecHitCalibration());
 }
 
 RecHit::~RecHit()
@@ -276,7 +276,7 @@ unique_ptr<Hexel> RecHit::GetHexel()
   return hexel;
 }
 
-tuple<bool,double> RecHit::RecHitAboveThreshold(RecHitCalibration *calib, double ecut, double dependSensor)
+tuple<bool,double> RecHit::RecHitAboveThreshold(double ecut, double dependSensor)
 {
   double sigmaNoise = 1.;
 
@@ -290,7 +290,7 @@ tuple<bool,double> RecHit::RecHitAboveThreshold(RecHitCalibration *calib, double
       else cout<<"ERROR - silicon thickness has a nonsensical value"<<endl;
       // determine noise for each sensor/subdetector using RecHitCalibration library
     }
-    sigmaNoise = 0.001 * calib->sigmaNoiseMeV(layer, thickIndex);  // returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
+    sigmaNoise = 0.001 * recHitCalibration->sigmaNoiseMeV(layer, thickIndex);  // returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
   }
   bool aboveThreshold = energy >= ecut * sigmaNoise;  // this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
   return make_tuple(aboveThreshold,sigmaNoise);

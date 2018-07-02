@@ -10,13 +10,11 @@ using namespace std;
 
 Event::Event(TTree* _tree) : tree(_tree)
 {
-  genParticles = new GenParticles(_tree);
+  genParticles = shared_ptr<GenParticles>(new GenParticles(_tree));
   recHits = shared_ptr<RecHits>(new RecHits(_tree));
-  simClusters = new SimClusters(_tree);
+  simClusters = shared_ptr<SimClusters>(new SimClusters(_tree));
 }
 
 Event::~Event()
 {
-  delete genParticles;
-  delete simClusters;
 }

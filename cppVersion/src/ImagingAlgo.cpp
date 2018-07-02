@@ -10,30 +10,17 @@
 
 using namespace std;
 
-ImagingAlgo::ImagingAlgo(double _ecut,double _deltac[3],int _minClusters, int _dependSensor,int _verbosityLevel)
+ImagingAlgo::ImagingAlgo(string _configPath)
 {
-  recHitCalib = new RecHitCalibration();
+  recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
+  config = unique_ptr<ConfigurationManager>(new ConfigurationManager(_configPath));
 
-  dependSensor = _dependSensor;
-  for(int i=0;i<3;i++){deltac[i] = 2.0;};
-  minClusters = 3;
-
-  if(!dependSensor){// (no sensor dependence, eta/phi coordinates for multi-clustering)
-    kappa = 10.;
-    ecut = 0.060;   // in absolute units
-  }
-  else{             // (with sensor dependence, cartesian coordinates for multi-clustering)
-    kappa = 9.;
-    ecut = 3;       // relative to the noise
-  }
-  // adjust params according to inputs, if necessary
-  if(_ecut>=0) ecut = _ecut;
-  if(_deltac[0]>=0) for(int i=0;i<3;i++){deltac[i] = _deltac[i];};
-  if(_minClusters>=0) minClusters = _minClusters;
-
-  // others
-  verbosityLevel = 0;
-  if(_verbosityLevel>0) verbosityLevel = _verbosityLevel;
+  for(int i=0;i<3;i++){deltac[i] = config->GetDeltac()[i];}
+  dependSensor = config->GetDependSensor();
+  kappa = config->GetKappa();
+  ecut = config->GetEnergyMin();
+  minClusters = config->GetMinClusters();
+  verbosityLevel = config->GetVerbosityLevel();
 
   // print out the setup
   if(verbosityLevel >= 1){
@@ -49,7 +36,6 @@ ImagingAlgo::ImagingAlgo(double _ecut,double _deltac[3],int _minClusters, int _d
 
 ImagingAlgo::~ImagingAlgo()
 {
-  delete recHitCalib;
 }
 
 double ImagingAlgo::calculateLocalDensity(vector<unique_ptr<Hexel>> &hexels,
@@ -246,7 +232,7 @@ void ImagingAlgo::populate(vector<vector<unique_ptr<Hexel>>> &points, shared_ptr
       continue;  // current protection
     }
     // energy treshold dependent on sensor
-    auto thresholdResult = hit->RecHitAboveThreshold(recHitCalib,ecut,dependSensor);
+    auto thresholdResult = hit->RecHitAboveThreshold(ecut,dependSensor);
     if(!get<0>(thresholdResult)){
       continue;
     }
