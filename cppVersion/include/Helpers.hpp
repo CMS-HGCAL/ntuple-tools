@@ -19,6 +19,11 @@ inline bool pointWithinCircle(double px,double py,double x,double y,double r){
   return pow(r,2) >= pow(px-x,2) + pow(py-y,2);
 }
 
+/// Check if two circles (x1,x2,r1 and x2,y2,r2) overlap
+inline bool circlesOverlap(double x1,double y1,double r1, double x2,double y2,double r2){
+  return pow(r1+r2,2) <= pow(x1-x2,2) + pow(y1-y2,2);
+}
+
 /// Calculate distance between two points (x1,y1) and (x2,y2)
 inline double distanceReal2(double x1, double y1, double x2, double y2)
 {

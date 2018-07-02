@@ -43,6 +43,9 @@ public:
   /// Returns the greatest Y among all hits stored in the collection
   double GetYmax();
   
+  /// Returns the average of min and max pseudorapidity among all hits stored in the collection
+  double GetCenterEta();
+  
   /// Returns a single RecHit
   /// \param index Index of the desired RecHit
   /// \return Pointer to the RecHit object

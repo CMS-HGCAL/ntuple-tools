@@ -126,6 +126,14 @@ double RecHits::GetYmax()
   return *max_element(y->begin(), y->end());
 }
 
+double RecHits::GetCenterEta()
+{
+  double minEta = *min_element(eta->begin(), eta->end());
+  double maxEta = *max_element(eta->begin(), eta->end());
+  
+  return (maxEta-minEta)/2.;
+}
+
 unique_ptr<RecHits> RecHits::GetHitsAboveNoise(double ecut)
 {
   unique_ptr<RecHits> hitsAboveNoise(new RecHits());

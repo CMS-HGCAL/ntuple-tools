@@ -40,7 +40,10 @@ const int nClusters = 40;
 //string baseDir = "clusteringResults/reachedEE_centerWithin_80pc_RecCluster_inverted/";
 
 // from C++ version
-string baseDir = "clusteringResultsCXX/pythonCompare";
+//string baseDir = "clusteringResultsCXX";
+//string baseDir = "clusteringResultsCXX/fixedSamples";
+string baseDir = "clusteringResultsCXX/oldSamples";
+
 
 vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
 {
@@ -67,11 +70,14 @@ vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
       while((eventDir=(TSystemDirectory*)nextEvent())){
         TString eventName(eventDir->GetName());
         if(eventName.Contains("event")){
-          cout<<Form("%s/%s/%s/energyComparisonHist.root",baseDir.c_str(),name.Data(),eventName.Data())<<endl;
+          cout<<Form("%s/%s/%s/%s.root",baseDir.c_str(),name.Data(),eventName.Data(),histFileName)<<endl;
           TFile *inFile = TFile::Open(Form("%s/%s/%s/%s.root",baseDir.c_str(),name.Data(),eventName.Data(),histFileName));
           if(!inFile) continue;
           TH2D *hist = (TH2D*)inFile->Get(histName);
-          
+          if(!hist){
+            cout<<"no hist: "<<histName<<"!!"<<endl;
+            continue;
+          }
           result.push_back(hist);
         }
       }
@@ -82,48 +88,66 @@ vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
 
 void analyzeClustering()
 {
-  vector<TH2D*> inputEnergyComparisonHists = getHistsWithName("energyComparisonHist","energy comparison");
-  TH2D *mergedEnergyComparisonHist = new TH2D(*inputEnergyComparisonHists[0]);
-
-  for(int iter=1;iter<inputEnergyComparisonHists.size();iter++){
-    mergedEnergyComparisonHist->Add(inputEnergyComparisonHists[iter]);
-  }
+  TCanvas *canvas = new TCanvas("canvas","canvas",1200,800);
+  canvas->Divide(2,2);
+  TF1 *fun = new TF1("fun","x",0,100);
   
+  
+  vector<TH2D*> inputEnergyComparisonHists = getHistsWithName("energyComparisonHist","energy comparison");
+  
+  if(inputEnergyComparisonHists.size() > 0){
+    TH2D *mergedEnergyComparisonHist = new TH2D(*inputEnergyComparisonHists[0]);
+
+    for(int iter=1;iter<inputEnergyComparisonHists.size();iter++){
+      mergedEnergyComparisonHist->Add(inputEnergyComparisonHists[iter]);
+    }
+    
+    canvas->cd(1);
+    mergedEnergyComparisonHist->Draw("colz");
+    
+    mergedEnergyComparisonHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
+    mergedEnergyComparisonHist->GetYaxis()->SetTitle("E_{sim} (Gev)");
+    mergedEnergyComparisonHist->GetZaxis()->SetRangeUser(0,500);
+    
+    fun->Draw("same");
+  }
 
   vector<TH2D*> inputEnergyComparisonOverlapHists = getHistsWithName("energyComparisonOverlapHist","energy comparison overlap.");
-  TH2D *mergedEnergyComparisonOverlapHist = new TH2D(*inputEnergyComparisonOverlapHists[0]);
-
-  for(int iter=1;iter<inputEnergyComparisonOverlapHists.size();iter++){
-    mergedEnergyComparisonOverlapHist->Add(inputEnergyComparisonOverlapHists[iter]);
+  
+  if(inputEnergyComparisonOverlapHists.size() >0){
+    TH2D *mergedEnergyComparisonOverlapHist = new TH2D(*inputEnergyComparisonOverlapHists[0]);
+    
+    for(int iter=1;iter<inputEnergyComparisonOverlapHists.size();iter++){
+      mergedEnergyComparisonOverlapHist->Add(inputEnergyComparisonOverlapHists[iter]);
+    }
+    canvas->cd(2);
+    mergedEnergyComparisonOverlapHist->Draw("colz");
+    
+    mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
+    mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitle("E_{sim} (GeV)");
+    mergedEnergyComparisonOverlapHist->GetZaxis()->SetRangeUser(0,30);
+    
+    fun->Draw("same");
   }
   
-  TCanvas *canvas = new TCanvas("canvas","canvas",1200,800);
-  canvas->Divide(2,1);
-  
-  canvas->cd(1);
-  mergedEnergyComparisonHist->Draw("colz");
-
-  mergedEnergyComparisonHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
-  mergedEnergyComparisonHist->GetYaxis()->SetTitle("E_{sim} (Gev)");
-  mergedEnergyComparisonHist->GetZaxis()->SetRangeUser(0,500);
-
-  
-  TF1 *fun = new TF1("fun","x",0,100);
-  fun->Draw("same");
-  
-  canvas->cd(2);
-  mergedEnergyComparisonOverlapHist->Draw("colz");
-
-  mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
-  mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitle("E_{sim} (GeV)");
-  mergedEnergyComparisonOverlapHist->GetZaxis()->SetRangeUser(0,30);
-
-  
-  fun->Draw("same");
-  
-  
-  
-  
+  vector<TH2D*> inputErecEsimVsEta = getHistsWithName("ErecEsimVsEta","ErecEsim vs. eta");
+  if(inputErecEsimVsEta.size() > 0){
+    
+    TH2D *mergedErecEsimVsEtaHists = new TH2D(*inputErecEsimVsEta[0]);
+    
+    for(int iter=1;iter<inputErecEsimVsEta.size();iter++){
+      mergedErecEsimVsEtaHists->Add(inputErecEsimVsEta[iter]);
+    }
+    
+    canvas->cd(3);
+    mergedErecEsimVsEtaHists->Draw("colz");
+    
+    mergedErecEsimVsEtaHists->GetXaxis()->SetTitle("|#eta|");
+    mergedErecEsimVsEtaHists->GetYaxis()->SetTitle("E_{rec}/E_{sim}");
+    //  mergedErecEsimVsEtaHists->GetZaxis()->SetRangeUser(0,30);
+    
+    //  fun->Draw("same");
+  }
   
 }
 
