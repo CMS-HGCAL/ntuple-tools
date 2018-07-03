@@ -30,6 +30,28 @@ inline double distanceReal2(double x1, double y1, double x2, double y2)
   return pow(x2-x1, 2) + pow(y2-y1, 2);
 }
 
+/// Finds a circle among a set of them that is closest to the given point
+/// \param Xs X coordinates of circles
+/// \param Ys Y coordinates of circles
+/// \param Rs Radii of the circles
+/// \param x X coordinate of the point
+/// \param y Y coordinate of the point
+/// \return Returns index of the circle that is the closest to the point
+inline int findClosestCircle(std::vector<double> Xs, std::vector<double> Ys, std::vector<double> Rs, double x, double y)
+{
+  int closestCircleIndex = -1;
+  double currentLowestDistance = 99999999;
+  
+  for(uint i=0;i<Xs.size();i++){
+    double distance = sqrt(pow(Xs[i]-x,2)+pow(Ys[i]-y,2)) - Rs[i];
+    if(distance < currentLowestDistance){
+      currentLowestDistance = distance;
+      closestCircleIndex = i;
+    }
+  }
+  return closestCircleIndex;
+}
+
 /// Finds all points in a circle
 /// \param lpX X coordinates of points to verify
 /// \param lpY Y coordinates of points to verify

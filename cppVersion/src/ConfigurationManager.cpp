@@ -12,6 +12,21 @@
 
 using namespace std;
 
+ConfigurationManager* ConfigurationManager::instance  = nullptr;
+
+ConfigurationManager* ConfigurationManager::Instance(string _configPath)
+{
+  if(instance){
+    if(_configPath != ""){
+      cout<<"WARNING - Configuration Manager was already created, but new config path was specified later on. Carefull - the new path will be ignored!!"<<endl;
+    }
+  }
+  else{
+    instance = new ConfigurationManager(_configPath);
+  }
+  return instance;
+}
+
 ConfigurationManager::ConfigurationManager(string _configPath) :
 configPath(_configPath)
 {

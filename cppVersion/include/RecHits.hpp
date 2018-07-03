@@ -10,6 +10,7 @@
 #include "RecHitCalibration.hpp"
 #include "SimClusters.hpp"
 #include "Hexel.hpp"
+#include "ConfigurationManager.hpp"
 
 #include <TTree.h>
 #include <vector>
@@ -80,7 +81,7 @@ public:
   std::unique_ptr<RecHits> GetHitsInLayer(int layer);
 
 private:
-  RecHitCalibration *recHitCalib; ///< Stores current hits calibration
+  std::unique_ptr<RecHitCalibration> recHitCalib; ///< Stores current hits calibration
   
   std::vector<float> *eta;        ///< Pseudorapidity values of hit
   std::vector<float> *phi;        ///< Polar angle values of hit
@@ -109,7 +110,6 @@ public:
   std::unique_ptr<Hexel> GetHexel();
   
   /// Checks if hit is above the noise threshold and calculates sigma noise
-  /// \params calib Current rec hits calibration
   /// \param ecut Minimum energy
   /// \param dependSensor Should depend on the sensor type?
   /// \return Returns a tuple: aboveThreshold, sigmaNoise

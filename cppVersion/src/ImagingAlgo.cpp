@@ -10,11 +10,11 @@
 
 using namespace std;
 
-ImagingAlgo::ImagingAlgo(string _configPath)
+ImagingAlgo::ImagingAlgo()
 {
   recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
-  config = unique_ptr<ConfigurationManager>(new ConfigurationManager(_configPath));
-
+  config = ConfigurationManager::Instance();
+  
   for(int i=0;i<3;i++){deltac[i] = config->GetDeltac()[i];}
   dependSensor = config->GetDependSensor();
   kappa = config->GetKappa();

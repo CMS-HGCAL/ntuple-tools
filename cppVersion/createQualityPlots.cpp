@@ -56,13 +56,13 @@ int main(int argc, char* argv[])
     exit(0);
   }
   string configPath(argv[1]);
-  unique_ptr<ConfigurationManager> config(new ConfigurationManager(configPath));
+  ConfigurationManager *config = ConfigurationManager::Instance(configPath);
   
   gROOT->ProcessLine(".L loader.C+");
   
   std::system(("mkdir -p "+config->GetOutputPath()).c_str());
   
-  ImagingAlgo *algo = new ImagingAlgo(configPath);
+  ImagingAlgo *algo = new ImagingAlgo();
   
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;

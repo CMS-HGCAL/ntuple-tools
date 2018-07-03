@@ -28,7 +28,7 @@ class ImagingAlgo {
 public:
   /// Default constructor
   /// \param _configPath path to the config file with in/out paths, algo parameters etc.
-  ImagingAlgo(std::string _configPath);
+  ImagingAlgo();
   ~ImagingAlgo();
   
   /// Calculates distance to the nearest hit with higher density
@@ -99,7 +99,7 @@ private:
   int verbosityLevel;    ///< Current verbosity level
   
   std::unique_ptr<RecHitCalibration> recHitCalib; ///< Contains calibration of rec hits
-  std::unique_ptr<ConfigurationManager> config;   ///< Manager keeping current configuration
+  ConfigurationManager *config;                   ///< Manager keeping current configuration
 };
 
 
