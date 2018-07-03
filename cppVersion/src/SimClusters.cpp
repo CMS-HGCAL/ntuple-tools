@@ -14,6 +14,7 @@ hits(nullptr)
 {
   _tree->SetBranchAddress("simcluster_eta",&eta);
   _tree->SetBranchAddress("simcluster_phi",&phi);
+  _tree->SetBranchAddress("simcluster_pt",&pt);
   _tree->SetBranchAddress("simcluster_energy",&energy);
   _tree->SetBranchAddress("simcluster_hits",&hits);
   // ... more branches can be add in the future if needed

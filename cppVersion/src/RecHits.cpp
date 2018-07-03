@@ -26,7 +26,7 @@ isHalf(new vector<bool>),
 time(new vector<float>),
 cluster2d(new vector<int>)
 {
-  recHitCalib = new RecHitCalibration();
+  recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
 }
 
 RecHits::RecHits(TTree *_tree):
@@ -43,8 +43,8 @@ isHalf(nullptr),
 time(nullptr),
 cluster2d(nullptr)
 {
-  recHitCalib = new RecHitCalibration();
-
+  recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
+  
   _tree->SetBranchAddress("rechit_eta",&eta);
   _tree->SetBranchAddress("rechit_phi",&phi);
   _tree->SetBranchAddress("rechit_energy",&energy);
@@ -61,8 +61,6 @@ cluster2d(nullptr)
 
 RecHits::~RecHits()
 {
-  if(recHitCalib) delete recHitCalib;
-
   if(eta){ eta->clear(); delete eta;}
   if(phi){ phi->clear(); delete phi;}
   if(energy){ energy->clear(); delete energy;}
@@ -153,7 +151,13 @@ void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<S
   unique_ptr<RecHits> hitsAboveNoise = GetHitsAboveNoise(energyMin);
   vector<unsigned int> *hitsDetIDs = hitsAboveNoise->detid;
 
+  int nAssociatedHits = 0;
+  
   for(int iCluster=0;iCluster<clusters->N();iCluster++){
+    
+    if(ConfigurationManager::Instance()->GetVerbosityLevel() >= 1){
+    cout<<"Sim-cluster index: "<<iCluster<<", pT: "<<clusters->GetPt(iCluster)<<", E: "<<clusters->GetEnergy(iCluster)<<", phi: "<<clusters->GetPhi(iCluster)<<", eta: "<<clusters->GetEta(iCluster)<<endl;
+    }
     vector<unsigned int> hitsInClusterDetIDs = clusters->GetHits()->at(iCluster);
     vector<unsigned int> clusterToHitID;
 
@@ -172,6 +176,10 @@ void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<S
       hitsInThisCluster->AddHit(hit);
     }
     hitsPerCluster.push_back(hitsInThisCluster);
+    nAssociatedHits += hitsInThisCluster->N();
+  }
+  if(ConfigurationManager::Instance()->GetVerbosityLevel() >= 1){
+    cout<<"num of rechits associated with sim-clusters:"<<nAssociatedHits<<endl;
   }
 }
 

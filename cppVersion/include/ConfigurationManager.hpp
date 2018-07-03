@@ -13,8 +13,7 @@
 
 class ConfigurationManager {
 public:
-  ConfigurationManager(std::string _configPath);
-  ~ConfigurationManager(){};
+  static ConfigurationManager* Instance(std::string _configPath="");
 
   /// Returns the path to the input files with ntuples
   std::string GetInputPath();
@@ -55,6 +54,11 @@ public:
   int GetMaxEventsPerTuple();
 
 private:
+  ConfigurationManager(std::string _configPath);
+  ~ConfigurationManager(){};
+  
+  static ConfigurationManager *instance;
+  
   TEnv *settings;           ///< Object storing current configuration
   std::string configPath;   ///< Current path to the configuration
 };
