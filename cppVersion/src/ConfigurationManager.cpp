@@ -81,18 +81,12 @@ int ConfigurationManager::GetMinClusters()
 
 double ConfigurationManager::GetEnergyMin()
 {
-  if(GetDependSensor()){
-    return settings->GetValue("energy_min_with_sensor_dependance",3.0);
-  }
-  return settings->GetValue("energy_min_no_sensor_dependance",0.060);
+  return settings->GetValue("energy_min",3.0);
 }
 
 double ConfigurationManager::GetKappa()
 {
-  if(GetDependSensor()){
-    return settings->GetValue("kappa_with_sensor_dependance",9.0);
-  }
-  return settings->GetValue("kappa_no_sensor_dependance",10.0);
+  return settings->GetValue("kappa",9.0);
 }
 
 int ConfigurationManager::GetVerbosityLevel()
