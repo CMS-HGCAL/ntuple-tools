@@ -10,6 +10,7 @@
 #include "GenParticles.hpp"
 #include "RecHits.hpp"
 #include "SimClusters.hpp"
+#include "Clusters2D.hpp"
 
 #include <TTree.h>
 
@@ -34,12 +35,16 @@ public:
   /// Returns collection of sim clusters
   inline std::shared_ptr<SimClusters> GetSimClusters(){return simClusters;}
   
+  /// Returns collection of 2D clusters from the original reconstruction
+  inline std::shared_ptr<Clusters2D> GetClusters2D(){return clusters2D;}
+  
 private:
   TTree *tree;  ///< Pointer to tree containing HGCal events
   
   std::shared_ptr<GenParticles> genParticles; ///< Collection of generated particles
   std::shared_ptr<RecHits> recHits;           ///< Collection of rec hits
   std::shared_ptr<SimClusters> simClusters;   ///< Collection of sim clusters
+  std::shared_ptr<Clusters2D> clusters2D;     ///< Collection of 2D clusters from the original reconstruction
 };
 
 #endif /* HGCalEvent_hpp */

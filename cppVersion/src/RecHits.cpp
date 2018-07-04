@@ -129,7 +129,7 @@ double RecHits::GetCenterEta()
   double minEta = *min_element(eta->begin(), eta->end());
   double maxEta = *max_element(eta->begin(), eta->end());
   
-  return (maxEta-minEta)/2.;
+  return (maxEta+minEta)/2.;
 }
 
 unique_ptr<RecHits> RecHits::GetHitsAboveNoise(double ecut)

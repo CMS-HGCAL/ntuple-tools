@@ -27,7 +27,7 @@ public:
   ~RecHits();
   
   /// Returns number of stored RecHit objects
-  int N(){return (int)eta->size();}
+  inline int N(){return (int)eta->size();}
   
   /// Returns sum of the energies of all hits in the collection
   double GetTotalEnergy();
