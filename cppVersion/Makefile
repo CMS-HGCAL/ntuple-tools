@@ -7,13 +7,13 @@ TMP_DIR = tmp
 
 all: algoBenchmark createQualityPlots matchingBenchmark
 
-algoBenchmark: ${TMP_DIR}/algoBenchmark.o ${TMP_DIR}/Event.o ${TMP_DIR}/GenParticles.o ${TMP_DIR}/RecHits.o ${TMP_DIR}/SimClusters.o ${TMP_DIR}/ImagingAlgo.o ${TMP_DIR}/Hexel.o ${TMP_DIR}/BasicCluster.o ${TMP_DIR}/ConfigurationManager.o
+algoBenchmark: ${TMP_DIR}/algoBenchmark.o ${TMP_DIR}/Event.o ${TMP_DIR}/GenParticles.o ${TMP_DIR}/RecHits.o ${TMP_DIR}/SimClusters.o ${TMP_DIR}/ImagingAlgo.o ${TMP_DIR}/Hexel.o ${TMP_DIR}/BasicCluster.o ${TMP_DIR}/ConfigurationManager.o ${TMP_DIR}/Clusters2D.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-createQualityPlots: ${TMP_DIR}/createQualityPlots.o ${TMP_DIR}/Event.o ${TMP_DIR}/GenParticles.o ${TMP_DIR}/RecHits.o ${TMP_DIR}/SimClusters.o ${TMP_DIR}/ImagingAlgo.o ${TMP_DIR}/Hexel.o ${TMP_DIR}/BasicCluster.o ${TMP_DIR}/ConfigurationManager.o
+createQualityPlots: ${TMP_DIR}/createQualityPlots.o ${TMP_DIR}/Event.o ${TMP_DIR}/GenParticles.o ${TMP_DIR}/RecHits.o ${TMP_DIR}/SimClusters.o ${TMP_DIR}/ImagingAlgo.o ${TMP_DIR}/Hexel.o ${TMP_DIR}/BasicCluster.o ${TMP_DIR}/ConfigurationManager.o ${TMP_DIR}/Clusters2D.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 
-matchingBenchmark: ${TMP_DIR}/matchingBenchmark.o ${TMP_DIR}/Event.o ${TMP_DIR}/GenParticles.o ${TMP_DIR}/RecHits.o ${TMP_DIR}/SimClusters.o ${TMP_DIR}/ImagingAlgo.o ${TMP_DIR}/Hexel.o ${TMP_DIR}/BasicCluster.o ${TMP_DIR}/ConfigurationManager.o
+matchingBenchmark: ${TMP_DIR}/matchingBenchmark.o ${TMP_DIR}/Event.o ${TMP_DIR}/GenParticles.o ${TMP_DIR}/RecHits.o ${TMP_DIR}/SimClusters.o ${TMP_DIR}/ImagingAlgo.o ${TMP_DIR}/Hexel.o ${TMP_DIR}/BasicCluster.o ${TMP_DIR}/ConfigurationManager.o ${TMP_DIR}/Clusters2D.o
 	  $(CC) $^ -o $@ $(LDFLAGS)
 
 ${TMP_DIR}/algoBenchmark.o: algoBenchmark.cpp

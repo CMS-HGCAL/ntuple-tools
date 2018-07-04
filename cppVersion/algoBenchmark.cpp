@@ -107,6 +107,13 @@ int main(int argc, char* argv[])
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
 
 
+      // get original 2d clusters from the tree
+      cout<<"preparing 2d clusters from the original reco...";
+      start = now();
+      shared_ptr<Clusters2D> clusters2D = hgCalEvent->GetClusters2D();
+      end = now();
+      cout<<" done ("<<duration(start,end)<<" s)"<<endl;
+      
       // re-run clustering with HGCalAlgo, save to file
       cout<<"running clustering algorithm...";
       start = now();
@@ -132,6 +139,19 @@ int main(int argc, char* argv[])
 
 
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
+        
+        if(config->GetVerbosityLevel() >= 1){
+          cout<<"\n\nLayer:"<<layer<<"\n"<<endl;
+          
+          unique_ptr<Clusters2D> clusters2DinLayer(new Clusters2D());
+          clusters2D->GetClustersInLayer(clusters2DinLayer, layer);
+          
+          for(int i=0;i<clusters2DinLayer->N();i++){
+            if(clusters2DinLayer->GetEnergy(i) > 0.0000001){
+              cout<<"Cluster E:"<<clusters2DinLayer->GetEnergy(i)<<"\teta:"<<clusters2DinLayer->GetEta(i)<<endl;
+            }
+          }
+        }
         for(uint recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
 
           RecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
@@ -139,6 +159,9 @@ int main(int argc, char* argv[])
 
           if(recHitsInLayerInCluster->N()==0) continue;
 
+          if(config->GetVerbosityLevel() >= 1){
+            cout<<"\tRec Cluster E:"<<recHitsInLayerInCluster->GetTotalEnergy()<<"\teta:"<<recHitsInLayerInCluster->GetCenterEta()<<endl;
+          }
           double recEnergy = recHitsInLayerInCluster->GetTotalEnergy();
           double xMaxRec   = recHitsInLayerInCluster->GetXmax();
           double xMinRec   = recHitsInLayerInCluster->GetXmin();
