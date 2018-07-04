@@ -140,12 +140,12 @@ int main(int argc, char* argv[])
 
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
-        cout<<"\n\nLayer:"<<layer<<"\n"<<endl;
-        
-        unique_ptr<Clusters2D> clusters2DinLayer(new Clusters2D());
-        clusters2D->GetClustersInLayer(clusters2DinLayer, layer);
-        
         if(config->GetVerbosityLevel() >= 1){
+          cout<<"\n\nLayer:"<<layer<<"\n"<<endl;
+          
+          unique_ptr<Clusters2D> clusters2DinLayer(new Clusters2D());
+          clusters2D->GetClustersInLayer(clusters2DinLayer, layer);
+          
           for(int i=0;i<clusters2DinLayer->N();i++){
             if(clusters2DinLayer->GetEnergy(i) > 0.0000001){
               cout<<"Cluster E:"<<clusters2DinLayer->GetEnergy(i)<<"\teta:"<<clusters2DinLayer->GetEta(i)<<endl;
