@@ -7,7 +7,7 @@ min_Ntuple:  10
 max_Ntuple:  11
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:     100
+analyze_events_per_tuple:     1000
 
 ### input and output paths
 
@@ -30,22 +30,12 @@ deltac_BH:    5.0
 ### Request at least minClusters+1 2D clusters  (*clarification needed*)
 min_clusters: 3
 
-### cut on energy, with sensor dependance (relative to the noise):
-energy_min_with_sensor_dependance:  3.0
+### cut on energy (relative to the noise):
+energy_min:  3.0
 
-### cut on energy, without sensor dependance (absolute units):
-energy_min_no_sensor_dependance:    0.060
-
-### kappa, with sensor dependance:
-kappa_with_sensor_dependance:  9.0
-
-### kappa, without sensor dependance:
-kappa_no_sensor_dependance:    10.0
+### kappa (energy density threshold):
+kappa:  9.0
 
 ### test only within this layers range:
 min_layer: 0
 max_layer: 40
-
-
-
-
