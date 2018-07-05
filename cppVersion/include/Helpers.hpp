@@ -114,6 +114,22 @@ struct MatchedClusters {
   }
 };
 
+inline BasicCluster* GetBasicClusterFromRecHits(std::unique_ptr<RecHits> &hits)
+{
+  double recEnergy = hits->GetTotalEnergy();
+  double xMax   = hits->GetXmax();
+  double xMin   = hits->GetXmin();
+  double yMax   = hits->GetYmax();
+  double yMin   = hits->GetYmin();
+  
+  double clusterX = (xMax+xMin)/2.;
+  double clusterY = (yMax+yMin)/2.;
+  double clusterEta = hits->GetCenterEta();
+  
+  BasicCluster *basicCluster = new BasicCluster(recEnergy,clusterX,clusterY,0,clusterEta);
+  return basicCluster;
+}
+
 /// Fills a vector of matched rec and sim clusters finding the nearest rec cluster for given sim cluster
 /// \param matched Vector that will be filled with rec and sim clusters
 /// \param recHitsPerCluster Vector of rec clusters
@@ -132,24 +148,22 @@ inline void matchClustersClosest(std::vector<MatchedClusters*> &matched, std::ve
 
     if(recHitsInLayerInCluster->N()==0) continue;
 
-    double recEnergy = recHitsInLayerInCluster->GetTotalEnergy();
+    BasicCluster *basicCluster = GetBasicClusterFromRecHits(recHitsInLayerInCluster);
+    
     double xMaxRec   = recHitsInLayerInCluster->GetXmax();
     double xMinRec   = recHitsInLayerInCluster->GetXmin();
     double yMaxRec   = recHitsInLayerInCluster->GetYmax();
     double yMinRec   = recHitsInLayerInCluster->GetYmin();
     
-    double recClusterX = xMinRec+(xMaxRec-xMinRec)/2.;
-    double recClusterY = yMinRec+(yMaxRec-yMinRec)/2.;
     double recClusterR = std::max((xMaxRec-xMinRec)/2.,(yMaxRec-yMinRec)/2.);
-    double recClusterEta = recHitsInLayerInCluster->GetCenterEta();
     
-    Xs.push_back(recClusterX);
-    Ys.push_back(recClusterY);
+    Xs.push_back(basicCluster->GetX());
+    Ys.push_back(basicCluster->GetY());
     Rs.push_back(recClusterR);
-    Es.push_back(recEnergy);
+    Es.push_back(basicCluster->GetEnergy());
     
     MatchedClusters *matchedCluster = new MatchedClusters();
-    BasicCluster *basicCluster = new BasicCluster(recEnergy,recClusterX,recClusterY,0,recClusterEta);
+    
     matchedCluster->recCluster = basicCluster;
     matched.push_back(matchedCluster);
   }
@@ -161,17 +175,8 @@ inline void matchClustersClosest(std::vector<MatchedClusters*> &matched, std::ve
     
     if(simHitsInLayerInCluster->N()==0) continue;
     
-    double simEnergy = simHitsInLayerInCluster->GetTotalEnergy();
-    double xMaxSim   = simHitsInLayerInCluster->GetXmax();
-    double xMinSim   = simHitsInLayerInCluster->GetXmin();
-    double yMaxSim   = simHitsInLayerInCluster->GetYmax();
-    double yMinSim   = simHitsInLayerInCluster->GetYmin();
-    
-    double simClusterX = xMinSim+(xMaxSim-xMinSim)/2.;
-    double simClusterY = yMinSim+(yMaxSim-yMinSim)/2.;
-    double simClusterEta = simHitsInLayerInCluster->GetCenterEta();
-    
-    int parentRecCluster = findClosestCircle(Xs, Ys, Rs, simClusterX, simClusterY);
+    BasicCluster *basicCluster = GetBasicClusterFromRecHits(simHitsInLayerInCluster);
+    int parentRecCluster = findClosestCircle(Xs, Ys, Rs, basicCluster->GetX(), basicCluster->GetY());
     
     if(parentRecCluster < 0){
       if(ConfigurationManager::Instance()->GetVerbosityLevel() >= 1){
@@ -180,7 +185,7 @@ inline void matchClustersClosest(std::vector<MatchedClusters*> &matched, std::ve
       continue;
     }
     
-    BasicCluster *basicCluster = new BasicCluster(simEnergy,simClusterX,simClusterY,0,simClusterEta);
+    
     matched[parentRecCluster]->simClusters->push_back(basicCluster);
   }
 }
@@ -200,20 +205,9 @@ inline void matchClustersAllToAll(std::vector<MatchedClusters*> &matched, std::v
     std::unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
     
     if(recHitsInLayerInCluster->N()==0) continue;
-      
-    double recEnergy = recHitsInLayerInCluster->GetTotalEnergy();
-    double xMaxRec   = recHitsInLayerInCluster->GetXmax();
-    double xMinRec   = recHitsInLayerInCluster->GetXmin();
-    double yMaxRec   = recHitsInLayerInCluster->GetYmax();
-    double yMinRec   = recHitsInLayerInCluster->GetYmin();
-    
-    double recClusterX = xMinRec+(xMaxRec-xMinRec)/2.;
-    double recClusterY = yMinRec+(yMaxRec-yMinRec)/2.;
-    double recClusterEta = recHitsInLayerInCluster->GetCenterEta();
     
     MatchedClusters *matchedCluster = new MatchedClusters();
-    BasicCluster *basicCluster = new BasicCluster(recEnergy,recClusterX,recClusterY,0,recClusterEta);
-    matchedCluster->recCluster = basicCluster;
+    matchedCluster->recCluster = GetBasicClusterFromRecHits(recHitsInLayerInCluster);;
     matched.push_back(matchedCluster);
     
     for(uint simClusterIndex=0;simClusterIndex<simHitsPerCluster.size();simClusterIndex++){
@@ -223,17 +217,7 @@ inline void matchClustersAllToAll(std::vector<MatchedClusters*> &matched, std::v
       
       if(simHitsInLayerInCluster->N()==0) continue;
       
-      double simEnergy = simHitsInLayerInCluster->GetTotalEnergy();
-      double xMaxSim   = simHitsInLayerInCluster->GetXmax();
-      double xMinSim   = simHitsInLayerInCluster->GetXmin();
-      double yMaxSim   = simHitsInLayerInCluster->GetYmax();
-      double yMinSim   = simHitsInLayerInCluster->GetYmin();
-      
-      double simClusterX = xMinSim+(xMaxSim-xMinSim)/2.;
-      double simClusterY = yMinSim+(yMaxSim-yMinSim)/2.;
-      double simClusterEta = simHitsInLayerInCluster->GetCenterEta();
-      
-      BasicCluster *basicCluster = new BasicCluster(simEnergy,simClusterX,simClusterY,0,simClusterEta);
+      BasicCluster *basicCluster = GetBasicClusterFromRecHits(simHitsInLayerInCluster);
       matched[currentMatchedIndex]->simClusters->push_back(basicCluster);
     }
     currentMatchedIndex++;
