@@ -22,6 +22,12 @@ output_path: ../clusteringResultsCXX
 ### should detector thickness be taken into account?
 depend_sensor:  1
 
+### Energy density inclusion funciton. Defines a way to include or reject hit when calculating local energy density.
+### Possible options:
+### *step* - include 100% of hit energy if distance smaller than *critical_distance*  
+### *gaus* - include fraction of hit's energy based on the distance scaled by a gaussian distribution with width *critical_distribution*
+energy_density_function:  step
+
 ### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than d_c from given hit will not be included in the energy density calculation for this hit.
 critial_distance_EE:  2.0

@@ -125,6 +125,11 @@ int ConfigurationManager::GetMaxEventsPerTuple()
   return settings->GetValue("analyze_events_per_tuple",99999);
 }
 
+string ConfigurationManager::GetEnergyDensityFunction()
+{
+  return settings->GetValue("energy_density_function","step");
+}
+
 
 
 

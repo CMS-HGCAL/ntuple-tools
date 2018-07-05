@@ -60,6 +60,9 @@ public:
   /// Stop analyzing each ntuple after that many events
   int GetMaxEventsPerTuple();
 
+  /// Returns a name of the function to be used for the energy density calculation
+  std::string GetEnergyDensityFunction();
+  
 private:
   ConfigurationManager(std::string _configPath);
   ~ConfigurationManager(){};

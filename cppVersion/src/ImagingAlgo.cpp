@@ -4,9 +4,10 @@
 //  Created by Jeremi Niedziela on 12/06/2018.
 //
 
-#include <algorithm>
 #include "ImagingAlgo.hpp"
 #include "Helpers.hpp"
+
+#include <algorithm>
 
 using namespace std;
 
@@ -21,6 +22,21 @@ ImagingAlgo::ImagingAlgo()
   minClusters = config->GetMinClusters();
   verbosityLevel = config->GetVerbosityLevel();
 
+  if(config->GetEnergyDensityFunction() == "step"){
+    // param [0] says what's the limit to include or reject hit (critical distance)
+    // param [1] says how much should be added to the energy density if hit is accepted
+    energyDensityFunction = new TF1("step function", "((x < [0]) ? [1] : 0)", -1000, 1000);
+  }
+  else if(config->GetEnergyDensityFunction() == "gaus"){
+    // param [0] is the distributino width
+    // param [1] scales the distribution (should be set to something proportional to the energy of the hit)
+    energyDensityFunction = new TF1("gaussian", "[1]/(sqrt(2*TMath::Pi())*[0])*exp(-x*x/(2*[0]*[0]))", -1000, 1000);
+  }
+  else{
+    cout<<"ERROR -- unknown energy density function:"<<config->GetEnergyDensityFunction()<<endl;
+    exit(0);
+  }
+  
   // print out the setup
   if(verbosityLevel >= 1){
     cout<<"HGCalImagingAlgo setup: "<<endl;
@@ -54,11 +70,13 @@ double ImagingAlgo::calculateLocalDensity(vector<unique_ptr<Hexel>> &hexels,
     // search in a circle of radius "criticalDistance" or "criticalDistance"*sqrt(2) (not identical to search in the box "criticalDistance")
     auto found = queryBallPoint(lpX, lpY, iNode->x, iNode->y, criticalDistance);
     for(int j : found){
-      double distSquared = distanceReal2(iNode->x,iNode->y, hexels[j]->x, hexels[j]->y);
-      if(distSquared < criticalDistance * criticalDistance){
-        iNode->rho += hexels[j]->weight;
-        if(iNode->rho > maxdensity) maxdensity = iNode->rho;
-      }
+      double dist = sqrt(distanceReal2(iNode->x,iNode->y, hexels[j]->x, hexels[j]->y));
+      
+      energyDensityFunction->SetParameter(0,criticalDistance);
+      energyDensityFunction->SetParameter(1,hexels[j]->weight);
+      
+      iNode->rho += energyDensityFunction->Eval(dist);
+      if(iNode->rho > maxdensity) maxdensity = iNode->rho;
     }
   }
   return maxdensity;
