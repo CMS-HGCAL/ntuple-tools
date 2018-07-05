@@ -15,7 +15,6 @@ ImagingAlgo::ImagingAlgo()
   recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
   config = ConfigurationManager::Instance();
   
-  for(int i=0;i<3;i++){deltac[i] = config->GetDeltac()[i];}
   dependSensor = config->GetDependSensor();
   kappa = config->GetKappa();
   ecut = config->GetEnergyMin();
@@ -26,7 +25,9 @@ ImagingAlgo::ImagingAlgo()
   if(verbosityLevel >= 1){
     cout<<"HGCalImagingAlgo setup: "<<endl;
     cout<<"   dependSensor: "<<dependSensor<<endl;
-    cout<<"   deltac: "<<deltac<<endl;
+    cout<<"   deltac_EE: "<<config->GetDeltac(kEE)<<endl;
+    cout<<"   deltac_FH: "<<config->GetDeltac(kFH)<<endl;
+    cout<<"   deltac_BH: "<<config->GetDeltac(kBH)<<endl;
     cout<<"   kappa: "<<kappa<<endl;
     cout<<"   ecut: "<<ecut<<endl;
     cout<<"   minClusters: "<<minClusters<<endl;
@@ -45,9 +46,9 @@ double ImagingAlgo::calculateLocalDensity(vector<unique_ptr<Hexel>> &hexels,
   double maxdensity = 0;
   double delta_c = 0;
 
-  if(layer <= lastLayerEE)       delta_c = deltac[0];
-  else if(layer <= lastLayerFH)  delta_c = deltac[1];
-  else                           delta_c = deltac[2];
+  if(layer <= lastLayerEE)       delta_c = config->GetDeltac(kEE);
+  else if(layer <= lastLayerFH)  delta_c = config->GetDeltac(kFH);
+  else                           delta_c = config->GetDeltac(kBH);
 
   for(unique_ptr<Hexel> &iNode : hexels){
     // search in a circle of radius delta_c or delta_c*sqrt(2) (not identical to search in the box delta_c)
@@ -129,9 +130,9 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   vector<int> ds = sortIndicesDeltaInverted(nodes);
 
   double delta_c=0;
-  if(layer <= lastLayerEE)      delta_c = deltac[0];
-  else if(layer <= lastLayerFH) delta_c = deltac[1];
-  else                          delta_c = deltac[2];
+  if(layer <= lastLayerEE)      delta_c = config->GetDeltac(kEE);
+  else if(layer <= lastLayerFH) delta_c = config->GetDeltac(kFH);
+  else                          delta_c = config->GetDeltac(kBH);
 
   for(uint i=0; i<nodes.size();i++){
     if(nodes[ds[i]]->delta < delta_c) break;  // no more cluster centers to be looked at

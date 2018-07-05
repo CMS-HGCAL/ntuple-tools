@@ -37,7 +37,6 @@ public:
   
 private:
   bool dependSensor;     ///< Should algo depend on the sensor type
-  double deltac[3];      ///< Radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector)
   double kappa;          ///< ??
   double ecut;           ///< Minimum hit energy
   int minClusters;       ///< Request at least minClusters+1 2D clusters

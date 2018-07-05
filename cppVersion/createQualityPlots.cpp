@@ -9,6 +9,7 @@
 #include "ImagingAlgo.hpp"
 #include "Helpers.hpp"
 #include "ConfigurationManager.hpp"
+#include "ClusterMatcher.hpp"
 
 #include <TROOT.h>
 #include <TFile.h>
@@ -38,6 +39,7 @@ int main(int argc, char* argv[])
   std::system(("mkdir -p "+config->GetOutputPath()).c_str());
   
   ImagingAlgo *algo = new ImagingAlgo();
+  ClusterMatcher *matcher = new ClusterMatcher();
   
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
@@ -93,7 +95,7 @@ int main(int argc, char* argv[])
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
         vector<MatchedClusters*> matchedClusters;
-        matchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        matcher->MatchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
         
         for(MatchedClusters *clusters : matchedClusters){
           double recEnergy = clusters->recCluster->GetEnergy();
@@ -133,7 +135,7 @@ int main(int argc, char* argv[])
     
   }
   delete algo;
-  
+  delete matcher;
   return 0;
 }
 
