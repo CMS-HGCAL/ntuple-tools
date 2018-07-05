@@ -27,14 +27,29 @@
 class ImagingAlgo {
 public:
   /// Default constructor
-  /// \param _configPath path to the config file with in/out paths, algo parameters etc.
   ImagingAlgo();
   ~ImagingAlgo();
+  
+  /// Get clustered hexels by re-running the clustering algorithm
+  /// \param hexelsClustered Will be filled with non-halo 2D hexels containing info about cluster index and layer
+  /// \param hits Rec hits to be clusterized
+  void getRecClusters(std::vector<std::shared_ptr<Hexel>> &hexelsClustered, std::shared_ptr<RecHits> &hits);
+  
+private:
+  bool dependSensor;     ///< Should algo depend on the sensor type
+  double deltac[3];      ///< Radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector)
+  double kappa;          ///< ??
+  double ecut;           ///< Minimum hit energy
+  int minClusters;       ///< Request at least minClusters+1 2D clusters
+  int verbosityLevel;    ///< Current verbosity level
+  
+  std::unique_ptr<RecHitCalibration> recHitCalib; ///< Contains calibration of rec hits
+  ConfigurationManager *config;                   ///< Manager keeping current configuration
   
   /// Calculates distance to the nearest hit with higher density
   /// \param nodes Nodes will be filled with the information about nearest higher-density hit
   void calculateDistanceToHigher(std::vector<std::unique_ptr<Hexel>> &nodes);
- 
+  
   /// Find cluster centers that satisfy delta & maxdensity/kappa criteria, and assign coresponding hexels
   /// \param clusters Will be filled with hexels grouped by clusters
   /// \param nodes Input hexels (in given layer) to be assigned to clusters
@@ -60,14 +75,14 @@ public:
   /// Get flat list of BasicClusters from the list of hexels grouped by layer by cluster
   /// \param clustersFlat Will be filled with BasicClusters
   /// \param clusters Input hexels grouped by layer by cluster to be flatten
-  void getClusters(std::vector<std::unique_ptr<BasicCluster>> &clustersFlat,
+  void getBasicClusters(std::vector<std::unique_ptr<BasicCluster>> &clustersFlat,
                    std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters);
-  
+
   /// Calculates XYZ position of a cluster
   /// \param cluster Input cluster of hexels
   /// \return Returns a tuple containing X,Y,Z coordinates of the cluster
   std::tuple<double,double,double>  calculatePosition(std::vector<std::unique_ptr<Hexel>> &cluster);
-    
+  
   /// Sorts hexels by rho
   /// \param v Input vector of hexels to sort (will not be modified)
   /// \return Returns vector of sorted indices
@@ -87,19 +102,7 @@ public:
   double calculateLocalDensity(std::vector<std::unique_ptr<Hexel>> &hexels,
                                std::vector<double> lpX, std::vector<double> lpY, int layer);
   
-  /// Change verbosity level of the algorithm
-  inline void SetVerbosityLevel(int level){verbosityLevel=level;}
   
-private:
-  bool dependSensor;     ///< Should algo depend on the sensor type
-  double deltac[3];      ///< Radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector)
-  double kappa;          ///< ??
-  double ecut;           ///< Minimum hit energy
-  int minClusters;       ///< Request at least minClusters+1 2D clusters
-  int verbosityLevel;    ///< Current verbosity level
-  
-  std::unique_ptr<RecHitCalibration> recHitCalib; ///< Contains calibration of rec hits
-  ConfigurationManager *config;                   ///< Manager keeping current configuration
 };
 
 

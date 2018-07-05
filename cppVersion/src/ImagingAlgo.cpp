@@ -85,7 +85,7 @@ void ImagingAlgo::calculateDistanceToHigher(vector<unique_ptr<Hexel>> &nodes)
   vector<int> sortedIndices = sortIndicesRhoInverted(nodes);
 
   // intial values, and check if there are any hits
-  double maxdensity = 0.0;
+  double maxdensity = 0.0; // this value is never used - do we need it? !!!
   double nearestHigher = -1;
   if(nodes.size() > 0) maxdensity = nodes[sortedIndices[0]]->rho;
   else return;
@@ -198,7 +198,7 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
       if(flag_isolated) iNode->isBorder = true;  // the hit is more than delta_c from any of its brethren
     }
     // check if this border hit has density larger than the current rho_b and update
-    if(iNode->isBorder && rho_b[ci] < iNode->rho)
+    if(iNode->isBorder && rho_b[ci] < iNode->rho) // here rho_b[ci] is always zero - this seems wrong!!
       rho_b[ci] = iNode->rho;
   }
   // flag points in cluster with density < rho_b as halo points, then fill the cluster vector
@@ -277,7 +277,7 @@ void ImagingAlgo::makeClusters(vector<vector<vector<unique_ptr<Hexel>>>> &cluste
   }
 }
 
-void ImagingAlgo::getClusters(vector<unique_ptr<BasicCluster>> &clustersFlat,
+void ImagingAlgo::getBasicClusters(vector<unique_ptr<BasicCluster>> &clustersFlat,
                               vector<vector<vector<unique_ptr<Hexel>>>> &clusters)
 {
   // loop over all layers and all clusters in each layer
@@ -300,6 +300,26 @@ void ImagingAlgo::getClusters(vector<unique_ptr<BasicCluster>> &clustersFlat,
     sort(clustersFlat.begin( ), clustersFlat.end( ), [ ](const unique_ptr<BasicCluster> &lhs,const  unique_ptr<BasicCluster> &rhs){
       return lhs->GetEnergy() > rhs->GetEnergy();
     });
+  }
+}
+
+void ImagingAlgo::getRecClusters(vector<shared_ptr<Hexel>> &hexelsClustered, shared_ptr<RecHits> &hits)
+{
+  // get 3D array of hexels (per layer, per 2D cluster)
+  vector<vector<vector<std::unique_ptr<Hexel>>>> clusters2D;
+  makeClusters(clusters2D, hits);
+  
+  // get flat list of 2D clusters (as basic clusters)
+  std::vector<unique_ptr<BasicCluster>> clusters2Dflat;
+  getBasicClusters(clusters2Dflat, clusters2D);
+  
+  // keep only non-halo hexels
+  for(auto &basicCluster : clusters2Dflat){
+    for(auto hexel : basicCluster->GetHexelsInThisCluster()){
+      if(!hexel->isHalo){
+        hexelsClustered.push_back(hexel);
+      }
+    }
   }
 }
 

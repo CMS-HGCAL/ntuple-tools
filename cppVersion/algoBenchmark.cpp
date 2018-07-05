@@ -18,31 +18,6 @@
 
 using namespace std;
 
-/// Get clustered hexels by re-running the clustering algorithm
-/// \param hexelsClustered Will be filled with non-halo hexels containing info about cluster index and layer
-/// \param hits Rec hits to be clusterized
-/// \param algo Algorithm to be used for clusterization
-void getRecClustersFromImagingAlgo(vector<shared_ptr<Hexel>> &hexelsClustered, shared_ptr<RecHits> &hits, ImagingAlgo *algo)
-{
-  // get 3D array of hexels (per layer, per 2D cluster)
-  vector<vector<vector<std::unique_ptr<Hexel>>>> clusters2D;
-  algo->makeClusters(clusters2D, hits);
-
-  // get flat list of 2D clusters (as basic clusters)
-  std::vector<unique_ptr<BasicCluster>> clusters2Dflat;
-  algo->getClusters(clusters2Dflat, clusters2D);
-
-  // keep only non-halo hexels
-  for(auto &basicCluster : clusters2Dflat){
-    for(auto hexel : basicCluster->GetHexelsInThisCluster()){
-      if(!hexel->isHalo){
-        hexelsClustered.push_back(hexel);
-      }
-    }
-  }
-}
-
-
 int main(int argc, char* argv[])
 {
   if(argc != 2){
@@ -118,7 +93,7 @@ int main(int argc, char* argv[])
       cout<<"running clustering algorithm...";
       start = now();
       std::vector<shared_ptr<Hexel>> recClusters;
-      getRecClustersFromImagingAlgo(recClusters, recHitsRaw, algo);
+      algo->getRecClusters(recClusters, recHitsRaw);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
 
@@ -168,8 +143,8 @@ int main(int argc, char* argv[])
           double yMaxRec   = recHitsInLayerInCluster->GetYmax();
           double yMinRec   = recHitsInLayerInCluster->GetYmin();
 
-          double recClusterX = xMinRec+(xMaxRec-xMinRec)/2.;
-          double recClusterY = yMinRec+(yMaxRec-yMinRec)/2.;
+          double recClusterX = (xMaxRec+xMinRec)/2.;
+          double recClusterY = (yMaxRec+yMinRec)/2.;
           double recClusterR = max((xMaxRec-xMinRec)/2.,(yMaxRec-yMinRec)/2.);
 
           double assocSimEnergy = 0;
@@ -186,8 +161,8 @@ int main(int argc, char* argv[])
             double yMaxSim   = simHitsInLayerInCluster->GetYmax();
             double yMinSim   = simHitsInLayerInCluster->GetYmin();
 
-            double simClusterX = xMinSim+(xMaxSim-xMinSim)/2.;
-            double simClusterY = yMinSim+(yMaxSim-yMinSim)/2.;
+            double simClusterX = (xMaxSim+xMinSim)/2.;
+            double simClusterY = (yMaxSim+yMinSim)/2.;
             // double simClusterR = max((xMaxSim-xMinSim)/2.,(yMaxSim-yMinSim)/2.);
 
             if(recEnergy*simEnergy != 0){
