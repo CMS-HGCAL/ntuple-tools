@@ -9,6 +9,7 @@
 #include "ImagingAlgo.hpp"
 #include "Helpers.hpp"
 #include "ConfigurationManager.hpp"
+#include "ClusterMatcher.hpp"
 
 #include <TROOT.h>
 #include <TFile.h>
@@ -38,6 +39,7 @@ int main(int argc, char* argv[])
   std::system(("mkdir -p "+config->GetOutputPath()).c_str());
   
   ImagingAlgo *algo = new ImagingAlgo();
+  ClusterMatcher *matcher = new ClusterMatcher();
   
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
@@ -93,20 +95,19 @@ int main(int argc, char* argv[])
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
         vector<MatchedClusters*> matchedClusters;
-        matchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        matcher->MatchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
         
         for(MatchedClusters *clusters : matchedClusters){
           double recEnergy = clusters->recCluster->GetEnergy();
           double recEta    = clusters->recCluster->GetEta();
           double simEnergy = clusters->GetTotalSimEnergy();
           
-          if(recEnergy > 1.0 && simEnergy > 1.0){
-            ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
-            sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
-          }
+          ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
+          sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
+          
         }
-        for(int i=0;i<matchedClusters.size();i++){
-          for(int j=i;j<matchedClusters.size();j++){
+        for(uint i=0;i<matchedClusters.size();i++){
+          for(uint j=i;j<matchedClusters.size();j++){
             BasicCluster *recCluster1 = matchedClusters[i]->recCluster;
             BasicCluster *recCluster2 = matchedClusters[j]->recCluster;
             
@@ -134,7 +135,7 @@ int main(int argc, char* argv[])
     
   }
   delete algo;
-  
+  delete matcher;
   return 0;
 }
 

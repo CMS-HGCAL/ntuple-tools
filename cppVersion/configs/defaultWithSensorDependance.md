@@ -22,19 +22,32 @@ output_path: ../clusteringResultsCXX
 ### should detector thickness be taken into account?
 depend_sensor:  1
 
-### ??? in cartesian coordiantes in cm, per detector (*clarification needed*)
+### Energy density inclusion funciton. Defines a way to include or reject hit when calculating local energy density.
+### Possible options:
+### *step* - include 100% of hit energy if distance smaller than *critical_distance*  
+### *gaus* - include fraction of hit's energy based on the distance scaled by a gaussian distribution with width *critical_distribution*
+energy_density_function:  step
+
+### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)
+### Hits that are further than d_c from given hit will not be included in the energy density calculation for this hit.
+critial_distance_EE:  2.0
+critial_distance_FH:  2.0
+critial_distance_BH:  2.0
+
+### Critical distance to higher ρ hit (in cartesian coordiantes in cm, separately for each detector)
+### Hits that are further than δ_c from any hit with higher ρ will be considered as potential cluster seeds.
 deltac_EE:    2.0
 deltac_FH:    2.0
 deltac_BH:    5.0
 
-### Request at least minClusters+1 2D clusters  (*clarification needed*)
-min_clusters: 3
+### Critical energy density is defined as ρ_c = max(ρ)/κ. Hits with ρ > ρ_c will be considered as potential cluster seeds.
+kappa:  9.0
 
 ### cut on energy (relative to the noise):
 energy_min:  3.0
 
-### kappa (energy density threshold):
-kappa:  9.0
+### Request at least minClusters+1 2D clusters  (*clarification needed*)
+min_clusters: 3
 
 ### test only within this layers range:
 min_layer: 0

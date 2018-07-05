@@ -65,13 +65,12 @@ bool ConfigurationManager::GetDependSensor()
   return settings->GetValue("depend_sensor",true);
 }
 
-vector<double> ConfigurationManager::GetDeltac()
+double ConfigurationManager::GetDeltac(EDet det)
 {
-  vector<double> deltac;
-  deltac.push_back(settings->GetValue("deltac_EE",2.0));
-  deltac.push_back(settings->GetValue("deltac_FH",2.0));
-  deltac.push_back(settings->GetValue("deltac_BH",2.0));
-  return deltac;
+  
+  if(det == kEE) return settings->GetValue("deltac_EE",2.0);
+  if(det == kFH) return settings->GetValue("deltac_FH",2.0);
+  return settings->GetValue("deltac_BH",2.0);
 }
 
 int ConfigurationManager::GetMinClusters()
@@ -82,6 +81,13 @@ int ConfigurationManager::GetMinClusters()
 double ConfigurationManager::GetEnergyMin()
 {
   return settings->GetValue("energy_min",3.0);
+}
+
+double ConfigurationManager::GetCriticalDistance(EDet det)
+{
+  if(det == kEE) return settings->GetValue("critical_distance_EE",2.0);
+  if(det == kFH) return settings->GetValue("critical_distance_FH",2.0);
+  return settings->GetValue("critical_distance_BH",5.0);
 }
 
 double ConfigurationManager::GetKappa()
@@ -117,6 +123,11 @@ int ConfigurationManager::GetMaxLayer()
 int ConfigurationManager::GetMaxEventsPerTuple()
 {
   return settings->GetValue("analyze_events_per_tuple",99999);
+}
+
+string ConfigurationManager::GetEnergyDensityFunction()
+{
+  return settings->GetValue("energy_density_function","step");
 }
 
 

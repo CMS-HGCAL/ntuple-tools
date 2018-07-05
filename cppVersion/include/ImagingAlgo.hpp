@@ -14,6 +14,8 @@
 #include "BasicCluster.hpp"
 #include "ConfigurationManager.hpp"
 
+#include <TF1.h>
+
 #include <iostream>
 #include <vector>
 #include <numeric>
@@ -37,11 +39,12 @@ public:
   
 private:
   bool dependSensor;     ///< Should algo depend on the sensor type
-  double deltac[3];      ///< Radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector)
   double kappa;          ///< ??
   double ecut;           ///< Minimum hit energy
   int minClusters;       ///< Request at least minClusters+1 2D clusters
   int verbosityLevel;    ///< Current verbosity level
+  
+  TF1 *energyDensityFunction; ///< Function that will be used to determine energy density for each hit
   
   std::unique_ptr<RecHitCalibration> recHitCalib; ///< Contains calibration of rec hits
   ConfigurationManager *config;                   ///< Manager keeping current configuration

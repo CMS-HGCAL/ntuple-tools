@@ -3,6 +3,7 @@
 #include "ImagingAlgo.hpp"
 #include "Helpers.hpp"
 #include "ConfigurationManager.hpp"
+#include "ClusterMatcher.hpp"
 
 #include <TROOT.h>
 #include <TFile.h>
@@ -32,6 +33,7 @@ int main(int argc, char* argv[])
   std::system(("mkdir -p "+config->GetOutputPath()).c_str());
 
   ImagingAlgo *algo = new ImagingAlgo();
+  ClusterMatcher *matcher = new ClusterMatcher();
   
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
@@ -89,8 +91,8 @@ int main(int argc, char* argv[])
         vector<MatchedClusters*> unmatchedClusters;
         vector<MatchedClusters*> matchedClusters;
         
-        matchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
-        matchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        matcher->MatchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        matcher->MatchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
         
         for(MatchedClusters *clusters : unmatchedClusters){
           if(clusters->recCluster->GetEnergy()*clusters->GetTotalSimEnergy() != 0){
@@ -119,6 +121,6 @@ int main(int argc, char* argv[])
     delete inFile;
   }
   delete algo;
-
+  delete matcher;
   return 0;
 }
