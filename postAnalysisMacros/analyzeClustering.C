@@ -10,6 +10,7 @@
 #include <TROOT.h>
 #include <TList.h>
 #include <TSystemDirectory.h>
+#include <TObject.h>
 
 #include <iostream>
 
@@ -45,9 +46,9 @@ const int nClusters = 40;
 //string baseDir = "clusteringResultsCXX/oldSamples";
 string baseDir = "clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/";
 
-vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
+vector<TObject*> getHistsWithName(const char* histFileName, const char* histName)
 {
-  vector<TH2D*> result;
+  vector<TObject*> result;
   
 
   TSystemDirectory mainDir(baseDir.c_str(),baseDir.c_str());
@@ -73,47 +74,7 @@ vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
           cout<<Form("%s/%s/%s/%s.root",baseDir.c_str(),name.Data(),eventName.Data(),histFileName)<<endl;
           TFile *inFile = TFile::Open(Form("%s/%s/%s/%s.root",baseDir.c_str(),name.Data(),eventName.Data(),histFileName));
           if(!inFile) continue;
-          TH2D *hist = (TH2D*)inFile->Get(histName);
-          if(!hist){
-            cout<<"no hist: "<<histName<<"!!"<<endl;
-            continue;
-          }
-          result.push_back(hist);
-        }
-      }
-    }
-  }
-  return result;
-}
-
-vector<TH1D*> get1DHistsWithName(const char* histFileName, const char* histName)
-{
-  vector<TH1D*> result;
-  
-  TSystemDirectory mainDir(baseDir.c_str(),baseDir.c_str());
-  TList *ntupleDirsList = mainDir.GetListOfFiles();
-  
-  ntupleDirsList->Print();
-  
-  TSystemDirectory *ntupleDir;
-  TIter next(ntupleDirsList);
-  
-  while((ntupleDir=(TSystemDirectory*)next())){
-    TString name(ntupleDir->GetName());
-    if(name.Contains("ntup")){
-      TSystemDirectory eventsDir(Form("%s/%s",baseDir.c_str(),name.Data()),
-                                 Form("%s/%s",baseDir.c_str(),name.Data()));
-      TList *eventsDirsList = eventsDir.GetListOfFiles();
-      
-      TSystemDirectory *eventDir;
-      TIter nextEvent(eventsDirsList);
-      while((eventDir=(TSystemDirectory*)nextEvent())){
-        TString eventName(eventDir->GetName());
-        if(eventName.Contains("event")){
-          cout<<Form("%s/%s/%s/%s.root",baseDir.c_str(),name.Data(),eventName.Data(),histFileName)<<endl;
-          TFile *inFile = TFile::Open(Form("%s/%s/%s/%s.root",baseDir.c_str(),name.Data(),eventName.Data(),histFileName));
-          if(!inFile) continue;
-          TH1D *hist = (TH1D*)inFile->Get(histName);
+          TObject *hist = inFile->Get(histName);
           if(!hist){
             cout<<"no hist: "<<histName<<"!!"<<endl;
             continue;
@@ -133,13 +94,13 @@ void analyzeClustering()
   TF1 *fun = new TF1("fun","x",0,100);
   
   
-  vector<TH2D*> inputEnergyComparisonHists = getHistsWithName("energyComparisonNoMatchingHist","no matching");
+  vector<TObject*> inputEnergyComparisonHists = getHistsWithName("energyComparisonNoMatchingHist","no matching");
   
   if(inputEnergyComparisonHists.size() > 0){
-    TH2D *mergedEnergyComparisonHist = new TH2D(*inputEnergyComparisonHists[0]);
+    TH2D *mergedEnergyComparisonHist = new TH2D(*(TH2D*)inputEnergyComparisonHists[0]);
 
     for(int iter=1;iter<inputEnergyComparisonHists.size();iter++){
-      mergedEnergyComparisonHist->Add(inputEnergyComparisonHists[iter]);
+      mergedEnergyComparisonHist->Add((TH2D*)inputEnergyComparisonHists[iter]);
     }
     
     canvas->cd(1);
@@ -152,13 +113,13 @@ void analyzeClustering()
     fun->Draw("same");
   }
 
-  vector<TH2D*> inputEnergyComparisonOverlapHists = getHistsWithName("energyComparisonClosestHist","closest rec cluster");
+  vector<TObject*> inputEnergyComparisonOverlapHists = getHistsWithName("energyComparisonClosestHist","closest rec cluster");
   
   if(inputEnergyComparisonOverlapHists.size() >0){
-    TH2D *mergedEnergyComparisonOverlapHist = new TH2D(*inputEnergyComparisonOverlapHists[0]);
+    TH2D *mergedEnergyComparisonOverlapHist = new TH2D(*(TH2D*)inputEnergyComparisonOverlapHists[0]);
     
     for(int iter=1;iter<inputEnergyComparisonOverlapHists.size();iter++){
-      mergedEnergyComparisonOverlapHist->Add(inputEnergyComparisonOverlapHists[iter]);
+      mergedEnergyComparisonOverlapHist->Add((TH2D*)inputEnergyComparisonOverlapHists[iter]);
     }
     canvas->cd(2);
     mergedEnergyComparisonOverlapHist->Draw("colz");
@@ -170,13 +131,13 @@ void analyzeClustering()
     fun->Draw("same");
   }
   
-  vector<TH2D*> inputErecEsimVsEta = getHistsWithName("ErecEsimVsEta","ErecEsim vs. eta");
+  vector<TObject*> inputErecEsimVsEta = getHistsWithName("ErecEsimVsEta","ErecEsim vs. eta");
   if(inputErecEsimVsEta.size() > 0){
     
-    TH2D *mergedErecEsimVsEtaHists = new TH2D(*inputErecEsimVsEta[0]);
+    TH2D *mergedErecEsimVsEtaHists = new TH2D(*(TH2D*)inputErecEsimVsEta[0]);
     
     for(int iter=1;iter<inputErecEsimVsEta.size();iter++){
-      mergedErecEsimVsEtaHists->Add(inputErecEsimVsEta[iter]);
+      mergedErecEsimVsEtaHists->Add((TH2D*)inputErecEsimVsEta[iter]);
     }
     
     canvas->cd(3);
@@ -189,13 +150,13 @@ void analyzeClustering()
     //  fun->Draw("same");
   }
   
-  vector<TH2D*> inputsigmaEsimVsEta = getHistsWithName("simgaEvsEta","sigma(E) vs. eta");
+  vector<TObject*> inputsigmaEsimVsEta = getHistsWithName("simgaEvsEta","sigma(E) vs. eta");
   if(inputsigmaEsimVsEta.size() > 0){
     
-    TH2D *mergedSigmaEsimVsEtaHists = new TH2D(*inputsigmaEsimVsEta[0]);
+    TH2D *mergedSigmaEsimVsEtaHists = new TH2D(*(TH2D*)inputsigmaEsimVsEta[0]);
     
     for(int iter=1;iter<inputsigmaEsimVsEta.size();iter++){
-      mergedSigmaEsimVsEtaHists->Add(inputsigmaEsimVsEta[iter]);
+      mergedSigmaEsimVsEtaHists->Add((TH2D*)inputsigmaEsimVsEta[iter]);
     }
     
     canvas->cd(4);
@@ -204,13 +165,13 @@ void analyzeClustering()
     mergedSigmaEsimVsEtaHists->GetYaxis()->SetTitle("(E_{rec}-E_{sim})/E_{rec}");
   }
   
-  vector<TH1D*> inputSeparation = get1DHistsWithName("twoSeparation","two clusters separation");
+  vector<TObject*> inputSeparation = getHistsWithName("twoSeparation","two clusters separation");
   if(inputSeparation.size() > 0){
     
-    TH1D *mergedSeparationHists = new TH1D(*inputSeparation[0]);
+    TH1D *mergedSeparationHists = new TH1D(*(TH1D*)inputSeparation[0]);
     
     for(int iter=1;iter<inputSeparation.size();iter++){
-      mergedSeparationHists->Add(inputSeparation[iter]);
+      mergedSeparationHists->Add((TH1D*)inputSeparation[iter]);
     }
     
     canvas->cd(5);
