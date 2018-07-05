@@ -24,14 +24,16 @@ thisCluster(_thisCluster)
   double theta = acos(z/sqrt(x*x+y*y+z*z));
   eta = -log(tan(theta/2.));
   phi = atan2(y, x);
+  radius = 0;
 }
 
-BasicCluster::BasicCluster(double _energy, double _x, double _y, double _z, double _eta) :
+BasicCluster::BasicCluster(double _energy, double _x, double _y, double _z, double _eta, double _radius) :
 energy(_energy),
 x(_x),
 y(_y),
 z(_z),
-eta(_eta)
+eta(_eta),
+radius(_radius)
 {
   thisCluster = std::vector<std::shared_ptr<Hexel>>(0);
   phi = 0;

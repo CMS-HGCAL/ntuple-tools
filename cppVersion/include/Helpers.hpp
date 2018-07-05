@@ -125,8 +125,9 @@ inline BasicCluster* GetBasicClusterFromRecHits(std::unique_ptr<RecHits> &hits)
   double clusterX = (xMax+xMin)/2.;
   double clusterY = (yMax+yMin)/2.;
   double clusterEta = hits->GetCenterEta();
+  double clusterR = std::max((xMax-xMin)/2.,(yMax-yMin)/2.);
   
-  BasicCluster *basicCluster = new BasicCluster(recEnergy,clusterX,clusterY,0,clusterEta);
+  BasicCluster *basicCluster = new BasicCluster(recEnergy,clusterX,clusterY,0,clusterEta,clusterR);
   return basicCluster;
 }
 
@@ -150,16 +151,9 @@ inline void matchClustersClosest(std::vector<MatchedClusters*> &matched, std::ve
 
     BasicCluster *basicCluster = GetBasicClusterFromRecHits(recHitsInLayerInCluster);
     
-    double xMaxRec   = recHitsInLayerInCluster->GetXmax();
-    double xMinRec   = recHitsInLayerInCluster->GetXmin();
-    double yMaxRec   = recHitsInLayerInCluster->GetYmax();
-    double yMinRec   = recHitsInLayerInCluster->GetYmin();
-    
-    double recClusterR = std::max((xMaxRec-xMinRec)/2.,(yMaxRec-yMinRec)/2.);
-    
     Xs.push_back(basicCluster->GetX());
     Ys.push_back(basicCluster->GetY());
-    Rs.push_back(recClusterR);
+    Rs.push_back(basicCluster->GetRadius());
     Es.push_back(basicCluster->GetEnergy());
     
     MatchedClusters *matchedCluster = new MatchedClusters();

@@ -88,6 +88,7 @@ int main(int argc, char* argv[])
       // perform final analysis, fill in histograms and save to files
       TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
       TH2D *sigmaEvsEta = new TH2D("sigma(E) vs. eta","sigma(E) vs. eta",100,1.5,3.2,100,-10,10);
+      TH1D *twoSeparation = new TH1D("two clusters separation","two clusters separation",100,0,50);
       
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
@@ -104,10 +105,24 @@ int main(int argc, char* argv[])
             sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
           }
         }
-        
+        for(int i=0;i<matchedClusters.size();i++){
+          for(int j=i;j<matchedClusters.size();j++){
+            BasicCluster *recCluster1 = matchedClusters[i]->recCluster;
+            BasicCluster *recCluster2 = matchedClusters[j]->recCluster;
+            
+            double distance = sqrt(pow(recCluster1->GetX()-recCluster2->GetX(),2)+
+                                   pow(recCluster1->GetY()-recCluster2->GetY(),2));
+            
+            double sigma1 = recCluster1->GetRadius();
+            double sigma2 = recCluster2->GetRadius();
+            
+            twoSeparation->Fill(distance/sqrt(sigma1*sigma1+sigma2*sigma2));
+          }
+        }
       }
       ErecEsimVsEta->SaveAs(Form("%s/ErecEsimVsEta.root",eventDir.c_str()));
       sigmaEvsEta->SaveAs(Form("%s/simgaEVsEta.root",eventDir.c_str()));
+      twoSeparation->SaveAs(Form("%s/twoSeparation.root",eventDir.c_str()));
       
       recHitsPerClusterArray.clear();
       simHitsPerClusterArray.clear();
