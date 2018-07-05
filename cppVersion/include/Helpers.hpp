@@ -191,8 +191,6 @@ inline void matchClustersClosest(std::vector<MatchedClusters*> &matched, std::ve
 /// \param layer Layer index
 inline void matchClustersAllToAll(std::vector<MatchedClusters*> &matched, std::vector<RecHits*> &recHitsPerCluster, std::vector<RecHits*> &simHitsPerCluster, int layer)
 {
-  int currentMatchedIndex = 0;
-  
   for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
     
     RecHits *recCluster = recHitsPerCluster[recClusterIndex];
@@ -200,21 +198,21 @@ inline void matchClustersAllToAll(std::vector<MatchedClusters*> &matched, std::v
     
     if(recHitsInLayerInCluster->N()==0) continue;
     
-    MatchedClusters *matchedCluster = new MatchedClusters();
-    matchedCluster->recCluster = GetBasicClusterFromRecHits(recHitsInLayerInCluster);;
-    matched.push_back(matchedCluster);
-    
-    for(uint simClusterIndex=0;simClusterIndex<simHitsPerCluster.size();simClusterIndex++){
+    for(uint simClusterIndex=0;simClusterIndex < simHitsPerCluster.size();simClusterIndex++){
       
       RecHits *simCluster = simHitsPerCluster[simClusterIndex];
       std::unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
       
       if(simHitsInLayerInCluster->N()==0) continue;
       
+      MatchedClusters *matchedCluster = new MatchedClusters();
+      matchedCluster->recCluster = GetBasicClusterFromRecHits(recHitsInLayerInCluster);
+    
       BasicCluster *basicCluster = GetBasicClusterFromRecHits(simHitsInLayerInCluster);
-      matched[currentMatchedIndex]->simClusters->push_back(basicCluster);
+      matchedCluster->simClusters->push_back(basicCluster);
+      
+      matched.push_back(matchedCluster);
     }
-    currentMatchedIndex++;
   }
 }
   

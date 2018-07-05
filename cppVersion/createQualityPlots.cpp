@@ -100,13 +100,12 @@ int main(int argc, char* argv[])
           double recEta    = clusters->recCluster->GetEta();
           double simEnergy = clusters->GetTotalSimEnergy();
           
-          if(recEnergy > 1.0 && simEnergy > 1.0){
-            ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
-            sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
-          }
+          ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
+          sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
+          
         }
-        for(int i=0;i<matchedClusters.size();i++){
-          for(int j=i;j<matchedClusters.size();j++){
+        for(uint i=0;i<matchedClusters.size();i++){
+          for(uint j=i;j<matchedClusters.size();j++){
             BasicCluster *recCluster1 = matchedClusters[i]->recCluster;
             BasicCluster *recCluster2 = matchedClusters[j]->recCluster;
             
