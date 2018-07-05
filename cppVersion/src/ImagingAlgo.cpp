@@ -44,18 +44,18 @@ double ImagingAlgo::calculateLocalDensity(vector<unique_ptr<Hexel>> &hexels,
                                           int layer)
 {
   double maxdensity = 0;
-  double delta_c = 0;
+  double criticalDistance = 0;
 
-  if(layer <= lastLayerEE)       delta_c = config->GetDeltac(kEE);
-  else if(layer <= lastLayerFH)  delta_c = config->GetDeltac(kFH);
-  else                           delta_c = config->GetDeltac(kBH);
+  if(layer <= lastLayerEE)       criticalDistance = config->GetCriticalDistance(kEE);
+  else if(layer <= lastLayerFH)  criticalDistance = config->GetCriticalDistance(kFH);
+  else                           criticalDistance = config->GetCriticalDistance(kBH);
 
   for(unique_ptr<Hexel> &iNode : hexels){
-    // search in a circle of radius delta_c or delta_c*sqrt(2) (not identical to search in the box delta_c)
-    auto found = queryBallPoint(lpX, lpY, iNode->x, iNode->y, delta_c);
+    // search in a circle of radius "criticalDistance" or "criticalDistance"*sqrt(2) (not identical to search in the box "criticalDistance")
+    auto found = queryBallPoint(lpX, lpY, iNode->x, iNode->y, criticalDistance);
     for(int j : found){
-      double dist = distanceReal2(iNode->x,iNode->y, hexels[j]->x, hexels[j]->y);
-      if(dist < delta_c * delta_c){
+      double distSquared = distanceReal2(iNode->x,iNode->y, hexels[j]->x, hexels[j]->y);
+      if(distSquared < criticalDistance * criticalDistance){
         iNode->rho += hexels[j]->weight;
         if(iNode->rho > maxdensity) maxdensity = iNode->rho;
       }
@@ -171,32 +171,38 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   double rho_b[clusterIndex];
   for(int i=0;i<clusterIndex;i++){rho_b[i]=0.;}
 
+  double criticalDistance = 0;
+  
+  if(layer <= lastLayerEE)       criticalDistance = config->GetCriticalDistance(kEE);
+  else if(layer <= lastLayerFH)  criticalDistance = config->GetCriticalDistance(kFH);
+  else                           criticalDistance = config->GetCriticalDistance(kBH);
+  
   // now loop on all hits again :( and check: if there are hits from another cluster within d_c -> flag as border hit
   for(auto &iNode : nodes){
     int ci = iNode->clusterIndex;
     bool flag_isolated = true;
-    if(ci != -1){// search in a circle of radius delta_c or delta_c*sqrt(2) (not identical to search in the box delta_c)
+    if(ci != -1){// search in a circle of radius criticalDistance or criticalDistance*sqrt(2) (not identical to search in the box criticalDistance)
 
-      auto found = queryBallPoint(points_0,points_1, iNode->x, iNode->y, delta_c);
+      auto found = queryBallPoint(points_0,points_1, iNode->x, iNode->y, criticalDistance);
       for(int j : found){
         // check if the hit is not within d_c of another cluster
         if(nodes[j]->clusterIndex != -1){
           double dist2 = distanceReal2(nodes[j]->x, nodes[j]->y , iNode->x, iNode->y);
-          if(dist2 < delta_c * delta_c && nodes[j]->clusterIndex != ci){
+          if(dist2 < criticalDistance * criticalDistance && nodes[j]->clusterIndex != ci){
             // in which case we assign it to the border
             iNode->isBorder = true;
             break;
           }
           // because we are using two different containers, we have to make sure that we don't unflag the
-          // hit when it finds *itself* closer than delta_c
+          // hit when it finds *itself* closer than criticalDistance
 
-          if(dist2 < delta_c * delta_c && dist2 != 0. && nodes[j]->clusterIndex == ci){
+          if(dist2 < criticalDistance * criticalDistance && dist2 != 0. && nodes[j]->clusterIndex == ci){
             // this is not an isolated hit
             flag_isolated = false;
           }
         }
       }
-      if(flag_isolated) iNode->isBorder = true;  // the hit is more than delta_c from any of its brethren
+      if(flag_isolated) iNode->isBorder = true;  // the hit is more than criticalDistance from any of its brethren
     }
     // check if this border hit has density larger than the current rho_b and update
     if(iNode->isBorder && rho_b[ci] < iNode->rho) // here rho_b[ci] is always zero - this seems wrong!!
