@@ -87,25 +87,27 @@ int main(int argc, char* argv[])
       
       // perform final analysis, fill in histograms and save to files
       TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
+      TH2D *sigmaEvsEta = new TH2D("sigma(E) vs. eta","sigma(E) vs. eta",100,1.5,3.2,100,-10,10);
       
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
-        for(uint recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
+        
+        vector<MatchedClusters*> matchedClusters;
+        matchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        
+        for(MatchedClusters *clusters : matchedClusters){
+          double recEnergy = clusters->recCluster->GetEnergy();
+          double recEta    = clusters->recCluster->GetEta();
+          double simEnergy = clusters->GetTotalSimEnergy();
           
-          vector<MatchedClusters*> matchedClusters;
-          matchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
-          
-          for(MatchedClusters *clusters : matchedClusters){
-            double recEnergy = clusters->recCluster->GetEnergy();
-            double recEta    = clusters->recCluster->GetEta();
-            double simEnergy = clusters->GetTotalSimEnergy();
-            
-            if(recEnergy*simEnergy != 0){
-              ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
-            }
+          if(recEnergy > 1.0 && simEnergy > 1.0){
+            ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
+            sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
           }
         }
+        
       }
       ErecEsimVsEta->SaveAs(Form("%s/ErecEsimVsEta.root",eventDir.c_str()));
+      sigmaEvsEta->SaveAs(Form("%s/simgaEVsEta.root",eventDir.c_str()));
       
       recHitsPerClusterArray.clear();
       simHitsPerClusterArray.clear();

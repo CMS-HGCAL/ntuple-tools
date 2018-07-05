@@ -33,6 +33,12 @@ public:
   /// Returns energy of this cluster
   inline double GetEnergy() const {return energy;}
 
+  /// Returns X coordinate of this cluster
+  inline double GetX() const {return x;}
+  
+  /// Returns Y coordinate of this cluster
+  inline double GetY() const {return y;}
+  
 private:
   double energy;///< Energy of the cluster (GeV)
   double x;     ///< X coordinate of the cluster

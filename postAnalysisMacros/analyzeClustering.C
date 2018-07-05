@@ -93,7 +93,7 @@ void analyzeClustering()
   TF1 *fun = new TF1("fun","x",0,100);
   
   
-  vector<TH2D*> inputEnergyComparisonHists = getHistsWithName("energyComparisonHist","energy comparison");
+  vector<TH2D*> inputEnergyComparisonHists = getHistsWithName("energyComparisonNoMatchingHist","no matching");
   
   if(inputEnergyComparisonHists.size() > 0){
     TH2D *mergedEnergyComparisonHist = new TH2D(*inputEnergyComparisonHists[0]);
@@ -112,7 +112,7 @@ void analyzeClustering()
     fun->Draw("same");
   }
 
-  vector<TH2D*> inputEnergyComparisonOverlapHists = getHistsWithName("energyComparisonOverlapHist","energy comparison overlap.");
+  vector<TH2D*> inputEnergyComparisonOverlapHists = getHistsWithName("energyComparisonClosestHist","closest rec cluster");
   
   if(inputEnergyComparisonOverlapHists.size() >0){
     TH2D *mergedEnergyComparisonOverlapHist = new TH2D(*inputEnergyComparisonOverlapHists[0]);
@@ -144,6 +144,25 @@ void analyzeClustering()
     
     mergedErecEsimVsEtaHists->GetXaxis()->SetTitle("|#eta|");
     mergedErecEsimVsEtaHists->GetYaxis()->SetTitle("E_{rec}/E_{sim}");
+    //  mergedErecEsimVsEtaHists->GetZaxis()->SetRangeUser(0,30);
+    
+    //  fun->Draw("same");
+  }
+  
+  vector<TH2D*> inputsigmaEsimVsEta = getHistsWithName("simgaEvsEta","sigma(E) vs. eta");
+  if(inputsigmaEsimVsEta.size() > 0){
+    
+    TH2D *mergedSigmaEsimVsEtaHists = new TH2D(*inputsigmaEsimVsEta[0]);
+    
+    for(int iter=1;iter<inputsigmaEsimVsEta.size();iter++){
+      mergedSigmaEsimVsEtaHists->Add(inputsigmaEsimVsEta[iter]);
+    }
+    
+    canvas->cd(4);
+    mergedSigmaEsimVsEtaHists->Draw("colz");
+    
+    mergedSigmaEsimVsEtaHists->GetXaxis()->SetTitle("|#eta|");
+    mergedSigmaEsimVsEtaHists->GetYaxis()->SetTitle("(E_{rec}-E_{sim})/E_{rec}");
     //  mergedErecEsimVsEtaHists->GetZaxis()->SetRangeUser(0,30);
     
     //  fun->Draw("same");
