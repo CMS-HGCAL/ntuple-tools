@@ -20,7 +20,7 @@ public:
                std::vector<std::shared_ptr<Hexel>> _thisCluster=std::vector<std::shared_ptr<Hexel>>(0));
   
   /// Default constructor taking as an input basic parameters of a cluster and a vector of hexels.
-  BasicCluster(double _energy=-1, double _x=0, double _y=0, double _z=0, double _eta=0);
+  BasicCluster(double _energy=-1, double _x=0, double _y=0, double _z=0, double _eta=0, double _radius=0);
   
   ~BasicCluster();
 
@@ -39,6 +39,9 @@ public:
   /// Returns Y coordinate of this cluster
   inline double GetY() const {return y;}
   
+  /// Returns maximum radius of the cluster
+  inline double GetRadius() const {return radius;}
+  
 private:
   double energy;///< Energy of the cluster (GeV)
   double x;     ///< X coordinate of the cluster
@@ -46,6 +49,7 @@ private:
   double z;     ///< Z coordinate of the cluster
   double eta;   ///< Pseudorapidity of the cluster
   double phi;   ///< Polar angle of the cluster
+  double radius;
 
   std::vector<std::shared_ptr<Hexel>> thisCluster;     ///< Hexels belonging to this cluster
 };

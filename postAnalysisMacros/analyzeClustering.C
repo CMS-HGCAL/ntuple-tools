@@ -86,10 +86,50 @@ vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
   return result;
 }
 
+vector<TH1D*> get1DHistsWithName(const char* histFileName, const char* histName)
+{
+  vector<TH1D*> result;
+  
+  TSystemDirectory mainDir(baseDir.c_str(),baseDir.c_str());
+  TList *ntupleDirsList = mainDir.GetListOfFiles();
+  
+  ntupleDirsList->Print();
+  
+  TSystemDirectory *ntupleDir;
+  TIter next(ntupleDirsList);
+  
+  while((ntupleDir=(TSystemDirectory*)next())){
+    TString name(ntupleDir->GetName());
+    if(name.Contains("ntup")){
+      TSystemDirectory eventsDir(Form("%s/%s",baseDir.c_str(),name.Data()),
+                                 Form("%s/%s",baseDir.c_str(),name.Data()));
+      TList *eventsDirsList = eventsDir.GetListOfFiles();
+      
+      TSystemDirectory *eventDir;
+      TIter nextEvent(eventsDirsList);
+      while((eventDir=(TSystemDirectory*)nextEvent())){
+        TString eventName(eventDir->GetName());
+        if(eventName.Contains("event")){
+          cout<<Form("%s/%s/%s/%s.root",baseDir.c_str(),name.Data(),eventName.Data(),histFileName)<<endl;
+          TFile *inFile = TFile::Open(Form("%s/%s/%s/%s.root",baseDir.c_str(),name.Data(),eventName.Data(),histFileName));
+          if(!inFile) continue;
+          TH1D *hist = (TH1D*)inFile->Get(histName);
+          if(!hist){
+            cout<<"no hist: "<<histName<<"!!"<<endl;
+            continue;
+          }
+          result.push_back(hist);
+        }
+      }
+    }
+  }
+  return result;
+}
+
 void analyzeClustering()
 {
   TCanvas *canvas = new TCanvas("canvas","canvas",1200,800);
-  canvas->Divide(2,2);
+  canvas->Divide(3,2);
   TF1 *fun = new TF1("fun","x",0,100);
   
   
@@ -160,13 +200,22 @@ void analyzeClustering()
     
     canvas->cd(4);
     mergedSigmaEsimVsEtaHists->Draw("colz");
-    
     mergedSigmaEsimVsEtaHists->GetXaxis()->SetTitle("|#eta|");
     mergedSigmaEsimVsEtaHists->GetYaxis()->SetTitle("(E_{rec}-E_{sim})/E_{rec}");
-    //  mergedErecEsimVsEtaHists->GetZaxis()->SetRangeUser(0,30);
-    
-    //  fun->Draw("same");
   }
   
+  vector<TH1D*> inputSeparation = get1DHistsWithName("twoSeparation","two clusters separation");
+  if(inputSeparation.size() > 0){
+    
+    TH1D *mergedSeparationHists = new TH1D(*inputSeparation[0]);
+    
+    for(int iter=1;iter<inputSeparation.size();iter++){
+      mergedSeparationHists->Add(inputSeparation[iter]);
+    }
+    
+    canvas->cd(5);
+    mergedSeparationHists->Draw();
+    mergedSeparationHists->GetXaxis()->SetTitle("sep");
+  }
 }
 
