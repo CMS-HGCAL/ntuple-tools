@@ -105,84 +105,6 @@ int main(int argc, char* argv[])
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)\n"<<endl;
 
-      // perform final analysis, fill in histograms and save to files
-      TH2D *energyComparisonHist = new TH2D("energy comparison","energy comparison",100,0,100,100,0,100);
-      TH2D *energyComparisonOverlapHist = new TH2D("energy comparison overlap.","energy comparison overlap.",100,0,100,100,0,100);
-
-      cout<<"\n\nGenerating final hists...\n\n";
-      start = now();
-
-
-      for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
-        
-        if(config->GetVerbosityLevel() >= 1){
-          cout<<"\n\nLayer:"<<layer<<"\n"<<endl;
-          
-          unique_ptr<Clusters2D> clusters2DinLayer(new Clusters2D());
-          clusters2D->GetClustersInLayer(clusters2DinLayer, layer);
-          
-          for(int i=0;i<clusters2DinLayer->N();i++){
-            if(clusters2DinLayer->GetEnergy(i) > 0.0000001){
-              cout<<"Cluster E:"<<clusters2DinLayer->GetEnergy(i)<<"\teta:"<<clusters2DinLayer->GetEta(i)<<endl;
-            }
-          }
-        }
-        for(uint recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
-
-          RecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
-          unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
-
-          if(recHitsInLayerInCluster->N()==0) continue;
-
-          if(config->GetVerbosityLevel() >= 1){
-            cout<<"\tRec Cluster E:"<<recHitsInLayerInCluster->GetTotalEnergy()<<"\teta:"<<recHitsInLayerInCluster->GetCenterEta()<<endl;
-          }
-          double recEnergy = recHitsInLayerInCluster->GetTotalEnergy();
-          double xMaxRec   = recHitsInLayerInCluster->GetXmax();
-          double xMinRec   = recHitsInLayerInCluster->GetXmin();
-          double yMaxRec   = recHitsInLayerInCluster->GetYmax();
-          double yMinRec   = recHitsInLayerInCluster->GetYmin();
-
-          double recClusterX = (xMaxRec+xMinRec)/2.;
-          double recClusterY = (yMaxRec+yMinRec)/2.;
-          double recClusterR = max((xMaxRec-xMinRec)/2.,(yMaxRec-yMinRec)/2.);
-
-          double assocSimEnergy = 0;
-
-          for(uint simClusterIndex=0;simClusterIndex<simHitsPerClusterArray.size();simClusterIndex++){
-            RecHits *simCluster = simHitsPerClusterArray[simClusterIndex];
-            unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
-
-            if(simHitsInLayerInCluster->N()==0) continue;
-
-            double simEnergy = simHitsInLayerInCluster->GetTotalEnergy();
-            double xMaxSim   = simHitsInLayerInCluster->GetXmax();
-            double xMinSim   = simHitsInLayerInCluster->GetXmin();
-            double yMaxSim   = simHitsInLayerInCluster->GetYmax();
-            double yMinSim   = simHitsInLayerInCluster->GetYmin();
-
-            double simClusterX = (xMaxSim+xMinSim)/2.;
-            double simClusterY = (yMaxSim+yMinSim)/2.;
-            // double simClusterR = max((xMaxSim-xMinSim)/2.,(yMaxSim-yMinSim)/2.);
-
-            if(recEnergy*simEnergy != 0){
-              energyComparisonHist->Fill(recEnergy,simEnergy);
-            }
-
-            if(pointWithinCircle(simClusterX,simClusterY,recClusterX,recClusterY,recClusterR)){
-              assocSimEnergy += simEnergy;
-            }
-          }
-          if(recEnergy*assocSimEnergy != 0){
-            energyComparisonOverlapHist->Fill(recEnergy,assocSimEnergy);
-          }
-        }
-      }
-      energyComparisonHist->SaveAs(Form("%s/energyComparisonHist.root",eventDir.c_str()));
-      energyComparisonOverlapHist->SaveAs(Form("%s/energyComparisonOverlapHist.root",eventDir.c_str()));
-      end = now();
-      cout<<" done ("<<duration(start,end)<<" s)"<<endl;
-
       auto endEvent = now();
       cout<<"Total event processing time: "<<duration(startEvent,endEvent)<<" s"<<endl;
 
@@ -193,7 +115,6 @@ int main(int argc, char* argv[])
     delete tree;
     inFile->Close();
     delete inFile;
-
   }
   delete algo;
 

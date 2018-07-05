@@ -85,98 +85,27 @@ int main(int argc, char* argv[])
       TH2D *energyComparisonClosestHist = new TH2D("closest rec cluster","closest rec cluster",100,0,100,100,0,100);
 
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
-        vector<int> alreadyAssociatedClusters;
-        vector<RecHits*> hitsMatchedToRecClusters;
-        vector<double> Xs,Ys,Rs, Es, Eassoc;
-        bool skip = false;
         
-        for(uint recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
-
-          RecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
-          unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
-          skip = false;
-          if(recHitsInLayerInCluster->N()==0){
-            skip = true;
-            continue;
+        vector<MatchedClusters*> unmatchedClusters;
+        vector<MatchedClusters*> matchedClusters;
+        
+        matchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        matchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        
+        for(MatchedClusters *clusters : unmatchedClusters){
+          if(clusters->recCluster->GetEnergy()*clusters->GetTotalSimEnergy() != 0){
+            energyComparisonNoMatchingHist->Fill(clusters->recCluster->GetEnergy(),
+                                                 clusters->GetTotalSimEnergy());
           }
-          double recEnergy = recHitsInLayerInCluster->GetTotalEnergy();
-          double xMaxRec   = recHitsInLayerInCluster->GetXmax();
-          double xMinRec   = recHitsInLayerInCluster->GetXmin();
-          double yMaxRec   = recHitsInLayerInCluster->GetYmax();
-          double yMinRec   = recHitsInLayerInCluster->GetYmin();
-
-          double recClusterX = xMinRec+(xMaxRec-xMinRec)/2.;
-          double recClusterY = yMinRec+(yMaxRec-yMinRec)/2.;
-          double recClusterR = max((xMaxRec-xMinRec)/2.,(yMaxRec-yMinRec)/2.);
-
-//          double assocSimEnergy = 0;
-
-          Xs.push_back(recClusterX);
-          Ys.push_back(recClusterY);
-          Rs.push_back(recClusterR);
-          Es.push_back(recEnergy);
-          Eassoc.push_back(0.0);
-          
-          for(uint simClusterIndex=0;simClusterIndex<simHitsPerClusterArray.size();simClusterIndex++){
-            RecHits *simCluster = simHitsPerClusterArray[simClusterIndex];
-            unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
-            
-            if(simHitsInLayerInCluster->N()==0) continue;
-            double simEnergy = simHitsInLayerInCluster->GetTotalEnergy();
-            
-            if(recEnergy*simEnergy != 0){
-              energyComparisonNoMatchingHist->Fill(recEnergy,simEnergy);
-            }
-          }
-          
-        }
-        if(skip) continue;
-        for(uint simClusterIndex=0;simClusterIndex<simHitsPerClusterArray.size();simClusterIndex++){
-          RecHits *simCluster = simHitsPerClusterArray[simClusterIndex];
-          unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
-          
-          if(simHitsInLayerInCluster->N()==0) continue;
-          
-          double simEnergy = simHitsInLayerInCluster->GetTotalEnergy();
-          double xMaxSim   = simHitsInLayerInCluster->GetXmax();
-          double xMinSim   = simHitsInLayerInCluster->GetXmin();
-          double yMaxSim   = simHitsInLayerInCluster->GetYmax();
-          double yMinSim   = simHitsInLayerInCluster->GetYmin();
-          
-          double simClusterX = xMinSim+(xMaxSim-xMinSim)/2.;
-          double simClusterY = yMinSim+(yMaxSim-yMinSim)/2.;
-          // double simClusterR = max((xMaxSim-xMinSim)/2.,(yMaxSim-yMinSim)/2.);
-          
-          int parentRecCluster = findClosestCircle(Xs, Ys, Rs, simClusterX, simClusterY);
-          
-          if(Es[parentRecCluster]*simEnergy != 0){
-            energyComparisonNoMatchingHist->Fill(Es[parentRecCluster],simEnergy);
-          }
-          
-          if(parentRecCluster < 0){
-            cout<<"No rec cluster found for a sim cluster!!"<<endl;
-            continue;
-          }
-          
-          
-          Eassoc[parentRecCluster] += simEnergy;
         }
         
-        for(uint recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
-          
-          RecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
-          unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
-          
-          if(recHitsInLayerInCluster->N()==0) continue;
-          
-          double recEnergy = recHitsInLayerInCluster->GetTotalEnergy();
-          if(recEnergy*Eassoc[recClusterIndex] != 0){
-            energyComparisonClosestHist->Fill(recEnergy,Eassoc[recClusterIndex]);
+        for(MatchedClusters *clusters : matchedClusters){
+          if(clusters->recCluster->GetEnergy()*clusters->GetTotalSimEnergy() != 0){
+            energyComparisonClosestHist->Fill(clusters->recCluster->GetEnergy(),
+                                              clusters->GetTotalSimEnergy());
           }
-          
         }
       }
-      
       
       energyComparisonNoMatchingHist->SaveAs(Form("%s/energyComparisonNoMatchingHist.root",eventDir.c_str()));
       energyComparisonClosestHist->SaveAs(Form("%s/energyComparisonClosestHist.root",eventDir.c_str()));

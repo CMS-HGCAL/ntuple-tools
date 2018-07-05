@@ -42,8 +42,8 @@ const int nClusters = 40;
 // from C++ version
 //string baseDir = "clusteringResultsCXX";
 //string baseDir = "clusteringResultsCXX/fixedSamples";
-string baseDir = "clusteringResultsCXX/oldSamples";
-
+//string baseDir = "clusteringResultsCXX/oldSamples";
+string baseDir = "clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/";
 
 vector<TH2D*> getHistsWithName(const char* histFileName, const char* histName)
 {
