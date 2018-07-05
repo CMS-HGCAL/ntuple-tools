@@ -26,6 +26,17 @@ thisCluster(_thisCluster)
   phi = atan2(y, x);
 }
 
+BasicCluster::BasicCluster(double _energy, double _x, double _y, double _z, double _eta) :
+energy(_energy),
+x(_x),
+y(_y),
+z(_z),
+eta(_eta)
+{
+  thisCluster = std::vector<std::shared_ptr<Hexel>>(0);
+  phi = 0;
+}
+
 BasicCluster::~BasicCluster()
 {
   thisCluster.clear();

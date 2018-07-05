@@ -91,45 +91,17 @@ int main(int argc, char* argv[])
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         for(uint recClusterIndex=0;recClusterIndex<recHitsPerClusterArray.size();recClusterIndex++){
           
-          RecHits *recCluster = recHitsPerClusterArray[recClusterIndex];
-          unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
+          vector<MatchedClusters*> matchedClusters;
+          matchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
           
-          if(recHitsInLayerInCluster->N()==0) continue;
-          
-          double recEnergy = recHitsInLayerInCluster->GetTotalEnergy();
-          double xMaxRec   = recHitsInLayerInCluster->GetXmax();
-          double xMinRec   = recHitsInLayerInCluster->GetXmin();
-          double yMaxRec   = recHitsInLayerInCluster->GetYmax();
-          double yMinRec   = recHitsInLayerInCluster->GetYmin();
-          
-          double recClusterX = xMinRec+(xMaxRec-xMinRec)/2.;
-          double recClusterY = yMinRec+(yMaxRec-yMinRec)/2.;
-          double recClusterR = max((xMaxRec-xMinRec)/2.,(yMaxRec-yMinRec)/2.);
-          
-          double assocSimEnergy = 0;
-          
-          for(uint simClusterIndex=0;simClusterIndex<simHitsPerClusterArray.size();simClusterIndex++){
-            RecHits *simCluster = simHitsPerClusterArray[simClusterIndex];
-            unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
+          for(MatchedClusters *clusters : matchedClusters){
+            double recEnergy = clusters->recCluster->GetEnergy();
+            double recEta    = clusters->recCluster->GetEta();
+            double simEnergy = clusters->GetTotalSimEnergy();
             
-            if(simHitsInLayerInCluster->N()==0) continue;
-            
-            double simEnergy = simHitsInLayerInCluster->GetTotalEnergy();
-            double xMaxSim   = simHitsInLayerInCluster->GetXmax();
-            double xMinSim   = simHitsInLayerInCluster->GetXmin();
-            double yMaxSim   = simHitsInLayerInCluster->GetYmax();
-            double yMinSim   = simHitsInLayerInCluster->GetYmin();
-            
-            double simClusterX = xMinSim+(xMaxSim-xMinSim)/2.;
-            double simClusterY = yMinSim+(yMaxSim-yMinSim)/2.;
-            // double simClusterR = max((xMaxSim-xMinSim)/2.,(yMaxSim-yMinSim)/2.);
-            
-            if(pointWithinCircle(simClusterX,simClusterY,recClusterX,recClusterY,recClusterR)){
-              assocSimEnergy += simEnergy;
+            if(recEnergy*simEnergy != 0){
+              ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
             }
-          }
-          if(recEnergy*assocSimEnergy != 0){
-            ErecEsimVsEta->Fill(fabs(recHitsInLayerInCluster->GetCenterEta()),recEnergy/assocSimEnergy);
           }
         }
       }
