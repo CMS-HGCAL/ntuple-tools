@@ -36,104 +36,60 @@ configPath(_configPath)
     cout<<"ERROR - could not load config file:"<<configPath<<endl;
     exit(0);
   }
-}
-
-string ConfigurationManager::GetInputPath()
-{
-  TString path = settings->GetValue("input_path","unknown");
   
-  if(path == "unknown"){
+  TString inpath = settings->GetValue("input_path","unknown");
+  
+  if(inpath == "unknown"){
     cout<<"WARNING -- could not read input data path from config file:"<<configPath<<endl;
-    return "";
+    inputPath = "";
   }
-  return path.Data();
-}
-
-string ConfigurationManager::GetOutputPath()
-{
-  TString path = settings->GetValue("output_path","unknown");
+  inputPath = inpath.Data();
   
-  if(path == "unknown"){
+  TString outpath = settings->GetValue("output_path","unknown");
+  
+  if(outpath == "unknown"){
     cout<<"WARNING -- could not read output data path from config file:"<<configPath<<endl;
-    return "";
+    outputPath = "";
   }
-  return path.Data();
-}
-
-bool ConfigurationManager::GetDependSensor()
-{
-  return settings->GetValue("depend_sensor",true);
+  outputPath = outpath.Data();
+  
+  dependSensor = settings->GetValue("depend_sensor",true);
+  
+  deltac_EE = settings->GetValue("deltac_EE",2.0);
+  deltac_FH = settings->GetValue("deltac_FH",2.0);
+  deltac_BH = settings->GetValue("deltac_BH",2.0);
+  
+  minEnergy = settings->GetValue("energy_min",3.0);
+  minClusters = settings->GetValue("min_clusters",3);
+  
+  criticalDistance_EE = settings->GetValue("critical_distance_EE",2.0);
+  criticalDistance_FH = settings->GetValue("critical_distance_FH",2.0);
+  criticalDistance_BH = settings->GetValue("critical_distance_BH",5.0);
+  
+  kappa = settings->GetValue("kappa",9.0);
+  
+  verbosityLevel = settings->GetValue("verbosity_level",0);
+  
+  minNtuple = settings->GetValue("min_Ntuple",0);
+  maxNtuple = settings->GetValue("max_Ntuple",0);
+  minLayer = settings->GetValue("min_layer",0);
+  maxLayer = settings->GetValue("max_layer",0);
+  
+  eventsPerTuple = settings->GetValue("analyze_events_per_tuple",99999);
+  energyDensityFunction = settings->GetValue("energy_density_function","step");
+  reachedEEonly = settings->GetValue("reachedEE_only",1);
 }
 
 double ConfigurationManager::GetDeltac(EDet det)
 {
-  
-  if(det == kEE) return settings->GetValue("deltac_EE",2.0);
-  if(det == kFH) return settings->GetValue("deltac_FH",2.0);
-  return settings->GetValue("deltac_BH",2.0);
-}
-
-int ConfigurationManager::GetMinClusters()
-{
-  return settings->GetValue("min_clusters",3);
-}
-
-double ConfigurationManager::GetEnergyMin()
-{
-  return settings->GetValue("energy_min",3.0);
+  if(det == kEE) return deltac_EE;
+  if(det == kFH) return deltac_FH;
+  return deltac_BH;
 }
 
 double ConfigurationManager::GetCriticalDistance(EDet det)
 {
-  if(det == kEE) return settings->GetValue("critical_distance_EE",2.0);
-  if(det == kFH) return settings->GetValue("critical_distance_FH",2.0);
-  return settings->GetValue("critical_distance_BH",5.0);
+  if(det == kEE) return criticalDistance_EE;
+  if(det == kFH) return criticalDistance_FH;
+  return criticalDistance_BH;
 }
-
-double ConfigurationManager::GetKappa()
-{
-  return settings->GetValue("kappa",9.0);
-}
-
-int ConfigurationManager::GetVerbosityLevel()
-{
-  return settings->GetValue("verbosity_level",0);
-}
-
-int ConfigurationManager::GetMinNtuple()
-{
-  return settings->GetValue("min_Ntuple",0);
-}
-
-int ConfigurationManager::GetMaxNtuple()
-{
-  return settings->GetValue("max_Ntuple",0);
-}
-
-int ConfigurationManager::GetMinLayer()
-{
-  return settings->GetValue("min_layer",0);
-}
-
-int ConfigurationManager::GetMaxLayer()
-{
-  return settings->GetValue("max_layer",0);
-}
-
-int ConfigurationManager::GetMaxEventsPerTuple()
-{
-  return settings->GetValue("analyze_events_per_tuple",99999);
-}
-
-string ConfigurationManager::GetEnergyDensityFunction()
-{
-  return settings->GetValue("energy_density_function","step");
-}
-
-bool ConfigurationManager::GetReachedEEonly()
-{
-  return settings->GetValue("reachedEE_only",1);
-}
-
-
-

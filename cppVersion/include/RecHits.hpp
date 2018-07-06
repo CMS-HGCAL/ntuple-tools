@@ -80,6 +80,14 @@ public:
   /// \return Hits filtered by layer
   std::unique_ptr<RecHits> GetHitsInLayer(int layer);
 
+  /// Returns layer index of i-th hit
+  /// \param i Index of the hit
+  inline int GetLayerOfHit(int i){return layer->at(i);}
+  
+  /// Checks if i-th hit is above the noise threshold and calculates sigma noise
+  /// \return Returns a tuple: aboveThreshold, sigmaNoise
+  std::tuple<bool,double> RecHitAboveThreshold(double iHit);
+  
 private:
   std::unique_ptr<RecHitCalibration> recHitCalib; ///< Stores current hits calibration
   
@@ -110,10 +118,8 @@ public:
   std::unique_ptr<Hexel> GetHexel();
   
   /// Checks if hit is above the noise threshold and calculates sigma noise
-  /// \param ecut Minimum energy
-  /// \param dependSensor Should depend on the sensor type?
   /// \return Returns a tuple: aboveThreshold, sigmaNoise
-  std::tuple<bool,double> RecHitAboveThreshold(double ecut, double dependSensor);
+  std::tuple<bool,double> RecHitAboveThreshold();
  
  float eta;        ///< Pseudorapidity values of hit
  float phi;        ///< Polar angle values of hit

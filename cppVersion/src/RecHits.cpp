@@ -139,7 +139,7 @@ unique_ptr<RecHits> RecHits::GetHitsAboveNoise(double ecut)
 
   for(int iHit=0;iHit<N();iHit++){
     hit = GetHit(iHit);
-    if(get<0>(hit->RecHitAboveThreshold(ecut, true))){
+    if(get<0>(hit->RecHitAboveThreshold())){
       hitsAboveNoise->AddHit(hit);
     }
   }
@@ -223,17 +223,39 @@ void RecHits::GetRecHitsPerHexel(vector<RecHits*> &hitsClustered,vector<shared_p
   }
 }
 
-unique_ptr<RecHits> RecHits::GetHitsInLayer(int layer)
+unique_ptr<RecHits> RecHits::GetHitsInLayer(int layerIndex)
 {
   unique_ptr<RecHits> hitsInLayer(new RecHits());
 
   for(int iHit=0;iHit<N();iHit++){
-    unique_ptr<RecHit> hit = GetHit(iHit);
-    if(hit->layer == layer){
+    if(layer->at(iHit) == layerIndex){
+      unique_ptr<RecHit> hit = GetHit(iHit);
       hitsInLayer->AddHit(hit);
     }
   }
   return hitsInLayer;
+}
+
+tuple<bool,double> RecHits::RecHitAboveThreshold(double iHit)
+{
+  ConfigurationManager *config = ConfigurationManager::Instance();
+  
+  double sigmaNoise = 1.;
+  
+  if(config->GetDependSensor()){
+    int thickIndex = -1;
+    
+    if(layer->at(iHit) <= lastLayerFH){  // EE + FH
+      if(thickness->at(iHit) > 99. && thickness->at(iHit) < 101.)        thickIndex = 0;
+      else if(thickness->at(iHit) > 199. && thickness->at(iHit) < 201.)  thickIndex = 1;
+      else if(thickness->at(iHit) > 299. && thickness->at(iHit) < 301.)  thickIndex = 2;
+      else cout<<"ERROR - silicon thickness has a nonsensical value"<<endl;
+      // determine noise for each sensor/subdetector using RecHitCalibration library
+    }
+    sigmaNoise = 0.001 * recHitCalib->sigmaNoiseMeV(layer->at(iHit), thickIndex);  // returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
+  }
+  bool aboveThreshold = energy->at(iHit) >= config->GetEnergyMin() * sigmaNoise;  // this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
+  return make_tuple(aboveThreshold,sigmaNoise);
 }
 
 //------------------------------------------------------------------------------------------------
@@ -284,22 +306,24 @@ unique_ptr<Hexel> RecHit::GetHexel()
   return hexel;
 }
 
-tuple<bool,double> RecHit::RecHitAboveThreshold(double ecut, double dependSensor)
+tuple<bool,double> RecHit::RecHitAboveThreshold()
 {
+  ConfigurationManager *config = ConfigurationManager::Instance();
+  
   double sigmaNoise = 1.;
 
-  if(dependSensor){
+  if(config->GetDependSensor()){
     int thickIndex = -1;
 
     if(layer <= lastLayerFH){  // EE + FH
-      if(thickness > 99. and thickness < 101.)        thickIndex = 0;
-      else if(thickness > 199. and thickness < 201.)  thickIndex = 1;
-      else if(thickness > 299. and thickness < 301.)  thickIndex = 2;
+      if(thickness > 99. && thickness < 101.)        thickIndex = 0;
+      else if(thickness > 199. && thickness < 201.)  thickIndex = 1;
+      else if(thickness > 299. && thickness < 301.)  thickIndex = 2;
       else cout<<"ERROR - silicon thickness has a nonsensical value"<<endl;
       // determine noise for each sensor/subdetector using RecHitCalibration library
     }
     sigmaNoise = 0.001 * recHitCalibration->sigmaNoiseMeV(layer, thickIndex);  // returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
   }
-  bool aboveThreshold = energy >= ecut * sigmaNoise;  // this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
+  bool aboveThreshold = energy >= config->GetEnergyMin() * sigmaNoise;  // this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
   return make_tuple(aboveThreshold,sigmaNoise);
 }
