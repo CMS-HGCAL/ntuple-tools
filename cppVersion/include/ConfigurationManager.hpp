@@ -63,6 +63,8 @@ public:
   /// Returns a name of the function to be used for the energy density calculation
   std::string GetEnergyDensityFunction();
   
+  /// Tells if events with at least one particle converting before EE should be skipped or not
+  bool GetReachedEEonly();
 private:
   ConfigurationManager(std::string _configPath);
   ~ConfigurationManager(){};

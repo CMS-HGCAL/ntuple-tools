@@ -52,15 +52,16 @@ int main(int argc, char* argv[])
       hgCalEvent->GoToEvent(iEvent);
 
       // check if particles reached EE
-      bool skipEvent = false;
-      for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
-        if(reachedEE==0){
-          skipEvent = true;
-          break;
+      if(config->GetReachedEEonly()){
+        bool skipEvent = false;
+        for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
+          if(reachedEE==0){
+            skipEvent = true;
+            break;
+          }
         }
+        if(skipEvent) continue;
       }
-      if(skipEvent) continue;
-
       string eventDir = config->GetOutputPath()+"/ntup"+to_string(nTupleIter)+"/event"+to_string(iEvent);
       std::system(("mkdir -p "+eventDir).c_str());
 

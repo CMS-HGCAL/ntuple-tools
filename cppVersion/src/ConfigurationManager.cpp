@@ -130,8 +130,10 @@ string ConfigurationManager::GetEnergyDensityFunction()
   return settings->GetValue("energy_density_function","step");
 }
 
-
-
+bool ConfigurationManager::GetReachedEEonly()
+{
+  return settings->GetValue("reachedEE_only",1);
+}
 
 
 

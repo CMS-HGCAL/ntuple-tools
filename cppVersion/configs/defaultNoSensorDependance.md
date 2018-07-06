@@ -53,6 +53,8 @@ min_clusters: 3
 min_layer: 0
 max_layer: 40
 
+### Include only events were all particles reached EE before converting
+reachedEE_only: 1
 
 
 
