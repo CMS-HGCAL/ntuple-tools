@@ -18,53 +18,56 @@ public:
   static ConfigurationManager* Instance(std::string _configPath="");
 
   /// Returns the path to the input files with ntuples
-  inline std::string GetInputPath(){return inputPath;};
+  inline std::string GetInputPath(){return inputPath;}
   
   /// Returns a path under which the output files should be stored
-  inline std::string GetOutputPath(){return outputPath;};
+  inline std::string GetOutputPath(){return outputPath;}
   
   /// Tells if sensor dependance should be taken into account
-  inline bool GetDependSensor(){return dependSensor;};
+  inline bool GetDependSensor(){return dependSensor;}
   
   /// Returns radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector: EE, FH, BH)
   double GetDeltac(EDet det);
   
   /// Returns requested min number of 2D clusters + 1
-  inline int GetMinClusters(){return minClusters;};
+  inline int GetMinClusters(){return minClusters;}
   
   /// Returns cut on energy (minimum)
-  inline double GetEnergyMin(){return minEnergy;};
+  inline double GetEnergyMin(){return minEnergy;}
   
   /// Returns maximum distance to include hits in the energy density calculation.
   double GetCriticalDistance(EDet det);
   
   /// Returns kappa parameter defining minimum energy density to consider a hit as a cluster seed
   /// Critical energy density rho_c = max(rho)/kappa
-  inline double GetKappa(){return kappa;};
+  inline double GetKappa(){return kappa;}
   
   /// Verbosity level of the algo (0 - no output, 1 - basic output, 2 - debug)
-  inline int GetVerbosityLevel(){return verbosityLevel;};
+  inline int GetVerbosityLevel(){return verbosityLevel;}
   
   /// Start running algo from this Ntuple
-  inline int GetMinNtuple(){return minNtuple;};
+  inline int GetMinNtuple(){return minNtuple;}
   
   /// Last Ntuple to run the algo on
-  inline int GetMaxNtuple(){return maxNtuple;};
+  inline int GetMaxNtuple(){return maxNtuple;}
   
   /// Start algorithm in this layer
-  inline int GetMinLayer(){return minLayer;};
+  inline int GetMinLayer(){return minLayer;}
   
   /// Finish alsorithm in this layer
-  inline int GetMaxLayer(){return maxLayer;};
+  inline int GetMaxLayer(){return maxLayer;}
 
   /// Stop analyzing each ntuple after that many events
-  inline int GetMaxEventsPerTuple(){return eventsPerTuple;};
+  inline int GetMaxEventsPerTuple(){return eventsPerTuple;}
 
   /// Returns a name of the function to be used for the energy density calculation
-  inline std::string GetEnergyDensityFunction(){return energyDensityFunction;};
+  inline std::string GetEnergyDensityFunction(){return energyDensityFunction;}
   
   /// Tells if events with at least one particle converting before EE should be skipped or not
-  inline bool GetReachedEEonly(){return reachedEEonly;};
+  inline bool GetReachedEEonly(){return reachedEEonly;}
+  
+  /// Tells how far sim cluster can be from a rec cluster to be matched with it
+  inline double GetMachingMaxDistance(){return matchingMaxDistance;}
 private:
   ConfigurationManager(std::string _configPath);
   ~ConfigurationManager(){};
@@ -94,6 +97,7 @@ private:
   int eventsPerTuple;
   std::string energyDensityFunction;
   bool reachedEEonly;
+  double matchingMaxDistance;
 };
 
 #endif /* ConfigurationManager_h */

@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
 
       // get simulated hits associated with a cluster
       vector<RecHits*> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters, config->GetEnergyMin());
+      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
       
       // re-run clustering with HGCalAlgo, save to file
       std::vector<shared_ptr<Hexel>> recClusters;
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
       
       // recClusters -> array of hexel objects
       vector<RecHits*> recHitsPerClusterArray;
-      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters, config->GetEnergyMin());
+      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
       
       // perform final analysis, fill in histograms and save to files
       TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",100,0,100,100,0,100);

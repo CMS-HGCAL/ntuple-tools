@@ -78,6 +78,8 @@ configPath(_configPath)
   eventsPerTuple = settings->GetValue("analyze_events_per_tuple",99999);
   energyDensityFunction = settings->GetValue("energy_density_function","step");
   reachedEEonly = settings->GetValue("reachedEE_only",1);
+  
+  matchingMaxDistance = settings->GetValue("matching_max_distance",-1);
 }
 
 double ConfigurationManager::GetDeltac(EDet det)

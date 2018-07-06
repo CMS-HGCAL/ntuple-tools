@@ -78,7 +78,7 @@ int main(int argc, char* argv[])
       cout<<"preparing simulated hits and clusters...";
       start = now();
       vector<RecHits*> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters, config->GetEnergyMin());
+      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
 
@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
       cout<<"looking for hits associated with hexels...";
       start = now();
       vector<RecHits*> recHitsPerClusterArray;
-      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters, config->GetEnergyMin());
+      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)\n"<<endl;
 

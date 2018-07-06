@@ -132,7 +132,7 @@ double RecHits::GetCenterEta()
   return (maxEta+minEta)/2.;
 }
 
-unique_ptr<RecHits> RecHits::GetHitsAboveNoise(double ecut)
+unique_ptr<RecHits> RecHits::GetHitsAboveNoise()
 {
   unique_ptr<RecHits> hitsAboveNoise(new RecHits());
   unique_ptr<RecHit> hit;
@@ -146,9 +146,9 @@ unique_ptr<RecHits> RecHits::GetHitsAboveNoise(double ecut)
   return hitsAboveNoise;
 }
 
-void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<SimClusters> clusters, double energyMin)
+void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<SimClusters> clusters)
 {
-  unique_ptr<RecHits> hitsAboveNoise = GetHitsAboveNoise(energyMin);
+  unique_ptr<RecHits> hitsAboveNoise = GetHitsAboveNoise();
   vector<unsigned int> *hitsDetIDs = hitsAboveNoise->detid;
 
   int nAssociatedHits = 0;
@@ -183,9 +183,9 @@ void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<S
   }
 }
 
-void RecHits::GetRecHitsPerHexel(vector<RecHits*> &hitsClustered,vector<shared_ptr<Hexel>> &hexels, double energyMin)
+void RecHits::GetRecHitsPerHexel(vector<RecHits*> &hitsClustered,vector<shared_ptr<Hexel>> &hexels)
 {
-  unique_ptr<RecHits> hitsAboveNoise = GetHitsAboveNoise(energyMin);
+  unique_ptr<RecHits> hitsAboveNoise = GetHitsAboveNoise();
 
   vector<int> clusterIndices;
   vector<unsigned int> *hitDetIDs = hitsAboveNoise->detid; //ok

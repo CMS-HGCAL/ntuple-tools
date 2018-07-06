@@ -45,7 +45,9 @@ int main(int argc, char* argv[])
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
     
     TFile *inFile = TFile::Open(Form("%s%i.root",config->GetInputPath().c_str(),nTupleIter));
+    if(!inFile) continue;
     TTree *tree = (TTree*)inFile->Get("ana/hgc");
+    if(!tree) continue;
     long long nEvents = tree->GetEntries();
     cout<<"n entries:"<<nEvents<<endl;
     
@@ -78,20 +80,21 @@ int main(int argc, char* argv[])
       
       // get simulated hits associated with a cluster
       vector<RecHits*> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters, config->GetEnergyMin());
+      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
       
       // re-run clustering with HGCalAlgo
       std::vector<shared_ptr<Hexel>> recClusters;
       algo->getRecClusters(recClusters, recHitsRaw);
       
       vector<RecHits*> recHitsPerClusterArray;
-      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters, config->GetEnergyMin());
+      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
     
       
       // perform final analysis, fill in histograms and save to files
       TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
       TH2D *sigmaEvsEta = new TH2D("sigma(E) vs. eta","sigma(E) vs. eta",100,1.5,3.2,100,-10,10);
-      TH1D *twoSeparation = new TH1D("two clusters separation","two clusters separation",100,0,50);
+      TH2D *sigmaEvsEtaEsim = new TH2D("sigma(E)Esim vs. eta","sigma(E)Esim vs. eta",100,1.5,3.2,500,-1,4);
+      TH1D *twoSeparation = new TH1D("two clusters separation","two clusters separation",1000,0,10);
       
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
@@ -105,7 +108,7 @@ int main(int argc, char* argv[])
           
           ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
           sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
-          
+          sigmaEvsEtaEsim->Fill(fabs(recEta),(recEnergy-simEnergy)/simEnergy);
         }
         for(uint i=0;i<matchedClusters.size();i++){
           for(uint j=i;j<matchedClusters.size();j++){
@@ -124,6 +127,7 @@ int main(int argc, char* argv[])
       }
       ErecEsimVsEta->SaveAs(Form("%s/ErecEsimVsEta.root",eventDir.c_str()));
       sigmaEvsEta->SaveAs(Form("%s/simgaEVsEta.root",eventDir.c_str()));
+      sigmaEvsEtaEsim->SaveAs(Form("%s/simgaEVsEtaEsim.root",eventDir.c_str()));
       twoSeparation->SaveAs(Form("%s/twoSeparation.root",eventDir.c_str()));
       
       recHitsPerClusterArray.clear();

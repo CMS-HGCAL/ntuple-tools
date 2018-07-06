@@ -57,23 +57,20 @@ public:
   void AddHit(std::unique_ptr<RecHit> &hit);
   
   /// Get subset of RecHits that are above the noise threshold
-  /// \param energyMin Noise threshold - minimum energy of hit to be included
   /// \return Pointer to a collection of hits above specified noise threshold
-  std::unique_ptr<RecHits> GetHitsAboveNoise(double energyMin);
+  std::unique_ptr<RecHits> GetHitsAboveNoise();
   
   /// Groups hits in clusters
   /// \param hitsPerCluster A vector that will be filled with RecHits collections, one for each cluster
   /// \param clusters Collection of simulated clusters to which hits will be assigned
-  /// \param energyMin Noise threshold - minimum energy of hit to be included
   void GetHitsPerSimCluster(std::vector<RecHits*> &hitsPerCluster,
-                            std::shared_ptr<SimClusters> clusters, double energyMin);
+                            std::shared_ptr<SimClusters> clusters);
   
   /// Groups hits associated with hexels into array of clusters
   /// \param hitsClustered Will be filled with RecHits collections, one per each cluster
   /// \param hexels Vector of hexels to which hits are associated
-  /// \param energyMin Noise threshold - minimum energy of hit to be included
   void GetRecHitsPerHexel(std::vector<RecHits*> &hitsClustered,
-                          std::vector<std::shared_ptr<Hexel>> &hexels, double energyMin);
+                          std::vector<std::shared_ptr<Hexel>> &hexels);
   
   /// Returns subset of hits that are within given layer
   /// \param layer Layer index in which to look for hits
