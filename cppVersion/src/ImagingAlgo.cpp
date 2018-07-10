@@ -28,9 +28,14 @@ ImagingAlgo::ImagingAlgo()
     energyDensityFunction = new TF1("step function", "((x < [0]) ? [1] : 0)", -1000, 1000);
   }
   else if(config->GetEnergyDensityFunction() == "gaus"){
-    // param [0] is the distributino width
+    // param [0] is the distribution width
     // param [1] scales the distribution (should be set to something proportional to the energy of the hit)
     energyDensityFunction = new TF1("gaussian", "[1]/(sqrt(2*TMath::Pi())*[0])*exp(-x*x/(2*[0]*[0]))", -1000, 1000);
+  }
+  else if(config->GetEnergyDensityFunction() == "exp"){
+    // param [0] is the critical distance (further than that we don't include hits)
+    // param [1] scales the distribution (should be set to something proportional to the energy of the hit)
+    energyDensityFunction = new TF1("exp", "((x < [0]) ? [1]*exp(-x/[0]) : 0)", -1000, 1000);
   }
   else{
     cout<<"ERROR -- unknown energy density function:"<<config->GetEnergyDensityFunction()<<endl;

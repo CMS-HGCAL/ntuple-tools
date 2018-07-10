@@ -46,6 +46,7 @@ const int nClusters = 40;
 //string baseDir = "clusteringResultsCXX/oldSamples";
 //string baseDir = "clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/";
 string baseDir = "clusteringResultsCXX/twoPions_jniedzie";
+//string baseDir = "clusteringResultsCXX/singleGamma";
 
 vector<TObject*> getHistsWithName(const char* histFileName, const char* histName)
 {
@@ -91,7 +92,7 @@ vector<TObject*> getHistsWithName(const char* histFileName, const char* histName
 void analyzeClustering()
 {
   TCanvas *canvas = new TCanvas("canvas","canvas",2880,1800);
-  canvas->Divide(4,2);
+  canvas->Divide(3,3);
   TF1 *fun = new TF1("fun","x",0,100);
   
   
@@ -127,6 +128,12 @@ void analyzeClustering()
     
     mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
     mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitle("E_{sim} (GeV)");
+    
+    mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitleSize(0.06);
+    mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitleOffset(0.75);
+    mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitleSize(0.06);
+    mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitleOffset(0.75);
+    
     mergedEnergyComparisonOverlapHist->GetZaxis()->SetRangeUser(0,30);
     
     fun->Draw("same");
@@ -178,9 +185,11 @@ void analyzeClustering()
     }
     
     canvas->cd(6);
+//    mergedSigmaEsimVsEtaEsimHists->Rebin2D(2,2);
     mergedSigmaEsimVsEtaEsimHists->Draw("colz");
     mergedSigmaEsimVsEtaEsimHists->GetXaxis()->SetTitle("|#eta|");
     mergedSigmaEsimVsEtaEsimHists->GetYaxis()->SetTitle("(E_{rec}-E_{sim})/E_{sim}");
+//    mergedSigmaEsimVsEtaEsimHists->GetYaxis()->SetRangeUser(-1.0,0.2);
     
     canvas->cd(7);
     TH1D *sigmaEvsEsim = mergedSigmaEsimVsEtaEsimHists->ProjectionY();
@@ -202,5 +211,25 @@ void analyzeClustering()
     mergedSeparationHists->Draw();
     mergedSeparationHists->GetXaxis()->SetTitle("sep");
   }
+  
+  vector<TObject*> inputNrecNsim = getHistsWithName("NrecNsim","NrecNsim");
+  if(inputNrecNsim.size() > 0){
+    
+    TH2D *mergedNrecNsim = new TH2D(*(TH2D*)inputNrecNsim[0]);
+    
+    for(int iter=1;iter<inputNrecNsim.size();iter++){
+      mergedNrecNsim->Add((TH2D*)inputNrecNsim[iter]);
+    }
+    
+    canvas->cd(9);
+    mergedNrecNsim->Draw("colz");
+    mergedNrecNsim->GetXaxis()->SetTitle("Nrec");
+    mergedNrecNsim->GetYaxis()->SetTitle("Nsim");
+    
+    
+  }
+  
+  canvas->SaveAs("/Users/Jeremi/Desktop/erecesim.png");
+  
 }
 

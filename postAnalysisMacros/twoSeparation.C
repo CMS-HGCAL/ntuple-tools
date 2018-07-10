@@ -13,10 +13,12 @@
 #include <TCanvas.h>
 #include <TStyle.h>
 #include <TGraph.h>
+#include <TGraphErrors.h>
 #include <TRandom.h>
 #include <TROOT.h>
 #include <TList.h>
 #include <TSystemDirectory.h>
+#include <TLegend.h>
 
 #include <iostream>
 
@@ -26,6 +28,7 @@ const int nDeltaRbins = 7;
 
 string baseDir = "clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR";
 string pathSuffix[nDeltaRbins] = {"0p1","0p15","0p2","0p25","0p3","0p35","0p4"};
+bool runDir[nDeltaRbins]       = {  1  ,  1   ,  1  ,  1   ,  1  ,  1   ,  1  };
 
 const double deltaR[nDeltaRbins] = {0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4};
 const int colors[nDeltaRbins] = {kRed, kGreen+1, kOrange+1, kBlue, kBlack, kCyan, kMagenta};
@@ -72,44 +75,92 @@ vector<TH1D*> get1DHistsWithName(const char* histFileName, const char* histName,
 
 void twoSeparation()
 {
-  TCanvas *canvas = new TCanvas("canvas","canvas",1200,800);
-    canvas->Divide(2,1);
+  double legendW = 0.15;
+  double legendH = 0.5;
+  double legendX = 0.75;
+  double legendY = 0.25;
+  TLegend *leg = new TLegend(legendX,legendY,legendX+legendW,legendY+legendH);
+  leg->SetHeader("#Delta R(#eta,#phi):");
+  
+  TCanvas *canvas = new TCanvas("canvas","canvas",2800,1800);
+  canvas->Divide(2,2);
   canvas->cd(1);
   
-  TF1 *fitFun = new TF1("fitFun","[0]/x+[1]",0.1,100);
-  fitFun->SetParameter(0,1);
-  fitFun->SetParameter(1,0);
+//  TF1 *fitFun = new TF1("fitFun","[0]/x+[1]",0.1,100);
+//  TF1 *fitFun = new TF1("fitFun","[0]/(sqrt(2*TMath::Pi())*[1])*exp(-pow(x-[2],2)/(2*[1]*[1]))+[3]/x+[4]",0.1,100);
+  TF1 *fitFun = new TF1("fitFun","[0]/(sqrt(2*TMath::Pi())*[1])*exp(-pow(x-[2],2)/(2*[1]*[1]))+[4]",0.1,100);
+  fitFun->SetParameter(0,260); // scaling of gaussian
+  fitFun->SetParameter(1,0.5);   // sigma
+  fitFun->SetParameter(2,1);   // miu
+//  fitFun->SetParameter(3,30); // scaling of 1/x
+  fitFun->SetParameter(4,20);  // offset
   
-  TGraph *distWidthVsDeltaR = new TGraph();
+  TGraphErrors *distWidthVsDeltaR = new TGraphErrors();
+  TGraphErrors *distMiuVsDeltaR = new TGraphErrors();
   
   for(int iDelta=0;iDelta<nDeltaRbins;iDelta++){
+    if(!runDir[iDelta]) continue;
     string histDir = baseDir + pathSuffix[iDelta];
     
-    vector<TH1D*> inputSeparation = get1DHistsWithName("twoSeparation","two clusters separation",histDir.c_str());
+    vector<TH1D*> inputSeparation = get1DHistsWithName("twoSeparationJer","two clusters separation",histDir.c_str());
     if(inputSeparation.size() > 0){
       TH1D *mergedSeparationHists = new TH1D(*inputSeparation[0]);
       
       for(int iter=1;iter<inputSeparation.size();iter++){
         mergedSeparationHists->Add(inputSeparation[iter]);
       }
-      
+      mergedSeparationHists->SetTitle("Two-cluster separation");
       mergedSeparationHists->SetLineColor(colors[iDelta]);
+      mergedSeparationHists->Rebin(5);
       mergedSeparationHists->Draw(iDelta == 0 ? "" : "same");
-      mergedSeparationHists->GetXaxis()->SetTitle("sep");
-      mergedSeparationHists->GetXaxis()->SetRangeUser(0,10);
-      mergedSeparationHists->Fit(fitFun);
+      mergedSeparationHists->GetXaxis()->SetTitle("Separation");
+      mergedSeparationHists->GetXaxis()->SetRangeUser(0,4);
+      mergedSeparationHists->GetYaxis()->SetRangeUser(0,600);
+      mergedSeparationHists->GetXaxis()->SetTitleSize(0.06);
+      mergedSeparationHists->GetXaxis()->SetTitleOffset(0.75);
       
-      distWidthVsDeltaR->SetPoint(iDelta,deltaR[iDelta],fitFun->GetParameter(0));
+      mergedSeparationHists->Fit(fitFun,"","",0.03,100);
+      fitFun->SetLineColor(colors[iDelta]);
+      fitFun->DrawCopy("same");
+      distWidthVsDeltaR->SetPoint(iDelta,deltaR[iDelta],fitFun->GetParameter(1));
+      distWidthVsDeltaR->SetPointError(iDelta,0,fitFun->GetParError(1));
+      distMiuVsDeltaR->SetPoint(iDelta,deltaR[iDelta],fitFun->GetParameter(2));
+      distMiuVsDeltaR->SetPointError(iDelta,0,fitFun->GetParError(2));
+      
+      leg->AddEntry(mergedSeparationHists,Form("%.2f",deltaR[iDelta]),"pl");
     }
   }
+  leg->Draw();
   
   canvas->cd(2);
   
   distWidthVsDeltaR->SetMarkerStyle(20);
   distWidthVsDeltaR->SetMarkerSize(1.0);
-  distWidthVsDeltaR->SetMarkerColor(kGreen+1);
-  distWidthVsDeltaR->Draw("AP");
-  distWidthVsDeltaR->GetXaxis()->SetTitle("#Delta R");
-  distWidthVsDeltaR->GetYaxis()->SetTitle("Fit offset");
+  distWidthVsDeltaR->SetMarkerColor(kGreen+2);
+  distWidthVsDeltaR->Draw("APE");
+  distWidthVsDeltaR->SetTitle("Gaussian width vs. #Delta R(#eta,#phi)");
+  distWidthVsDeltaR->GetXaxis()->SetTitle("#Delta R(#eta,#phi)");
+  distWidthVsDeltaR->GetYaxis()->SetTitle("#sigma");
+  
+  distWidthVsDeltaR->GetXaxis()->SetTitleSize(0.06);
+  distWidthVsDeltaR->GetXaxis()->SetTitleOffset(0.75);
+  distWidthVsDeltaR->GetYaxis()->SetTitleSize(0.06);
+  distWidthVsDeltaR->GetYaxis()->SetTitleOffset(0.75);
+  
+  
+  canvas->cd(3);
+  
+  distMiuVsDeltaR->SetMarkerStyle(20);
+  distMiuVsDeltaR->SetMarkerSize(1.0);
+  distMiuVsDeltaR->SetMarkerColor(kGreen+2);
+  distMiuVsDeltaR->Draw("APE");
+  distMiuVsDeltaR->SetTitle("Gaussian position vs. #Delta R(#eta,#phi)");
+  distMiuVsDeltaR->GetXaxis()->SetTitle("#Delta R(#eta,#phi)");
+  distMiuVsDeltaR->GetYaxis()->SetTitle("#mu");
+  
+  distMiuVsDeltaR->GetXaxis()->SetTitleSize(0.06);
+  distMiuVsDeltaR->GetXaxis()->SetTitleOffset(0.75);
+  distMiuVsDeltaR->GetYaxis()->SetTitleSize(0.06);
+  distMiuVsDeltaR->GetYaxis()->SetTitleOffset(0.75);
 }
 
