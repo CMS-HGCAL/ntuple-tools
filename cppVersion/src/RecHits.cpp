@@ -138,8 +138,9 @@ unique_ptr<RecHits> RecHits::GetHitsAboveNoise()
   unique_ptr<RecHit> hit;
 
   for(int iHit=0;iHit<N();iHit++){
-    hit = GetHit(iHit);
-    if(get<0>(hit->RecHitAboveThreshold())){
+    
+    if(get<0>(RecHitAboveThreshold(iHit))){
+      hit = GetHit(iHit);
       hitsAboveNoise->AddHit(hit);
     }
   }
