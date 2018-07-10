@@ -87,28 +87,32 @@ int main(int argc, char* argv[])
       TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",100,0,100,100,0,100);
       TH2D *energyComparisonClosestHist = new TH2D("closest rec cluster","closest rec cluster",100,0,100,100,0,100);
 
+      
+      int nZeroSim = 0;
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
         vector<MatchedClusters*> unmatchedClusters;
         vector<MatchedClusters*> matchedClusters;
         
-        matcher->MatchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        matcher->MatchClustersByDetID(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
         matcher->MatchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
         
         for(MatchedClusters *clusters : unmatchedClusters){
-          if(clusters->recCluster->GetEnergy()*clusters->GetTotalSimEnergy() != 0){
             energyComparisonNoMatchingHist->Fill(clusters->recCluster->GetEnergy(),
                                                  clusters->GetTotalSimEnergy());
-          }
         }
         
         for(MatchedClusters *clusters : matchedClusters){
-          if(clusters->recCluster->GetEnergy()*clusters->GetTotalSimEnergy() != 0){
             energyComparisonClosestHist->Fill(clusters->recCluster->GetEnergy(),
                                               clusters->GetTotalSimEnergy());
-          }
+          
+          if(clusters->GetTotalSimEnergy() < 0.0001) nZeroSim++;
+          
+//          cout<<"E sim:"<<clusters->GetTotalSimEnergy()<<"\tErec:"<<clusters->recCluster->GetEnergy()<<endl;
         }
       }
+      
+      cout<<"\nN zero sim:"<<nZeroSim<<"\n\n"<<endl;
       
       energyComparisonNoMatchingHist->SaveAs(Form("%s/energyComparisonNoMatchingHist.root",eventDir.c_str()));
       energyComparisonClosestHist->SaveAs(Form("%s/energyComparisonClosestHist.root",eventDir.c_str()));

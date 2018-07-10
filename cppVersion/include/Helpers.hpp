@@ -61,6 +61,27 @@ inline int findClosestCircle(std::vector<double> Xs, std::vector<double> Ys, std
   return closestCircleIndex;
 }
 
+inline int findMostDetIDsharingCluster(std::vector<std::vector<unsigned int>> &recDetIDs,std::vector<unsigned int> &detIDsInSimCluster)
+{
+  int mostSharingIndex = -1;
+  
+  size_t currentMaxSharing = 0;
+  int index=0;
+  
+  for(std::vector<unsigned int> recDetIDsInCluster : recDetIDs){
+    std::vector<unsigned int> common;
+    std::set_intersection(detIDsInSimCluster.begin(), detIDsInSimCluster.end(),
+                          detIDsInSimCluster.begin(), detIDsInSimCluster.end(), std::back_inserter(common));
+    
+    if(common.size() > currentMaxSharing){
+      currentMaxSharing = common.size();
+      mostSharingIndex = index;
+    }
+    index++;
+  }
+  return mostSharingIndex;
+}
+
 /// Finds all points in a circle
 /// \param lpX X coordinates of points to verify
 /// \param lpY Y coordinates of points to verify

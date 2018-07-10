@@ -111,7 +111,7 @@ int main(int argc, char* argv[])
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
         vector<MatchedClusters*> matchedClusters;
-        matcher->MatchClustersClosest(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        matcher->MatchClustersByDetID(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
         
         for(MatchedClusters *clusters : matchedClusters){
           if(clusters->simClusters->size() == 0) continue;

@@ -81,6 +81,10 @@ public:
   /// \param i Index of the hit
   inline int GetLayerOfHit(int i){return layer->at(i);}
   
+  /// Returns detID of i-th hit
+  /// \param i Index of the hit
+  inline int GetDetIDofHit(int i){return detid->at(i);}
+  
   /// Checks if i-th hit is above the noise threshold and calculates sigma noise
   /// \return Returns a tuple: aboveThreshold, sigmaNoise
   std::tuple<bool,double> RecHitAboveThreshold(double iHit);

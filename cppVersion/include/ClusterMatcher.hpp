@@ -17,6 +17,8 @@ public:
   ClusterMatcher();
   ~ClusterMatcher();
   
+  void MatchClustersByDetID(std::vector<MatchedClusters*> &matched, std::vector<RecHits*> &recHitsPerCluster, std::vector<RecHits*> &simHitsPerCluster, int layer);
+  
   /// Fills a vector of matched rec and sim clusters finding the nearest rec cluster for given sim cluster
   /// \param matched Vector that will be filled with rec and sim clusters
   /// \param recHitsPerCluster Vector of rec clusters
