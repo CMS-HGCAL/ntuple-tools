@@ -25,7 +25,7 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
   vector<int> alreadyAssociatedClusters;
   vector<RecHits*> hitsMatchedToRecClusters;
   vector<double> Xs,Ys,Rs, Es;
-  
+
   for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
     
     RecHits *recCluster = recHitsPerCluster[recClusterIndex];
@@ -46,6 +46,8 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
     matched.push_back(matchedCluster);
   }
   
+  double maxDistance = ConfigurationManager::Instance()->GetMachingMaxDistance();
+  
   for(uint simClusterIndex=0;simClusterIndex<simHitsPerCluster.size();simClusterIndex++){
     
     RecHits *simCluster = simHitsPerCluster[simClusterIndex];
@@ -62,9 +64,11 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
       }
       continue;
     }
+    double distance = sqrt(pow(Xs[parentRecCluster]-basicCluster->GetX(),2)+pow(Ys[parentRecCluster]-basicCluster->GetY(),2));
     
-    
-    matched[parentRecCluster]->simClusters->push_back(basicCluster);
+    if((distance <= maxDistance) || maxDistance < 0){
+      matched[parentRecCluster]->simClusters->push_back(basicCluster);
+    }
   }
 }
 

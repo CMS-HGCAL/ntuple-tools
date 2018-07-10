@@ -57,29 +57,34 @@ public:
   void AddHit(std::unique_ptr<RecHit> &hit);
   
   /// Get subset of RecHits that are above the noise threshold
-  /// \param energyMin Noise threshold - minimum energy of hit to be included
   /// \return Pointer to a collection of hits above specified noise threshold
-  std::unique_ptr<RecHits> GetHitsAboveNoise(double energyMin);
+  std::unique_ptr<RecHits> GetHitsAboveNoise();
   
   /// Groups hits in clusters
   /// \param hitsPerCluster A vector that will be filled with RecHits collections, one for each cluster
   /// \param clusters Collection of simulated clusters to which hits will be assigned
-  /// \param energyMin Noise threshold - minimum energy of hit to be included
   void GetHitsPerSimCluster(std::vector<RecHits*> &hitsPerCluster,
-                            std::shared_ptr<SimClusters> clusters, double energyMin);
+                            std::shared_ptr<SimClusters> clusters);
   
   /// Groups hits associated with hexels into array of clusters
   /// \param hitsClustered Will be filled with RecHits collections, one per each cluster
   /// \param hexels Vector of hexels to which hits are associated
-  /// \param energyMin Noise threshold - minimum energy of hit to be included
   void GetRecHitsPerHexel(std::vector<RecHits*> &hitsClustered,
-                          std::vector<std::shared_ptr<Hexel>> &hexels, double energyMin);
+                          std::vector<std::shared_ptr<Hexel>> &hexels);
   
   /// Returns subset of hits that are within given layer
   /// \param layer Layer index in which to look for hits
   /// \return Hits filtered by layer
   std::unique_ptr<RecHits> GetHitsInLayer(int layer);
 
+  /// Returns layer index of i-th hit
+  /// \param i Index of the hit
+  inline int GetLayerOfHit(int i){return layer->at(i);}
+  
+  /// Checks if i-th hit is above the noise threshold and calculates sigma noise
+  /// \return Returns a tuple: aboveThreshold, sigmaNoise
+  std::tuple<bool,double> RecHitAboveThreshold(double iHit);
+  
 private:
   std::unique_ptr<RecHitCalibration> recHitCalib; ///< Stores current hits calibration
   
@@ -110,10 +115,8 @@ public:
   std::unique_ptr<Hexel> GetHexel();
   
   /// Checks if hit is above the noise threshold and calculates sigma noise
-  /// \param ecut Minimum energy
-  /// \param dependSensor Should depend on the sensor type?
   /// \return Returns a tuple: aboveThreshold, sigmaNoise
-  std::tuple<bool,double> RecHitAboveThreshold(double ecut, double dependSensor);
+  std::tuple<bool,double> RecHitAboveThreshold();
  
  float eta;        ///< Pseudorapidity values of hit
  float phi;        ///< Polar angle values of hit

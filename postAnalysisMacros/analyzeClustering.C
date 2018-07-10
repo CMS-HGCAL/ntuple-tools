@@ -44,7 +44,9 @@ const int nClusters = 40;
 //string baseDir = "clusteringResultsCXX";
 //string baseDir = "clusteringResultsCXX/fixedSamples";
 //string baseDir = "clusteringResultsCXX/oldSamples";
-string baseDir = "clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/";
+//string baseDir = "clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/";
+string baseDir = "clusteringResultsCXX/twoPions_jniedzie";
+//string baseDir = "clusteringResultsCXX/singleGamma";
 
 vector<TObject*> getHistsWithName(const char* histFileName, const char* histName)
 {
@@ -89,8 +91,8 @@ vector<TObject*> getHistsWithName(const char* histFileName, const char* histName
 
 void analyzeClustering()
 {
-  TCanvas *canvas = new TCanvas("canvas","canvas",1200,800);
-  canvas->Divide(3,2);
+  TCanvas *canvas = new TCanvas("canvas","canvas",2880,1800);
+  canvas->Divide(3,3);
   TF1 *fun = new TF1("fun","x",0,100);
   
   
@@ -126,6 +128,12 @@ void analyzeClustering()
     
     mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
     mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitle("E_{sim} (GeV)");
+    
+    mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitleSize(0.06);
+    mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitleOffset(0.75);
+    mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitleSize(0.06);
+    mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitleOffset(0.75);
+    
     mergedEnergyComparisonOverlapHist->GetZaxis()->SetRangeUser(0,30);
     
     fun->Draw("same");
@@ -145,9 +153,11 @@ void analyzeClustering()
     
     mergedErecEsimVsEtaHists->GetXaxis()->SetTitle("|#eta|");
     mergedErecEsimVsEtaHists->GetYaxis()->SetTitle("E_{rec}/E_{sim}");
-    //  mergedErecEsimVsEtaHists->GetZaxis()->SetRangeUser(0,30);
     
-    //  fun->Draw("same");
+    canvas->cd(4);
+    TH1D *sigmaEvsEsim = mergedErecEsimVsEtaHists->ProjectionY();
+    sigmaEvsEsim->Draw();
+    sigmaEvsEsim->GetXaxis()->SetRangeUser(0,2);
   }
   
   vector<TObject*> inputsigmaEsimVsEta = getHistsWithName("simgaEvsEta","sigma(E) vs. eta");
@@ -159,10 +169,33 @@ void analyzeClustering()
       mergedSigmaEsimVsEtaHists->Add((TH2D*)inputsigmaEsimVsEta[iter]);
     }
     
-    canvas->cd(4);
+    canvas->cd(5);
     mergedSigmaEsimVsEtaHists->Draw("colz");
     mergedSigmaEsimVsEtaHists->GetXaxis()->SetTitle("|#eta|");
     mergedSigmaEsimVsEtaHists->GetYaxis()->SetTitle("(E_{rec}-E_{sim})/E_{rec}");
+  }
+  
+  vector<TObject*> inputsigmaEsimVsEtaEsim = getHistsWithName("simgaEvsEtaEsim","sigma(E)Esim vs. eta");
+  if(inputsigmaEsimVsEtaEsim.size() > 0){
+    
+    TH2D *mergedSigmaEsimVsEtaEsimHists = new TH2D(*(TH2D*)inputsigmaEsimVsEtaEsim[0]);
+    
+    for(int iter=1;iter<inputsigmaEsimVsEtaEsim.size();iter++){
+      mergedSigmaEsimVsEtaEsimHists->Add((TH2D*)inputsigmaEsimVsEtaEsim[iter]);
+    }
+    
+    canvas->cd(6);
+//    mergedSigmaEsimVsEtaEsimHists->Rebin2D(2,2);
+    mergedSigmaEsimVsEtaEsimHists->Draw("colz");
+    mergedSigmaEsimVsEtaEsimHists->GetXaxis()->SetTitle("|#eta|");
+    mergedSigmaEsimVsEtaEsimHists->GetYaxis()->SetTitle("(E_{rec}-E_{sim})/E_{sim}");
+//    mergedSigmaEsimVsEtaEsimHists->GetYaxis()->SetRangeUser(-1.0,0.2);
+    
+    canvas->cd(7);
+    TH1D *sigmaEvsEsim = mergedSigmaEsimVsEtaEsimHists->ProjectionY();
+    sigmaEvsEsim->Rebin(2);
+    sigmaEvsEsim->Draw();
+    sigmaEvsEsim->GetXaxis()->SetRangeUser(-1,1);
   }
   
   vector<TObject*> inputSeparation = getHistsWithName("twoSeparation","two clusters separation");
@@ -174,9 +207,29 @@ void analyzeClustering()
       mergedSeparationHists->Add((TH1D*)inputSeparation[iter]);
     }
     
-    canvas->cd(5);
+    canvas->cd(8);
     mergedSeparationHists->Draw();
     mergedSeparationHists->GetXaxis()->SetTitle("sep");
   }
+  
+  vector<TObject*> inputNrecNsim = getHistsWithName("NrecNsim","NrecNsim");
+  if(inputNrecNsim.size() > 0){
+    
+    TH2D *mergedNrecNsim = new TH2D(*(TH2D*)inputNrecNsim[0]);
+    
+    for(int iter=1;iter<inputNrecNsim.size();iter++){
+      mergedNrecNsim->Add((TH2D*)inputNrecNsim[iter]);
+    }
+    
+    canvas->cd(9);
+    mergedNrecNsim->Draw("colz");
+    mergedNrecNsim->GetXaxis()->SetTitle("Nrec");
+    mergedNrecNsim->GetYaxis()->SetTitle("Nsim");
+    
+    
+  }
+  
+  canvas->SaveAs("/Users/Jeremi/Desktop/erecesim.png");
+  
 }
 

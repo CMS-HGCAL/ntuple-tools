@@ -28,9 +28,14 @@ ImagingAlgo::ImagingAlgo()
     energyDensityFunction = new TF1("step function", "((x < [0]) ? [1] : 0)", -1000, 1000);
   }
   else if(config->GetEnergyDensityFunction() == "gaus"){
-    // param [0] is the distributino width
+    // param [0] is the distribution width
     // param [1] scales the distribution (should be set to something proportional to the energy of the hit)
     energyDensityFunction = new TF1("gaussian", "[1]/(sqrt(2*TMath::Pi())*[0])*exp(-x*x/(2*[0]*[0]))", -1000, 1000);
+  }
+  else if(config->GetEnergyDensityFunction() == "exp"){
+    // param [0] is the critical distance (further than that we don't include hits)
+    // param [1] scales the distribution (should be set to something proportional to the energy of the hit)
+    energyDensityFunction = new TF1("exp", "((x < [0]) ? [1]*exp(-x/[0]) : 0)", -1000, 1000);
   }
   else{
     cout<<"ERROR -- unknown energy density function:"<<config->GetEnergyDensityFunction()<<endl;
@@ -252,16 +257,18 @@ void ImagingAlgo::populate(vector<vector<unique_ptr<Hexel>>> &points, shared_ptr
   unique_ptr<RecHit> hit;
   // loop over all hits and create the Hexel structure, skip energies below ecut
   for(int iHit=0;iHit<hits->N();iHit++){
-    hit = hits->GetHit(iHit);
-    if (hit->layer > maxlayer){
+    
+    if (hits->GetLayerOfHit(iHit) > maxlayer){
       continue;  // current protection
     }
+    
     // energy treshold dependent on sensor
-    auto thresholdResult = hit->RecHitAboveThreshold(ecut,dependSensor);
+    auto thresholdResult = hits->RecHitAboveThreshold(iHit);
     if(!get<0>(thresholdResult)){
       continue;
     }
     // organise layers accoring to the sgn(z)
+    hit = hits->GetHit(iHit);
     int layerID = hit->layer + (hit->z > 0) * (maxlayer + 1);  // +1 - yes or no?
     double sigmaNoise = get<1>(thresholdResult);
     unique_ptr<Hexel> hexel = hit->GetHexel();

@@ -52,15 +52,16 @@ int main(int argc, char* argv[])
       hgCalEvent->GoToEvent(iEvent);
 
       // check if particles reached EE
-      bool skipEvent = false;
-      for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
-        if(reachedEE==0){
-          skipEvent = true;
-          break;
+      if(config->GetReachedEEonly()){
+        bool skipEvent = false;
+        for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
+          if(reachedEE==0){
+            skipEvent = true;
+            break;
+          }
         }
+        if(skipEvent) continue;
       }
-      if(skipEvent) continue;
-
       string eventDir = config->GetOutputPath()+"/ntup"+to_string(nTupleIter)+"/event"+to_string(iEvent);
       std::system(("mkdir -p "+eventDir).c_str());
 
@@ -71,7 +72,7 @@ int main(int argc, char* argv[])
 
       // get simulated hits associated with a cluster
       vector<RecHits*> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters, config->GetEnergyMin());
+      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
       
       // re-run clustering with HGCalAlgo, save to file
       std::vector<shared_ptr<Hexel>> recClusters;
@@ -80,7 +81,7 @@ int main(int argc, char* argv[])
       
       // recClusters -> array of hexel objects
       vector<RecHits*> recHitsPerClusterArray;
-      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters, config->GetEnergyMin());
+      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
       
       // perform final analysis, fill in histograms and save to files
       TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",100,0,100,100,0,100);

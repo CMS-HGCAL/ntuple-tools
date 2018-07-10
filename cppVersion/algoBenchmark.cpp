@@ -56,15 +56,16 @@ int main(int argc, char* argv[])
       hgCalEvent->GoToEvent(iEvent);
 
       // check if particles reached EE
-      bool skipEvent = false;
-      for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
-        if(reachedEE==0){
-          skipEvent = true;
-          break;
+      if(config->GetReachedEEonly()){
+        bool skipEvent = false;
+        for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
+          if(reachedEE==0){
+            skipEvent = true;
+            break;
+          }
         }
+        if(skipEvent) continue;
       }
-      if(skipEvent) continue;
-
       string eventDir = config->GetOutputPath()+"/ntup"+to_string(nTupleIter)+"/event"+to_string(iEvent);
       std::system(("mkdir -p "+eventDir).c_str());
 
@@ -77,7 +78,7 @@ int main(int argc, char* argv[])
       cout<<"preparing simulated hits and clusters...";
       start = now();
       vector<RecHits*> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters, config->GetEnergyMin());
+      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
 
@@ -101,7 +102,7 @@ int main(int argc, char* argv[])
       cout<<"looking for hits associated with hexels...";
       start = now();
       vector<RecHits*> recHitsPerClusterArray;
-      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters, config->GetEnergyMin());
+      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)\n"<<endl;
 
