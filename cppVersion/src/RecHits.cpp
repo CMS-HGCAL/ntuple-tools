@@ -98,6 +98,25 @@ void RecHits::AddHit(unique_ptr<RecHit> &hit)
   cluster2d->push_back(hit->cluster2d);
 }
 
+void RecHits::AddHits(unique_ptr<RecHits> &hits)
+{
+  for(int i=0;i<hits->N();i++){
+    unique_ptr<RecHit> hit = hits->GetHit(i);
+    eta->push_back(hit->eta);
+    phi->push_back(hit->phi);
+    energy->push_back(hit->energy);
+    x->push_back(hit->x);
+    y->push_back(hit->y);
+    z->push_back(hit->z);
+    layer->push_back(hit->layer);
+    detid->push_back(hit->detid);
+    thickness->push_back(hit->thickness);
+    isHalf->push_back(hit->isHalf);
+    time->push_back(hit->time);
+    cluster2d->push_back(hit->cluster2d);
+  }
+}
+
 double RecHits::GetTotalEnergy()
 {
   double totalEnergy=0;
@@ -138,8 +157,9 @@ unique_ptr<RecHits> RecHits::GetHitsAboveNoise()
   unique_ptr<RecHit> hit;
 
   for(int iHit=0;iHit<N();iHit++){
-    hit = GetHit(iHit);
-    if(get<0>(hit->RecHitAboveThreshold())){
+    
+    if(get<0>(RecHitAboveThreshold(iHit))){
+      hit = GetHit(iHit);
       hitsAboveNoise->AddHit(hit);
     }
   }

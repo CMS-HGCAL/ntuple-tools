@@ -107,10 +107,16 @@ void analyzeClustering()
     
     canvas->cd(1);
     mergedEnergyComparisonHist->Draw("colz");
+    mergedEnergyComparisonHist->SetTitle("No matching");
     
     mergedEnergyComparisonHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
     mergedEnergyComparisonHist->GetYaxis()->SetTitle("E_{sim} (Gev)");
     mergedEnergyComparisonHist->GetZaxis()->SetRangeUser(0,500);
+    
+    mergedEnergyComparisonHist->GetXaxis()->SetTitleSize(0.06);
+    mergedEnergyComparisonHist->GetXaxis()->SetTitleOffset(0.75);
+    mergedEnergyComparisonHist->GetYaxis()->SetTitleSize(0.06);
+    mergedEnergyComparisonHist->GetYaxis()->SetTitleOffset(0.75);
     
     fun->Draw("same");
   }
@@ -125,6 +131,7 @@ void analyzeClustering()
     }
     canvas->cd(2);
     mergedEnergyComparisonOverlapHist->Draw("colz");
+    mergedEnergyComparisonOverlapHist->SetTitle("Matching by detID");
     
     mergedEnergyComparisonOverlapHist->GetXaxis()->SetTitle("E_{rec} (GeV)");
     mergedEnergyComparisonOverlapHist->GetYaxis()->SetTitle("E_{sim} (GeV)");

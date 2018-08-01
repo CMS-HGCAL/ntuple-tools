@@ -43,3 +43,16 @@ BasicCluster::~BasicCluster()
 {
   thisCluster.clear();
 }
+
+bool BasicCluster::operator=(BasicCluster &b)
+{
+  if(   fabs(energy - b.energy) < 0.000001
+     && fabs(x - b.x)           < 0.000001
+     && fabs(y - b.y)           < 0.000001
+     && fabs(z - b.z)           < 0.000001
+     && fabs(eta - b.eta)       < 0.000001
+     && fabs(phi - b.phi)       < 0.000001)
+    return true;
+  
+  return false;
+}

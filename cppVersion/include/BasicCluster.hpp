@@ -42,6 +42,7 @@ public:
   /// Returns maximum radius of the cluster
   inline double GetRadius() const {return radius;}
   
+  bool operator=(BasicCluster &b);
 private:
   double energy;///< Energy of the cluster (GeV)
   double x;     ///< X coordinate of the cluster

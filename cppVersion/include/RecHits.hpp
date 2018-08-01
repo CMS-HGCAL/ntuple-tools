@@ -56,6 +56,10 @@ public:
   /// \param hit Pointer to RecHit object to be added to the collection
   void AddHit(std::unique_ptr<RecHit> &hit);
   
+  /// Adds a group of hits to the colleciton
+  /// \param hits Pointer to RecHits object to be added to the collection
+  void AddHits(std::unique_ptr<RecHits> &hits);
+  
   /// Get subset of RecHits that are above the noise threshold
   /// \return Pointer to a collection of hits above specified noise threshold
   std::unique_ptr<RecHits> GetHitsAboveNoise();
@@ -80,6 +84,14 @@ public:
   /// Returns layer index of i-th hit
   /// \param i Index of the hit
   inline int GetLayerOfHit(int i){return layer->at(i);}
+  
+  /// Returns detID of i-th hit
+  /// \param i Index of the hit
+  inline int GetDetIDofHit(int i){return detid->at(i);}
+  
+  /// Returns energy of i-th hit
+  /// \param i Index of the hit
+  inline double GetEnergyOfHit(int i){return energy->at(i);}
   
   /// Checks if i-th hit is above the noise threshold and calculates sigma noise
   /// \return Returns a tuple: aboveThreshold, sigmaNoise
