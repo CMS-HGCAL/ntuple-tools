@@ -98,12 +98,13 @@ int main(int argc, char* argv[])
         matcher->MatchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
         
         for(MatchedClusters *clusters : unmatchedClusters){
-            energyComparisonNoMatchingHist->Fill(clusters->recCluster->GetEnergy(),
+            energyComparisonNoMatchingHist->Fill(clusters->GetTotalRecEnergy(),
                                                  clusters->GetTotalSimEnergy());
         }
         
         for(MatchedClusters *clusters : matchedClusters){
-            energyComparisonClosestHist->Fill(clusters->recCluster->GetEnergy(),
+           if(clusters->simClusters->size() == 0) continue;
+            energyComparisonClosestHist->Fill(clusters->GetTotalRecEnergy(),
                                               clusters->GetTotalSimEnergy());
           
           if(clusters->GetTotalSimEnergy() < 0.0001) nZeroSim++;

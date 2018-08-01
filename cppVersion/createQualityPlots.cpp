@@ -41,6 +41,10 @@ int main(int argc, char* argv[])
   ImagingAlgo *algo = new ImagingAlgo();
   ClusterMatcher *matcher = new ClusterMatcher();
   
+  TH1D *deltaE = new TH1D("Erec-Esim/Esim","Erec-Esim/Esim",100,-1.0,2.0);
+  TH1D *separation = new TH1D("separation","separation",100,0,10);
+  TH1D *containment = new TH1D("separation","separation",100,0,10);
+  
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
     
@@ -112,31 +116,32 @@ int main(int argc, char* argv[])
         
         vector<MatchedClusters*> matchedClusters;
         matcher->MatchClustersByDetID(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
-        
+        if(matchedClusters.size()==0) continue;
+
         for(MatchedClusters *clusters : matchedClusters){
           if(clusters->simClusters->size() == 0) continue;
           
-          double recEnergy = clusters->recCluster->GetEnergy();
-          double recEta    = clusters->recCluster->GetEta();
+          double recEnergy = clusters->GetTotalRecEnergy();
+          double recEta    = clusters->GetMergedRecCluster()->GetEta();
           double simEnergy = clusters->GetTotalSimEnergy();
           
           totalRecEnergy += recEnergy;
           totalSimEnergy += simEnergy;
-          
-//          if(simEnergy > 10.0 * recEnergy ) continue;
-          
+
           ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
           sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
           sigmaEvsEtaEsim->Fill(fabs(recEta),(recEnergy-simEnergy)/simEnergy);
+          deltaE->Fill((recEnergy-simEnergy)/simEnergy);
+          containment->Fill(clusters->GetSharedFraction());
         }
-        
         NrecNsim->Fill(recHitsPerClusterArray.size(),matchedClusters.size());
         
         
         for(uint i=0;i<matchedClusters.size();i++){
-          for(uint j=i;j<matchedClusters.size();j++){
-            BasicCluster *recCluster1 = matchedClusters[i]->recCluster;
-            BasicCluster *recCluster2 = matchedClusters[j]->recCluster;
+          for(uint j=(i+1);j<matchedClusters.size();j++){
+            
+            BasicCluster *recCluster1 = matchedClusters[i]->GetMergedRecCluster();
+            BasicCluster *recCluster2 = matchedClusters[j]->GetMergedRecCluster();
             
             double distance = sqrt(pow(recCluster1->GetX()-recCluster2->GetX(),2)+
                                    pow(recCluster1->GetY()-recCluster2->GetY(),2));
@@ -144,11 +149,18 @@ int main(int argc, char* argv[])
             double sigma1 = recCluster1->GetRadius();
             double sigma2 = recCluster2->GetRadius();
             
+            if(sigma1+sigma2 == 0) continue;
+            
             twoSeparation->Fill(distance/sqrt(sigma1*sigma1+sigma2*sigma2));
             twoSeparationJer->Fill(distance/(sigma1+sigma2));
+            separation->Fill(distance/(sigma1+sigma2));
           }
         }
       }
+      
+      
+  
+
       ErecEsimVsEta->SaveAs(Form("%s/ErecEsimVsEta.root",eventDir.c_str()));
       sigmaEvsEta->SaveAs(Form("%s/simgaEVsEta.root",eventDir.c_str()));
       sigmaEvsEtaEsim->SaveAs(Form("%s/simgaEVsEtaEsim.root",eventDir.c_str()));
@@ -160,6 +172,13 @@ int main(int argc, char* argv[])
       simHitsPerClusterArray.clear();
       
     }
+    cout<<"Average resolution per event:"<<deltaE->GetMean()<<endl;
+    cout<<"Resolution sigma:"<<deltaE->GetStdDev()<<endl;
+    cout<<"Average separation per event:"<<separation->GetMean()<<endl;
+    cout<<"Separation sigma:"<<separation->GetStdDev()<<endl;
+    cout<<"Average containment per event:"<<containment->GetMean()<<endl;
+    cout<<"Containment sigma:"<<containment->GetStdDev()<<endl;
+    
     delete tree;
     inFile->Close();
     delete inFile;

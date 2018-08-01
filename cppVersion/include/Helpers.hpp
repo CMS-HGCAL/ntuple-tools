@@ -61,7 +61,8 @@ inline int findClosestCircle(std::vector<double> Xs, std::vector<double> Ys, std
   return closestCircleIndex;
 }
 
-inline int findMostDetIDsharingCluster(std::vector<std::vector<unsigned int>> &recDetIDs,std::vector<unsigned int> &detIDsInSimCluster)
+inline int findMostDetIDsharingCluster(std::vector<std::vector<unsigned int>> &recDetIDs,
+                                       std::vector<unsigned int> &detIDsInSimCluster)
 {
   int mostSharingIndex = -1;
   
