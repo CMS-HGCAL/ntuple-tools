@@ -49,22 +49,25 @@ void myfuncf(int&, double*, double &f, double *par, int)
 
 int main()
 {
+  srand((unsigned int)time(0));
+  
 //  UpdateParamValue(configPath, "analyze_events_per_tuple",10);
 //  GetParamFomeConfig(configPath, "depend_sensor"), 1, 0, 1); // 0 - no dependance, 1 - depend on sensor
   
   Chromosome ch1;
-  ch1.SetDependSensor(true);
-  ch1.SetReachedEE(true);
-  ch1.SetCriticalDistanceEE(2.53);
-  ch1.SetCriticalDistanceFH(4.53);
-  ch1.SetCriticalDistanceBH(6.53);
-  ch1.SetKernel(2);
-  ch1.SetDeltacEE(123.412);
-  ch1.SetDeltacFH(3.524621);
-  ch1.SetDeltacBH(4123.431);
-  ch1.SetEnergyMin(0.00012);
-  ch1.SetMinClusters(3);
-  ch1.SetMatchingDistance(4.32);
+  ch1 = Chromosome::GetRandom();
+//  ch1.SetDependSensor(true);
+//  ch1.SetReachedEE(true);
+//  ch1.SetCriticalDistanceEE(2.53);
+//  ch1.SetCriticalDistanceFH(4.53);
+//  ch1.SetCriticalDistanceBH(6.53);
+//  ch1.SetKernel(2);
+//  ch1.SetDeltacEE(123.412);
+//  ch1.SetDeltacFH(3.524621);
+//  ch1.SetDeltacBH(4123.431);
+//  ch1.SetEnergyMin(0.00012);
+//  ch1.SetMinClusters(3);
+//  ch1.SetMatchingDistance(4.32);
   
   ch1.SaveToBitChromosome();
   
@@ -76,7 +79,9 @@ int main()
   
   cout<<"\n\nChromosome 2:"<<endl;
   ch2.Print();
-  
+
+  ch1.StoreInConfig();
+  ch2.StoreInConfig();
   
   return 0;
 }

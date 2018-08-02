@@ -14,6 +14,21 @@
 #include <fstream>
 #include <bitset>
 
+inline float RandFloat(float min, float max)
+{
+  return min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(max-min)));
+}
+
+inline int RandInt(int min, int max)
+{
+  return min + (rand() % static_cast<int>(max - min + 1));
+}
+
+inline bool RandBool()
+{
+  return rand() % 2;
+}
+
 inline void PrintBits(uint64_t bits)
 {
   std::bitset<80> x(bits);
@@ -30,7 +45,8 @@ template<class T>
 inline void UpdateParamValue(std::string configPath, std::string keyToReplace, T newValue){
   std::ifstream is_file(configPath);
   std::ofstream outputFile;
-  outputFile.open ("tmp.md");
+  std::string tmpName = "tmp_"+std::to_string(RandInt(0, 10000000))+".md";
+  outputFile.open(tmpName);
   
   std::string line;
   while(getline(is_file, line)){
@@ -49,7 +65,7 @@ inline void UpdateParamValue(std::string configPath, std::string keyToReplace, T
     else  outputFile<<line<<std::endl;
   }
   outputFile.close();
-  system(("mv tmp.md "+configPath).c_str());
+  system(("mv "+tmpName+" "+configPath).c_str());
 }
 
 

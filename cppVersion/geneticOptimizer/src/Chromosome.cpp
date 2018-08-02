@@ -12,7 +12,7 @@ using namespace std;
 
 Chromosome::Chromosome()
 {
-  
+  uniqueID = reinterpret_cast<uint64_t>(this);
 }
 
 Chromosome::Chromosome(Chromosome &c)
@@ -20,11 +20,33 @@ Chromosome::Chromosome(Chromosome &c)
   for(int i=0;i<3;i++){
     bitChromosome[i] = c.bitChromosome[i];
   }
+  uniqueID = reinterpret_cast<uint64_t>(this);
 }
 
 Chromosome::~Chromosome()
 {
   
+}
+
+Chromosome Chromosome::GetRandom()
+{
+  Chromosome result;
+  
+  result.SetCriticalDistanceEE(RandFloat(0.0, 100.0));
+  result.SetCriticalDistanceFH(RandFloat(0.0, 100.0));
+  result.SetCriticalDistanceBH(RandFloat(0.0, 100.0));
+  result.SetDependSensor(RandBool());
+  result.SetReachedEE(RandBool());
+  result.SetKernel(RandInt(0, 2));
+  result.SetDeltacEE(RandFloat(0.0, 100.0));
+  result.SetDeltacFH(RandFloat(0.0, 100.0));
+  result.SetDeltacBH(RandFloat(0.0, 100.0));
+  result.SetKappa(RandFloat(0.0, 10000.0));
+  result.SetEnergyMin(RandFloat(0.0, 100.0));
+  result.SetMatchingDistance(RandFloat(0.0, 100.0));
+  result.SetMinClusters(RandInt(0, 100));
+  
+  return result;
 }
 
 void Chromosome::SaveToBitChromosome()
@@ -85,6 +107,8 @@ void Chromosome::ReadFromBitChromosome()
 
 void Chromosome::Print()
 {
+  cout<<"Chromosome "<<uniqueID<<endl;
+  
   cout<<"Critical distance:"<<endl;
   cout<<"\tEE:"<<criticalDistanceEE/1000.<<endl;
   cout<<"\tFH:"<<criticalDistanceFH/1000.<<endl;
@@ -110,9 +134,6 @@ void Chromosome::Print()
 }
 
 
-
-
-
 template<class T>
 void Chromosome::ShiftIntoChromosome(T value, int &shift, int chromoIndex)
 {
@@ -129,5 +150,33 @@ void Chromosome::SetValueFromChromosome(T &value, int &shift, int chromoIndex)
   value = (bitChromosome[chromoIndex] & mask) >> shift;
   shift += BitSize(value);
 }
+
+
+void Chromosome::StoreInConfig()
+{
+  string configPath = "tmp/config_"+to_string(uniqueID)+".md";
+  system(("cp baseConfig.md "+configPath).c_str());
+ 
+  UpdateParamValue(configPath, "depend_sensor",GetDependSensor());
+  if(GetKernel() == 0)      UpdateParamValue(configPath, "energy_density_function","step");
+  else if(GetKernel() == 1) UpdateParamValue(configPath, "energy_density_function","gaus");
+  else                      UpdateParamValue(configPath, "energy_density_function","exp");
+  
+  UpdateParamValue(configPath, "critial_distance_EE",GetCriticalDistanceEE());
+  UpdateParamValue(configPath, "critial_distance_FH",GetCriticalDistanceFH());
+  UpdateParamValue(configPath, "critial_distance_BH",GetCriticalDistanceBH());
+  UpdateParamValue(configPath, "deltac_EE",GetDeltacEE());
+  UpdateParamValue(configPath, "deltac_FH",GetDeltacFH());
+  UpdateParamValue(configPath, "deltac_BH",GetDeltacBH());
+  UpdateParamValue(configPath, "kappa",GetKappa());
+  UpdateParamValue(configPath, "energy_min",GetEnergyMin());
+  UpdateParamValue(configPath, "min_clusters",GetMinClusters());
+  UpdateParamValue(configPath, "reachedEE_only",GetReachedEE());
+  UpdateParamValue(configPath, "matching_max_distance",GetMatchingDistance());
+  
+}
+
+
+
 
 
