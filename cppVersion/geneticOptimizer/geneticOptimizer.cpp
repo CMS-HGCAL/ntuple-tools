@@ -3,85 +3,93 @@
 #include "Chromosome.hpp"
 
 #include <TMath.h>
+#include <TH1D.h>
+#include <TApplication.h>
+#include <TCanvas.h>
+
+#include <future>
+#include <thread>
+#include <assert.h>
+#include <chrono>
+#include <utility>
+#include <atomic>
+#include <mutex>
+#include <cstring>
+#include <pthread.h>
 
 using namespace std;
 
 const string configPath = "../configs/autoGenConfig.md";
 const string outputPath = "autoGenOutput.txt";
 
+const int initPopulationSize = 3;
 
-void myfuncf(int&, double*, double &f, double *par, int)
+void threadFunction(Chromosome *chromo)
 {
-  double chi2 = 0;
-  
-  UpdateParamValue(configPath, "depend_sensor",par[0] < 0.5 ? 0 : 1);
-  if(par[1]<0.5)      UpdateParamValue(configPath, "energy_density_function","step");
-  else if(par[1]<1.5) UpdateParamValue(configPath, "energy_density_function","gaus");
-  else                UpdateParamValue(configPath, "energy_density_function","exp");
-  
-  UpdateParamValue(configPath, "critial_distance_EE",par[2]);
-  UpdateParamValue(configPath, "critial_distance_FH",par[3]);
-  UpdateParamValue(configPath, "critial_distance_BH",par[4]);
-  UpdateParamValue(configPath, "deltac_EE",par[5]);
-  UpdateParamValue(configPath, "deltac_FH",par[6]);
-  UpdateParamValue(configPath, "deltac_BH",par[7]);
-  UpdateParamValue(configPath, "kappa",par[8]);
-  UpdateParamValue(configPath, "energy_min",par[9]);
-  UpdateParamValue(configPath, "min_clusters",par[10]);
-  UpdateParamValue(configPath, "reachedEE_only",par[11] < 0.5 ? 0 : 1);
-  UpdateParamValue(configPath, "matching_max_distance",par[12]);
-  
-  cout<<"Running clusterization"<<endl;
-  system(("./createQualityPlots "+configPath+" > /dev/null 2>&1").c_str());
-//  system(("./createQualityPlots "+configPath).c_str());
-  cout<<"Clusterization output:"<<endl;
-  
-  ClusteringOutput output = ReadOutput(outputPath);
-  output.Print();
-  
-  chi2 = fabs(output.resolutionMean) + output.separationMean + 1/output.containmentMean;
-  cout<<"\n\nchi2:"<<chi2<<"\n\n"<<endl;
-  
-  f = chi2;
-  return;
+  chromo->CalculateScore();
 }
 
-
-int main()
+int main(int argc, char* argv[])
 {
+  TApplication theApp("App", &argc, argv);
+  
   srand((unsigned int)time(0));
   
-//  UpdateParamValue(configPath, "analyze_events_per_tuple",10);
-//  GetParamFomeConfig(configPath, "depend_sensor"), 1, 0, 1); // 0 - no dependance, 1 - depend on sensor
+  Chromosome* initPopulation[initPopulationSize];
   
-  Chromosome ch1;
-  ch1 = Chromosome::GetRandom();
-//  ch1.SetDependSensor(true);
-//  ch1.SetReachedEE(true);
-//  ch1.SetCriticalDistanceEE(2.53);
-//  ch1.SetCriticalDistanceFH(4.53);
-//  ch1.SetCriticalDistanceBH(6.53);
-//  ch1.SetKernel(2);
-//  ch1.SetDeltacEE(123.412);
-//  ch1.SetDeltacFH(3.524621);
-//  ch1.SetDeltacBH(4123.431);
-//  ch1.SetEnergyMin(0.00012);
-//  ch1.SetMinClusters(3);
-//  ch1.SetMatchingDistance(4.32);
+  // draw initial population
+  for(int i=0;i<initPopulationSize;i++){
+    Chromosome *chromo;
+    chromo = Chromosome::GetRandom();
+    chromo->SaveToBitChromosome();
+    chromo->Print();
+    initPopulation[i] = chromo;
+  }
+  TH1D *scoresDist = new TH1D("score dist","score dist",200,-20,20);
   
-  ch1.SaveToBitChromosome();
-  
-  Chromosome ch2(ch1);
-  ch2.ReadFromBitChromosome();
-  
-  cout<<"Chromosome 1:"<<endl;
-  ch1.Print();
-  
-  cout<<"\n\nChromosome 2:"<<endl;
-  ch2.Print();
+  // calculate scores for each member of initial population
+  vector<float> initPopulationScores;
+  float minScore=99999999, maxScore=-99999999;
 
-  ch1.StoreInConfig();
-  ch2.StoreInConfig();
+  // Starting Threads & move the future object in lambda function by reference
+  thread *threads[initPopulationSize];
+
+//  thread::native_handle_type threadHandles[initPopulationSize];
   
+  for(int i=0;i<initPopulationSize;i++){
+    threads[i] = new thread(threadFunction, initPopulation[i]);
+//    threadHandles[i] = threads[i]->native_handle();
+//    threads[i]->detach();
+  }
+  
+  //Wait for 10 sec and then ask thread to join
+//  this_thread::sleep_for(std::chrono::seconds(10));
+//  cout<<"\n\nTime passed\n\n"<<endl;
+  
+  for(int i=0;i<initPopulationSize;i++){
+//    pthread_cancel(threadHandles[i]);
+//    pthread_kill(threadHandles[i], 1);
+//    if(threads[i]->joinable()) threads[i]->join();
+    
+    threads[i]->join();
+    
+    float score = initPopulation[i]->GetScore();
+    initPopulationScores.push_back(score);
+    if(score < minScore) minScore = score;
+    if(score > maxScore) maxScore = score;
+    scoresDist->Fill(score);
+  }
+
+  // re-assing normalized points to population members
+  for(int i=0;i<initPopulationSize;i++){
+    initPopulation[i]->SetScore((initPopulationScores[i]-minScore)/(maxScore-minScore));
+  }
+    
+  TCanvas *c1 = new TCanvas("c1","c1",800,600);
+  c1->cd();
+  scoresDist->Draw();
+  
+  c1->Update();
+  theApp.Run();
   return 0;
 }

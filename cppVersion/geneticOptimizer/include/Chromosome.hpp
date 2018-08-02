@@ -15,15 +15,10 @@ public:
   /// Default constructor
   Chromosome();
   
-  /// Copy contructor. Copies only the bit chromosome.
-  /// Call ReadFromBitChromosome() to populate other fields.
-  /// uniqueID of the copy will be different.
-  Chromosome(Chromosome &c);
-  
   /// Default destructor
   ~Chromosome();
   
-  static Chromosome GetRandom();
+  static Chromosome* GetRandom();
   
   // Setters
   inline void SetCriticalDistanceEE(float val){criticalDistanceEE = (uint16_t)(val*1000);}
@@ -40,6 +35,8 @@ public:
   inline void SetMatchingDistance(float val){matchingDistance = (uint16_t)(val*1000);}
   inline void SetMinClusters(float val){minClusters = (uint16_t)val;}
   
+  inline void SetScore(float val){score = val;}
+  
   // Getters
   inline float  GetCriticalDistanceEE(){return criticalDistanceEE/1000.;}
   inline float  GetCriticalDistanceFH(){return criticalDistanceFH/1000.;}
@@ -55,11 +52,14 @@ public:
   inline float  GetMatchingDistance(){return matchingDistance/1000.;}
   inline float  GetMinClusters(){return minClusters;}
   
+  inline float  GetScore(){return score;}
+  
   void SaveToBitChromosome();
   void ReadFromBitChromosome();
   
   void Print();
-  void StoreInConfig();
+  
+  void CalculateScore();
 private:
   // 52 bits (1st choromosome)
   uint16_t criticalDistanceEE;
@@ -83,6 +83,12 @@ private:
   uint64_t bitChromosome[3]; // 64 bit
   
   uint64_t uniqueID;
+  std::string configPath;
+  std::string clusteringOutputPath;
+  
+  ClusteringOutput clusteringOutput;
+  float executionTime;
+  float score;
   
   template<class T>
   void ShiftIntoChromosome(T value, int &shift, int chromoIndex);
@@ -90,7 +96,8 @@ private:
   template<class T>
   void SetValueFromChromosome(T &value, int &shift, int chromoIndex);
   
-  
+  void StoreInConfig();
+  void RunClustering();
 };
 
 #endif /* Chromosome_hpp */

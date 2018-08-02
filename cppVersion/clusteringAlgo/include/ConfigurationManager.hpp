@@ -68,6 +68,10 @@ public:
   
   /// Tells how far sim cluster can be from a rec cluster to be matched with it
   inline double GetMachingMaxDistance(){return matchingMaxDistance;}
+  
+  /// Where to store resulting algo characteristics (resolution, separation, containment)
+  inline std::string GetScoreOutputPath(){return scoreOutputPath;}
+  
 private:
   ConfigurationManager(std::string _configPath);
   ~ConfigurationManager(){};
@@ -98,6 +102,7 @@ private:
   std::string energyDensityFunction;
   bool reachedEEonly;
   double matchingMaxDistance;
+  std::string scoreOutputPath;
 };
 
 #endif /* ConfigurationManager_h */

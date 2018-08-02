@@ -6,6 +6,7 @@
 
 #include "Chromosome.hpp"
 
+#include <TMath.h>
 #include <iostream>
 
 using namespace std;
@@ -13,14 +14,9 @@ using namespace std;
 Chromosome::Chromosome()
 {
   uniqueID = reinterpret_cast<uint64_t>(this);
-}
-
-Chromosome::Chromosome(Chromosome &c)
-{
-  for(int i=0;i<3;i++){
-    bitChromosome[i] = c.bitChromosome[i];
-  }
-  uniqueID = reinterpret_cast<uint64_t>(this);
+  configPath = "tmp/config_"+to_string(uniqueID)+".md";
+  clusteringOutputPath = "../tmp/output_"+to_string(uniqueID)+".txt";
+  executionTime = 9999999;
 }
 
 Chromosome::~Chromosome()
@@ -28,23 +24,23 @@ Chromosome::~Chromosome()
   
 }
 
-Chromosome Chromosome::GetRandom()
+Chromosome* Chromosome::GetRandom()
 {
-  Chromosome result;
+  Chromosome *result = new Chromosome();
   
-  result.SetCriticalDistanceEE(RandFloat(0.0, 100.0));
-  result.SetCriticalDistanceFH(RandFloat(0.0, 100.0));
-  result.SetCriticalDistanceBH(RandFloat(0.0, 100.0));
-  result.SetDependSensor(RandBool());
-  result.SetReachedEE(RandBool());
-  result.SetKernel(RandInt(0, 2));
-  result.SetDeltacEE(RandFloat(0.0, 100.0));
-  result.SetDeltacFH(RandFloat(0.0, 100.0));
-  result.SetDeltacBH(RandFloat(0.0, 100.0));
-  result.SetKappa(RandFloat(0.0, 10000.0));
-  result.SetEnergyMin(RandFloat(0.0, 100.0));
-  result.SetMatchingDistance(RandFloat(0.0, 100.0));
-  result.SetMinClusters(RandInt(0, 100));
+  result->SetCriticalDistanceEE(RandFloat(0.0, 100.0));
+  result->SetCriticalDistanceFH(RandFloat(0.0, 100.0));
+  result->SetCriticalDistanceBH(RandFloat(0.0, 100.0));
+  result->SetDependSensor(RandBool());
+  result->SetReachedEE(RandBool());
+  result->SetKernel(RandInt(0, 2));
+  result->SetDeltacEE(RandFloat(0.0, 100.0));
+  result->SetDeltacFH(RandFloat(0.0, 100.0));
+  result->SetDeltacBH(RandFloat(0.0, 100.0));
+  result->SetKappa(RandFloat(0.0, 10000.0));
+  result->SetEnergyMin(RandFloat(0.0, 100.0));
+  result->SetMatchingDistance(RandFloat(0.0, 100.0));
+  result->SetMinClusters(RandInt(0, 100));
   
   return result;
 }
@@ -154,9 +150,9 @@ void Chromosome::SetValueFromChromosome(T &value, int &shift, int chromoIndex)
 
 void Chromosome::StoreInConfig()
 {
-  string configPath = "tmp/config_"+to_string(uniqueID)+".md";
   system(("cp baseConfig.md "+configPath).c_str());
- 
+  cout<<"\n\nSaving config:"<<configPath<<endl;
+  
   UpdateParamValue(configPath, "depend_sensor",GetDependSensor());
   if(GetKernel() == 0)      UpdateParamValue(configPath, "energy_density_function","step");
   else if(GetKernel() == 1) UpdateParamValue(configPath, "energy_density_function","gaus");
@@ -173,10 +169,46 @@ void Chromosome::StoreInConfig()
   UpdateParamValue(configPath, "min_clusters",GetMinClusters());
   UpdateParamValue(configPath, "reachedEE_only",GetReachedEE());
   UpdateParamValue(configPath, "matching_max_distance",GetMatchingDistance());
-  
+  UpdateParamValue(configPath, "score_output_path",clusteringOutputPath);
 }
 
+void Chromosome::RunClustering()
+{
+  cout<<"Running clusterization"<<endl;
+  
+  
+  auto start = now();
+  system(("../clusteringAlgo/createQualityPlots "+configPath+" > /dev/null 2>&1").c_str());
+//      system(("../clusteringAlgo/createQualityPlots "+configPath).c_str());
+  auto end = now();
+  executionTime = duration(start,end);
+  
 
+  cout<<"Clusterization output:"<<endl;
+  
+  clusteringOutput = ReadOutput(clusteringOutputPath);
+  clusteringOutput.Print();
+  cout<<"Execution time:"<<executionTime<<endl;
+  
+  system(("rm "+clusteringOutputPath).c_str());
+}
 
+void Chromosome::CalculateScore()
+{
+  StoreInConfig();
+  RunClustering();
+  
+  score =   clusteringOutput.containmentMean              // we want high containment
+          - 0.1*fabs(clusteringOutput.containmentSigma)   // with small spread (but not that important)
+          - fabs(clusteringOutput.resolutionMean)         // with good resolution
+          - 0.1*fabs(clusteringOutput.resolutionSigma)    // also with small spread (with lower weight)
+          - clusteringOutput.separationMean               // small separation factor
+          - 0.1*fabs(clusteringOutput.separationSigma);   // with small spread
+  
+  if(executionTime > 30){
+    score -= 1.0; // add additional penalty for super long execution
+  }
+  
+}
 
 

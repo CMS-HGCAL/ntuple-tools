@@ -175,7 +175,7 @@ int main(int argc, char* argv[])
     }
     
     ofstream outputFile;
-    outputFile.open("autoGenOutput.txt");
+    outputFile.open(config->GetScoreOutputPath());
     outputFile<<deltaE->GetMean()<<endl;
     outputFile<<deltaE->GetStdDev()<<endl;
     outputFile<<separation->GetMean()<<endl;

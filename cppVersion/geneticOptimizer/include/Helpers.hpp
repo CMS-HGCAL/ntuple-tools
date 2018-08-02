@@ -122,5 +122,23 @@ inline ClusteringOutput ReadOutput(std::string fileName){
   return output;
 }
 
+/// Calculate duration between two events
+/// \param t0 Start time
+/// \param t1 End time
+/// \return Difference between events t0 and t1 in seconds
+inline double duration(std::chrono::time_point<std::chrono::system_clock> t0,
+                       std::chrono::time_point<std::chrono::system_clock> t1)
+{
+  auto elapsed_secs = t1-t0;
+  typedef std::chrono::duration<float> float_seconds;
+  auto secs = std::chrono::duration_cast<float_seconds>(elapsed_secs);
+  return secs.count();
+}
+
+/// Returns current time
+inline std::chrono::time_point<std::chrono::system_clock> now()
+{
+  return std::chrono::system_clock::now();
+}
   
 #endif /* Helpers_h */

@@ -80,6 +80,8 @@ configPath(_configPath)
   reachedEEonly = settings->GetValue("reachedEE_only",1);
   
   matchingMaxDistance = settings->GetValue("matching_max_distance",-1);
+  
+  scoreOutputPath = settings->GetValue("score_output_path","./output.txt");
 }
 
 double ConfigurationManager::GetDeltac(EDet det)
