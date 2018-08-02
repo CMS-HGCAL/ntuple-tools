@@ -14,9 +14,14 @@
 #include <fstream>
 #include <bitset>
 
+inline double RandDouble(double min, double max)
+{
+  return min + static_cast<double>(rand()) /( static_cast<double>(RAND_MAX/(max-min)));
+}
+
 inline float RandFloat(float min, float max)
 {
-  return min + static_cast <float> (rand()) /( static_cast <float> (RAND_MAX/(max-min)));
+  return min + static_cast<float>(rand()) /( static_cast<float>(RAND_MAX/(max-min)));
 }
 
 inline int RandInt(int min, int max)
@@ -89,6 +94,15 @@ inline double GetParamFomeConfig(std::string configPath, std::string keyToFind){
 }
 
 struct ClusteringOutput {
+  ClusteringOutput(){
+    resolutionMean = 99999;
+    resolutionSigma = 99999;
+    separationMean = 99999;
+    separationSigma = 99999;
+    containmentMean = 99999;
+    containmentSigma = -99999;
+  }
+  
   void Print(){
     std::cout<<"Resolution:"<<resolutionMean<<" +/- "<<resolutionSigma<<std::endl;
     std::cout<<"Separation:"<<separationMean<<" +/- "<<separationSigma<<std::endl;

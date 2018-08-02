@@ -16,17 +16,24 @@
 #include <mutex>
 #include <cstring>
 #include <pthread.h>
+#include <random>
 
 using namespace std;
 
 const string configPath = "../configs/autoGenConfig.md";
 const string outputPath = "autoGenOutput.txt";
 
-const int initPopulationSize = 3;
+const int initPopulationSize = 10;
+mt19937 gen;
 
 void threadFunction(Chromosome *chromo)
 {
   chromo->CalculateScore();
+}
+
+int GetWeightedRandom(discrete_distribution<double> dist)
+{
+  return dist(gen);
 }
 
 int main(int argc, char* argv[])
@@ -34,6 +41,7 @@ int main(int argc, char* argv[])
   TApplication theApp("App", &argc, argv);
   
   srand((unsigned int)time(0));
+  gen.seed((unsigned int)time(0));
   
   Chromosome* initPopulation[initPopulationSize];
   
@@ -47,10 +55,6 @@ int main(int argc, char* argv[])
   }
   TH1D *scoresDist = new TH1D("score dist","score dist",200,-20,20);
   
-  // calculate scores for each member of initial population
-  vector<float> initPopulationScores;
-  float minScore=99999999, maxScore=-99999999;
-
   // Starting Threads & move the future object in lambda function by reference
   thread *threads[initPopulationSize];
 
@@ -66,6 +70,10 @@ int main(int argc, char* argv[])
 //  this_thread::sleep_for(std::chrono::seconds(10));
 //  cout<<"\n\nTime passed\n\n"<<endl;
   
+  vector<double> scores;
+  vector<double> scoresNormalized;
+  double minScore=99999, maxScore=-99999;
+  
   for(int i=0;i<initPopulationSize;i++){
 //    pthread_cancel(threadHandles[i]);
 //    pthread_kill(threadHandles[i], 1);
@@ -73,21 +81,49 @@ int main(int argc, char* argv[])
     
     threads[i]->join();
     
-    float score = initPopulation[i]->GetScore();
-    initPopulationScores.push_back(score);
-    if(score < minScore) minScore = score;
+    cout<<"filling scores"<<endl;
+    double score = initPopulation[i]->GetScore();
+    if(score < minScore && score > -100) minScore = score; // make sure to remove veeery bad results
     if(score > maxScore) maxScore = score;
     scoresDist->Fill(score);
+    scores.push_back(score);
   }
 
   // re-assing normalized points to population members
+  
+  cout<<"min score:"<<minScore<<endl;
+  cout<<"max score:"<<maxScore<<endl;
+  
+  double normScore;
+  
   for(int i=0;i<initPopulationSize;i++){
-    initPopulation[i]->SetScore((initPopulationScores[i]-minScore)/(maxScore-minScore));
+    if(scores[i] > -100) normScore = (scores[i]-minScore)/(maxScore-minScore);
+    else normScore = 0; // kill extremally weak members of population
+      
+    cout<<"Original score:"<<scores[i]<<endl;
+    cout<<"Normalized score:"<<normScore<<endl;
+    initPopulation[i]->SetScore(normScore);
+    scoresNormalized.push_back(normScore);
   }
-    
+
+  cout<<"plotting"<<endl;
   TCanvas *c1 = new TCanvas("c1","c1",800,600);
   c1->cd();
   scoresDist->Draw();
+  
+  // draw new population
+  Chromosome *newPopulation[initPopulationSize];
+  discrete_distribution<double> dist(scoresNormalized.begin(), scoresNormalized.end());
+  
+  for(int i=0;i<initPopulationSize;i++){
+    Chromosome *chromo1 = initPopulation[GetWeightedRandom(dist)];
+    Chromosome *chromo2 = initPopulation[GetWeightedRandom(dist)];
+    
+    cout<<"Pair "<<i<<endl;
+    chromo1->Print();
+    chromo2->Print();
+  }
+  
   
   c1->Update();
   theApp.Run();

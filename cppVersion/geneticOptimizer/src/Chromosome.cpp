@@ -17,6 +17,7 @@ Chromosome::Chromosome()
   configPath = "tmp/config_"+to_string(uniqueID)+".md";
   clusteringOutputPath = "../tmp/output_"+to_string(uniqueID)+".txt";
   executionTime = 9999999;
+  score = -999999;
 }
 
 Chromosome::~Chromosome()
@@ -103,6 +104,7 @@ void Chromosome::ReadFromBitChromosome()
 
 void Chromosome::Print()
 {
+  cout<<"================================================="<<endl;
   cout<<"Chromosome "<<uniqueID<<endl;
   
   cout<<"Critical distance:"<<endl;
@@ -127,6 +129,11 @@ void Chromosome::Print()
   cout<<"energy threshold:"<<energyMin/100000.<<endl;
   cout<<"max matching distance:"<<matchingDistance/1000.<<endl;
   cout<<"min clusters:"<<minClusters<<endl;
+  
+  clusteringOutput.Print();
+  cout<<"execution time:"<<executionTime<<endl;
+  cout<<"score:"<<score<<endl;
+  cout<<"================================================="<<endl;
 }
 
 
@@ -151,7 +158,6 @@ void Chromosome::SetValueFromChromosome(T &value, int &shift, int chromoIndex)
 void Chromosome::StoreInConfig()
 {
   system(("cp baseConfig.md "+configPath).c_str());
-  cout<<"\n\nSaving config:"<<configPath<<endl;
   
   UpdateParamValue(configPath, "depend_sensor",GetDependSensor());
   if(GetKernel() == 0)      UpdateParamValue(configPath, "energy_density_function","step");
@@ -191,6 +197,7 @@ void Chromosome::RunClustering()
   cout<<"Execution time:"<<executionTime<<endl;
   
   system(("rm "+clusteringOutputPath).c_str());
+  system(("rm "+configPath).c_str());
 }
 
 void Chromosome::CalculateScore()
@@ -205,8 +212,8 @@ void Chromosome::CalculateScore()
           - clusteringOutput.separationMean               // small separation factor
           - 0.1*fabs(clusteringOutput.separationSigma);   // with small spread
   
-  if(executionTime > 30){
-    score -= 1.0; // add additional penalty for super long execution
+  if(executionTime > 60){
+    score -= (executionTime-30); // add additional penalty for super long execution
   }
   
 }

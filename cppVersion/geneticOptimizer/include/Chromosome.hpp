@@ -35,7 +35,7 @@ public:
   inline void SetMatchingDistance(float val){matchingDistance = (uint16_t)(val*1000);}
   inline void SetMinClusters(float val){minClusters = (uint16_t)val;}
   
-  inline void SetScore(float val){score = val;}
+  inline void SetScore(double val){score = val;}
   
   // Getters
   inline float  GetCriticalDistanceEE(){return criticalDistanceEE/1000.;}
@@ -52,7 +52,7 @@ public:
   inline float  GetMatchingDistance(){return matchingDistance/1000.;}
   inline float  GetMinClusters(){return minClusters;}
   
-  inline float  GetScore(){return score;}
+  inline double  GetScore(){return score;}
   
   void SaveToBitChromosome();
   void ReadFromBitChromosome();
@@ -87,8 +87,8 @@ private:
   std::string clusteringOutputPath;
   
   ClusteringOutput clusteringOutput;
-  float executionTime;
-  float score;
+  double executionTime;
+  double score;
   
   template<class T>
   void ShiftIntoChromosome(T value, int &shift, int chromoIndex);
