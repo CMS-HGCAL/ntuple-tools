@@ -53,26 +53,23 @@ int main()
 //  GetParamFomeConfig(configPath, "depend_sensor"), 1, 0, 1); // 0 - no dependance, 1 - depend on sensor
   
   Chromosome ch1;
-  ch1.dependSensor = 1;
-  ch1.reachedEE = 0;
-  ch1.criticalDistanceEE = 2.53*1000;
-  ch1.criticalDistanceFH = 4.53*1000;
-  ch1.criticalDistanceBH = 6.53*1000;
-  ch1.kernel = 2;
-  ch1.deltacEE = 123.412*1000;
-  ch1.deltacFH = 3.524621*1000;
-  ch1.deltacBH = 4123.431*1000;
-  ch1.energyMin = 0.00012*100000;
-  ch1.minClusters = 3;
-  ch1.matchingDistance = 4.32*1000;
-  ch1.SetupBitChromosome();
+  ch1.SetDependSensor(true);
+  ch1.SetReachedEE(true);
+  ch1.SetCriticalDistanceEE(2.53);
+  ch1.SetCriticalDistanceFH(4.53);
+  ch1.SetCriticalDistanceBH(6.53);
+  ch1.SetKernel(2);
+  ch1.SetDeltacEE(123.412);
+  ch1.SetDeltacFH(3.524621);
+  ch1.SetDeltacBH(4123.431);
+  ch1.SetEnergyMin(0.00012);
+  ch1.SetMinClusters(3);
+  ch1.SetMatchingDistance(4.32);
   
-  Chromosome ch2;
-  ch2.bitChromosome[0] = ch1.bitChromosome[0];
-  ch2.bitChromosome[1] = ch1.bitChromosome[1];
-  ch2.bitChromosome[2] = ch1.bitChromosome[2];
-  ch2.GetFromBitChromosome();
+  ch1.SaveToBitChromosome();
   
+  Chromosome ch2(ch1);
+  ch2.ReadFromBitChromosome();
   
   cout<<"Chromosome 1:"<<endl;
   ch1.Print();

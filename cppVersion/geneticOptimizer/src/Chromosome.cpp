@@ -15,13 +15,19 @@ Chromosome::Chromosome()
   
 }
 
+Chromosome::Chromosome(Chromosome &c)
+{
+  for(int i=0;i<3;i++){
+    bitChromosome[i] = c.bitChromosome[i];
+  }
+}
+
 Chromosome::~Chromosome()
 {
   
 }
 
-
-void Chromosome::SetupBitChromosome()
+void Chromosome::SaveToBitChromosome()
 {
   int currentShift = 0;
   bitChromosome[0] = 0;
@@ -51,7 +57,7 @@ void Chromosome::SetupBitChromosome()
   
 }
 
-void Chromosome::GetFromBitChromosome()
+void Chromosome::ReadFromBitChromosome()
 {
   int currentShift = 0;
   
