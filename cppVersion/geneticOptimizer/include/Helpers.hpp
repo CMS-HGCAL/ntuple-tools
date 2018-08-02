@@ -7,9 +7,7 @@
 #ifndef Helpers_h
 #define Helpers_h
 
-#include <TMath.h>
-
-#include <chrono>
+#include <cstdint>
 #include <iostream>
 #include <string>
 #include <sstream>

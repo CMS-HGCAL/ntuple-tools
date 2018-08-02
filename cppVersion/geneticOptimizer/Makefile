@@ -7,7 +7,7 @@ TMP_DIR = tmp
 
 all: geneticOptimizer
 
-geneticOptimizer: ${TMP_DIR}/geneticOptimizer.o
+geneticOptimizer: ${TMP_DIR}/geneticOptimizer.o ${TMP_DIR}/Chromosome.o
 	$(CC) $^ -o $@ $(LDFLAGS)
 
 ${TMP_DIR}/geneticOptimizer.o: geneticOptimizer.cpp
