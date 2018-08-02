@@ -11,6 +11,10 @@
 
 #include <chrono>
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <fstream>
+
 
 // Define constants
 const int lastLayerEE = 28;  ///< Last layer of EE
@@ -120,7 +124,5 @@ inline std::chrono::time_point<std::chrono::system_clock> now()
 {
   return std::chrono::system_clock::now();
 }
-
-
   
 #endif /* Helpers_h */

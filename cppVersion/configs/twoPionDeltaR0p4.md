@@ -3,18 +3,17 @@
 verbosity_level:  0
 
 ### range of ntuples to test (will be appended to the inputPath string below)
-min_Ntuple:  10
-max_Ntuple:  11
+min_Ntuple:  1
+max_Ntuple:  1
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:     1000
+analyze_events_per_tuple:     999999
 
 ### input and output paths
 
-input_path: ../../../data/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_
+input_path: ../../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p4_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_
 
-output_path: ../../clusteringResultsCXX
-
+output_path: ../../clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/
 
 
 **HGCal Imaging Algo parameters**
@@ -26,7 +25,8 @@ depend_sensor:  1
 ### Possible options:
 ### *step* - include 100% of hit energy if distance smaller than *critical_distance*  
 ### *gaus* - include fraction of hit's energy based on the distance scaled by a gaussian distribution with width *critical_distribution*
-energy_density_function:  step
+energy_density_function:  gaus
+
 
 ### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than d_c from given hit will not be included in the energy density calculation for this hit.
@@ -36,12 +36,12 @@ critial_distance_BH:  2.0
 
 ### Critical distance to higher ρ hit (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than δ_c from any hit with higher ρ will be considered as potential cluster seeds.
-deltac_EE:    2.0
-deltac_FH:    2.0
-deltac_BH:    5.0
+deltac_EE:    6.0
+deltac_FH:    12.0
+deltac_BH:    22.0
 
 ### Critical energy density is defined as ρ_c = max(ρ)/κ. Hits with ρ > ρ_c will be considered as potential cluster seeds.
-kappa:  9.0
+kappa:  100.0
 
 ### cut on energy (relative to the noise):
 energy_min:  3.0

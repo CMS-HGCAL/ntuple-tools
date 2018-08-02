@@ -4,17 +4,16 @@ verbosity_level:  0
 
 ### range of ntuples to test (will be appended to the inputPath string below)
 min_Ntuple:  10
-max_Ntuple:  11
+max_Ntuple:  10
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:     1000
+analyze_events_per_tuple:     999999
 
 ### input and output paths
 
 input_path: ../../../data/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_
 
-output_path: ../../clusteringResultsCXX
-
+output_path: ../../clusteringResultsCXX/singleGamma/
 
 
 **HGCal Imaging Algo parameters**
@@ -26,7 +25,8 @@ depend_sensor:  1
 ### Possible options:
 ### *step* - include 100% of hit energy if distance smaller than *critical_distance*  
 ### *gaus* - include fraction of hit's energy based on the distance scaled by a gaussian distribution with width *critical_distribution*
-energy_density_function:  step
+energy_density_function:  exp
+
 
 ### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than d_c from given hit will not be included in the energy density calculation for this hit.
@@ -59,4 +59,4 @@ reachedEE_only: 1
 **Cluster Matching parameters**
 
 ### Sim clusters further than matching_max_distance from the clostest rec cluster will not be matched 
-matching_max_distance: 5.0
+matching_max_distance: 999999

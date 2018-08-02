@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <utility>
 #include <memory>
+#include <fstream>
 
 using namespace std;
 
@@ -172,6 +173,17 @@ int main(int argc, char* argv[])
       simHitsPerClusterArray.clear();
       
     }
+    
+    ofstream outputFile;
+    outputFile.open("autoGenOutput.txt");
+    outputFile<<deltaE->GetMean()<<endl;
+    outputFile<<deltaE->GetStdDev()<<endl;
+    outputFile<<separation->GetMean()<<endl;
+    outputFile<<separation->GetStdDev()<<endl;
+    outputFile<<containment->GetMean()<<endl;
+    outputFile<<containment->GetStdDev()<<endl;
+    outputFile.close();
+    
     cout<<"Average resolution per event:"<<deltaE->GetMean()<<endl;
     cout<<"Resolution sigma:"<<deltaE->GetStdDev()<<endl;
     cout<<"Average separation per event:"<<separation->GetMean()<<endl;
