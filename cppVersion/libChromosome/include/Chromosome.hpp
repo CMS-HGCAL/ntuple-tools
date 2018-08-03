@@ -7,7 +7,7 @@
 #ifndef Chromosome_hpp
 #define Chromosome_hpp
 
-#include "Helpers.hpp"
+#include "GeneticHelpers.hpp"
 
 class Chromosome
 {
@@ -37,6 +37,8 @@ public:
   
   inline void SetScore(double val){score = val;}
   
+  inline void SetBitChromosome(int i, uint64_t bits){bitChromosome[i] = bits;}
+  
   // Getters
   inline float  GetCriticalDistanceEE(){return criticalDistanceEE/1000.;}
   inline float  GetCriticalDistanceFH(){return criticalDistanceFH/1000.;}
@@ -53,13 +55,16 @@ public:
   inline float  GetMinClusters(){return minClusters;}
   
   inline double  GetScore(){return score;}
+  inline uint64_t GetBitChromosome(int i){return bitChromosome[i];}
   
   void SaveToBitChromosome();
   void ReadFromBitChromosome();
   
   void Print();
-  
   void CalculateScore();
+  
+  Chromosome* ProduceChildWith(Chromosome *partner);
+  
 private:
   // 52 bits (1st choromosome)
   uint16_t criticalDistanceEE;
@@ -98,6 +103,8 @@ private:
   
   void StoreInConfig();
   void RunClustering();
+  
+  void Clusterize(std::string configPath);
 };
 
 #endif /* Chromosome_hpp */

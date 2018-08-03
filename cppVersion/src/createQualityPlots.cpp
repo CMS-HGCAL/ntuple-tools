@@ -175,6 +175,7 @@ int main(int argc, char* argv[])
     }
     
     ofstream outputFile;
+    cout<<"writing output to:"<<config->GetScoreOutputPath()<<endl;
     outputFile.open(config->GetScoreOutputPath());
     outputFile<<deltaE->GetMean()<<endl;
     outputFile<<deltaE->GetStdDev()<<endl;

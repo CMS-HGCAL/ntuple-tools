@@ -5,9 +5,17 @@
 //
 
 #include "Chromosome.hpp"
+#include "ConfigurationManager.hpp"
+#include "ImagingAlgo.hpp"
+#include "ClusterMatcher.hpp"
+#include "Event.hpp"
+#include "Helpers.hpp"
 
 #include <TMath.h>
 #include <iostream>
+#include <TROOT.h>
+#include <TH1D.h>
+#include <TFile.h>
 
 using namespace std;
 
@@ -15,10 +23,10 @@ Chromosome::Chromosome()
 {
   uniqueID = reinterpret_cast<uint64_t>(this);
   configPath = "tmp/config_"+to_string(uniqueID)+".md";
-  clusteringOutputPath = "../tmp/output_"+to_string(uniqueID)+".txt";
+  clusteringOutputPath = "tmp/output_"+to_string(uniqueID)+".txt";
   executionTime = 9999999;
   score = -999999;
-}
+} 
 
 Chromosome::~Chromosome()
 {
@@ -41,7 +49,7 @@ Chromosome* Chromosome::GetRandom()
   result->SetKappa(RandFloat(0.0, 10000.0));
   result->SetEnergyMin(RandFloat(0.0, 100.0));
   result->SetMatchingDistance(RandFloat(0.0, 100.0));
-  result->SetMinClusters(RandInt(0, 100));
+  result->SetMinClusters(RandInt(0, 10));
   
   return result;
 }
@@ -116,9 +124,9 @@ void Chromosome::Print()
   cout<<"Reached EE only:"<<reachedEE<<endl;
   
   cout<<"Kernel: ";
-  if(kernel==0) cout<<"step"<<endl;
-  if(kernel==1) cout<<"gaus"<<endl;
-  if(kernel==2) cout<<"exp"<<endl;
+  if(kernel==0)       cout<<"step"<<endl;
+  else if(kernel==1)  cout<<"gaus"<<endl;
+  else                cout<<"exp"<<endl;
   
   cout<<"Critical #delta:"<<endl;
   cout<<"\tEE:"<<deltacEE/1000.<<endl;
@@ -182,22 +190,18 @@ void Chromosome::RunClustering()
 {
   cout<<"Running clusterization"<<endl;
   
-  
   auto start = now();
-  system(("../clusteringAlgo/createQualityPlots "+configPath+" > /dev/null 2>&1").c_str());
-//      system(("../clusteringAlgo/createQualityPlots "+configPath).c_str());
+//  Clusterize(configPath);
+  system(("./createQualityPlots "+configPath+" > /dev/null 2>&1").c_str());
+//  system(("./createQualityPlots "+configPath).c_str());
   auto end = now();
   executionTime = duration(start,end);
-  
-
-  cout<<"Clusterization output:"<<endl;
-  
   clusteringOutput = ReadOutput(clusteringOutputPath);
-  clusteringOutput.Print();
-  cout<<"Execution time:"<<executionTime<<endl;
   
-  system(("rm "+clusteringOutputPath).c_str());
   system(("rm "+configPath).c_str());
+  system(("rm "+clusteringOutputPath).c_str());
+  
+  cout<<"Done. Execution time:"<<executionTime<<endl;
 }
 
 void Chromosome::CalculateScore()
@@ -217,5 +221,147 @@ void Chromosome::CalculateScore()
   }
   
 }
+
+Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
+{
+  Chromosome *child = new Chromosome();
+  
+  // combine chromosomes of parents in a random way
+  for(int i=0;i<3;i++){
+    int crossingPoint = RandInt(0, 63);
+    uint64_t newBitChromosome = 0;
+    
+    uint64_t maskA = 0;
+    for(int j=0;j<BitSize(maskA)-crossingPoint;j++){maskA |= 1ull << (j+crossingPoint);}
+    
+    uint64_t maskB = 0;
+    for(int j=(int)BitSize(maskB)-crossingPoint;j<BitSize(maskB);j++){maskB |= 1ull << j;}
+    
+    newBitChromosome = bitChromosome[0] & maskA;
+    newBitChromosome |= partner->GetBitChromosome(0) & maskB;
+    
+    child->SetBitChromosome(i, newBitChromosome);
+  }
+  
+  
+  
+  child->ReadFromBitChromosome();
+  return child;
+}
+
+
+void Chromosome::Clusterize(string configPath)
+{
+  ConfigurationManager *config = ConfigurationManager::Instance(configPath);
+  gROOT->ProcessLine(".L loader.C+");
+  
+  ImagingAlgo *algo = new ImagingAlgo();
+  ClusterMatcher *matcher = new ClusterMatcher();
+  
+  TH1D *deltaE = new TH1D("Erec-Esim/Esim","Erec-Esim/Esim",100,-1.0,2.0);
+  TH1D *separation = new TH1D("separation","separation",100,0,10);
+  TH1D *containment = new TH1D("separation","separation",100,0,10);
+  
+  for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
+
+    TFile *inFile = TFile::Open(Form("%s%i.root",config->GetInputPath().c_str(),nTupleIter));
+    if(!inFile) continue;
+    TTree *tree = (TTree*)inFile->Get("ana/hgc");
+    if(!tree) continue;
+    long long nEvents = tree->GetEntries();
+    cout<<"n entries:"<<nEvents<<endl;
+    
+    unique_ptr<Event> hgCalEvent(new Event(tree));
+    
+    // start event loop
+    for(int iEvent=0;iEvent<nEvents;iEvent++){
+      if(iEvent>config->GetMaxEventsPerTuple()) break;
+      
+      hgCalEvent->GoToEvent(iEvent);
+      
+      // check if particles reached EE
+      if(config->GetReachedEEonly()){
+        bool skipEvent = false;
+        for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
+          if(reachedEE==0){
+            skipEvent = true;
+            break;
+          }
+        }
+        if(skipEvent) continue;
+      }
+      shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
+      shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
+      
+      // get simulated hits associated with a cluster
+      vector<RecHits*> simHitsPerClusterArray;
+      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
+      
+      // re-run clustering with HGCalAlgo
+      std::vector<shared_ptr<Hexel>> recClusters;
+      algo->getRecClusters(recClusters, recHitsRaw);
+      
+      vector<RecHits*> recHitsPerClusterArray;
+      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
+      
+      
+      // perform final analysis, fill in histograms and save to files
+      for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
+        
+        vector<MatchedClusters*> matchedClusters;
+        matcher->MatchClustersByDetID(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        if(matchedClusters.size()==0) continue;
+        
+        for(MatchedClusters *clusters : matchedClusters){
+          if(clusters->simClusters->size() == 0) continue;
+          
+          double recEnergy = clusters->GetTotalRecEnergy();
+          double simEnergy = clusters->GetTotalSimEnergy();
+          
+          deltaE->Fill((recEnergy-simEnergy)/simEnergy);
+          containment->Fill(clusters->GetSharedFraction());
+        }
+        
+        for(uint i=0;i<matchedClusters.size();i++){
+          for(uint j=(i+1);j<matchedClusters.size();j++){
+            
+            BasicCluster *recCluster1 = matchedClusters[i]->GetMergedRecCluster();
+            BasicCluster *recCluster2 = matchedClusters[j]->GetMergedRecCluster();
+            
+            double distance = sqrt(pow(recCluster1->GetX()-recCluster2->GetX(),2)+
+                                   pow(recCluster1->GetY()-recCluster2->GetY(),2));
+            
+            double sigma1 = recCluster1->GetRadius();
+            double sigma2 = recCluster2->GetRadius();
+            
+            if(sigma1+sigma2 == 0) continue;
+            
+            separation->Fill(distance/(sigma1+sigma2));
+          }
+        }
+      }
+      recHitsPerClusterArray.clear();
+      simHitsPerClusterArray.clear();
+    }
+    
+    ofstream outputFile;
+    outputFile.open(config->GetScoreOutputPath());
+    outputFile<<deltaE->GetMean()<<endl;
+    outputFile<<deltaE->GetStdDev()<<endl;
+    outputFile<<separation->GetMean()<<endl;
+    outputFile<<separation->GetStdDev()<<endl;
+    outputFile<<containment->GetMean()<<endl;
+    outputFile<<containment->GetStdDev()<<endl;
+    outputFile.close();
+    
+    delete tree;
+    inFile->Close();
+    delete inFile;
+    
+  }
+  delete algo;
+  delete matcher;
+}
+
 
 

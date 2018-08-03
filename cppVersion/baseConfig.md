@@ -7,16 +7,15 @@ min_Ntuple:  0
 max_Ntuple:  0
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:	5
+analyze_events_per_tuple:	1
 
 ### input and output paths
 
-input_path: ../../../data/MultiParticleInConeGunProducer_test_jniedzie_20180704/NTUP/merged_NTUP_
+input_path: ../../data/MultiParticleInConeGunProducer_test_jniedzie_20180704/NTUP/merged_NTUP_
 
-output_path: ../../clusteringResultsCXX/optimizer/
+output_path: ../clusteringResultsCXX/geneticOptimizer/
 
-score_output_path: ../tmp/output.txt
-
+score_output_path: tmp/output.txt
 
 **HGCal Imaging Algo parameters**
 

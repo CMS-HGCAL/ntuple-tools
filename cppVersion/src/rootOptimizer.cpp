@@ -1,4 +1,4 @@
-#include "../geneticOptimizer/include/Helpers.hpp"
+#include "GeneticHelpers.hpp"
 
 #include <TFitter.h>
 

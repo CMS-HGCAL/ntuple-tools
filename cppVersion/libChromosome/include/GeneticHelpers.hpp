@@ -14,6 +14,12 @@
 #include <fstream>
 #include <bitset>
 
+enum EDet {
+  kEE,  ///< electromagneric endcap (silicon)
+  kFH,  ///< front hadronic endcap (silicon)
+  kBH   ///< back hadronic endcap (plastic)
+};
+
 inline double RandDouble(double min, double max)
 {
   return min + static_cast<double>(rand()) /( static_cast<double>(RAND_MAX/(max-min)));
@@ -34,6 +40,13 @@ inline bool RandBool()
   return rand() % 2;
 }
 
+inline uint64_t reverse_bit (uint64_t bits, int pos)
+{
+  if(bits&(2^pos)==0) return (bits|(2^pos));
+  return (bits&(~2^pos));
+}
+
+
 inline void PrintBits(uint64_t bits)
 {
   std::bitset<80> x(bits);
@@ -48,9 +61,13 @@ T BitSize(T&)
 
 template<class T>
 inline void UpdateParamValue(std::string configPath, std::string keyToReplace, T newValue){
+  std::string tmpName = "tmp/tmp_"+std::to_string(RandInt(0, 10000000))+".md";
+  
+//  std::cout<<"tmp name:"<<tmpName<<std::endl;
+//  std::cout<<"config path:"<<configPath<<std::endl;
+  
   std::ifstream is_file(configPath);
   std::ofstream outputFile;
-  std::string tmpName = "tmp_"+std::to_string(RandInt(0, 10000000))+".md";
   outputFile.open(tmpName);
   
   std::string line;
@@ -70,6 +87,7 @@ inline void UpdateParamValue(std::string configPath, std::string keyToReplace, T
     else  outputFile<<line<<std::endl;
   }
   outputFile.close();
+//  std::cout<<"Executing: "<<("mv "+tmpName+" "+configPath)<<std::endl;
   system(("mv "+tmpName+" "+configPath).c_str());
 }
 
