@@ -244,7 +244,18 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
     child->SetBitChromosome(i, newBitChromosome);
   }
   
-  
+  // perform child genes mutation
+  for(int i=0;i<3;i++){
+    uint64_t bits = child->GetBitChromosome(i);
+    
+    for(int iBit=0;iBit<BitSize(bits);iBit++){
+      double r = RandDouble(0, 1);
+      if(r < 0.1){ // 10% chance for mutation
+        ReverseBit(bits, iBit);
+      }
+    }
+    child->SetBitChromosome(i, bits);
+  }
   
   child->ReadFromBitChromosome();
   return child;

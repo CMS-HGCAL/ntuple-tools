@@ -25,8 +25,8 @@ using namespace std;
 const string configPath = "baseConfig.md";
 const string outputPath = "autoGenOutput.txt";
 
-const int populationSize = 10;  ///< Size of the population, will stay the same for all generations
-const int nGenerations = 2;     ///< Number of iterations
+const int populationSize = 30;  ///< Size of the population, will stay the same for all generations
+const int nGenerations = 20;     ///< Number of iterations
 const int nEventsPerTest = 1;   ///< On how many events each population member will be tested
 
 mt19937 randGenerator;

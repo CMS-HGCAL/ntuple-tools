@@ -14,6 +14,8 @@
 #include <fstream>
 #include <bitset>
 
+#include <TMath.h>
+
 enum EDet {
   kEE,  ///< electromagneric endcap (silicon)
   kFH,  ///< front hadronic endcap (silicon)
@@ -40,12 +42,12 @@ inline bool RandBool()
   return rand() % 2;
 }
 
-inline uint64_t reverse_bit (uint64_t bits, int pos)
+inline void ReverseBit(uint64_t &bits, int pos)
 {
-  if(bits&(2^pos)==0) return (bits|(2^pos));
-  return (bits&(~2^pos));
+  uint64_t mask = pow(2,pos);
+  if((bits&mask)==0) bits = bits|mask;
+  else bits = bits&(~mask);
 }
-
 
 inline void PrintBits(uint64_t bits)
 {
