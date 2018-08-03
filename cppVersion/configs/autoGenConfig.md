@@ -11,7 +11,7 @@ analyze_events_per_tuple:	10
 
 ### input and output paths
 
-input_path: ../../../data/MultiParticleInConeGunProducer_test_jniedzie_20180704/NTUP/merged_NTUP_
+input_path: ../../data/MultiParticleInConeGunProducer_test_jniedzie_20180704/NTUP/merged_NTUP_
 
 output_path: ../../clusteringResultsCXX/optimizer/
 
@@ -31,24 +31,24 @@ depend_sensor:	0
 
 ### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than d_c from given hit will not be included in the energy density calculation for this hit.
-critial_distance_EE:	1.97583
-critial_distance_FH:	1.97583
-critial_distance_BH:	1.97583
+critial_distance_EE:	2
+critial_distance_FH:	2
+critial_distance_BH:	5
 
 ### Critical distance to higher ρ hit (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than δ_c from any hit with higher ρ will be considered as potential cluster seeds.
-deltac_EE:	5.97579
-deltac_FH:	11.9758
-deltac_BH:	21.9758
+deltac_EE:	5.92589
+deltac_FH:	11.9258
+deltac_BH:	21.9258
 
 ### Critical energy density is defined as ρ_c = max(ρ)/κ. Hits with ρ > ρ_c will be considered as potential cluster seeds.
-kappa:	9.97578
+kappa:	9.87603
 
 ### cut on energy (relative to the noise):
-energy_min:	0.06
+energy_min:	0.0503842
 
 ### Request at least minClusters+1 2D clusters  (*clarification needed*)
-min_clusters:	2.75905
+min_clusters:	1
 
 ### test only within this layers range:
 min_layer: 0
@@ -61,5 +61,5 @@ reachedEE_only:	1
 **Cluster Matching parameters**
 
 ### Sim clusters further than matching_max_distance from the clostest rec cluster will not be matched 
-matching_max_distance:	4.97579
+matching_max_distance:	3
 

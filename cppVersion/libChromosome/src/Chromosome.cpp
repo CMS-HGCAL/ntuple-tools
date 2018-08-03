@@ -10,6 +10,7 @@
 #include "ClusterMatcher.hpp"
 #include "Event.hpp"
 #include "Helpers.hpp"
+#include "GeneticHelpers.hpp"
 
 #include <TMath.h>
 #include <iostream>
@@ -115,9 +116,9 @@ void Chromosome::Print()
   cout<<"================================================="<<endl;
   cout<<"Chromosome "<<uniqueID<<endl;
   
-  cout<<"Critical distance:"<<endl;
-  cout<<"\tEE:"<<criticalDistanceEE/1000.<<endl;
-  cout<<"\tFH:"<<criticalDistanceFH/1000.<<endl;
+  cout<<"Critical distance:";
+  cout<<"\tEE:"<<criticalDistanceEE/1000.;
+  cout<<"\tFH:"<<criticalDistanceFH/1000.;
   cout<<"\tBH:"<<criticalDistanceBH/1000.<<endl;
   
   cout<<"Depend on sensor:"<<dependSensor<<endl;
@@ -128,9 +129,9 @@ void Chromosome::Print()
   else if(kernel==1)  cout<<"gaus"<<endl;
   else                cout<<"exp"<<endl;
   
-  cout<<"Critical #delta:"<<endl;
-  cout<<"\tEE:"<<deltacEE/1000.<<endl;
-  cout<<"\tFH:"<<deltacFH/1000.<<endl;
+  cout<<"Critical #delta:";
+  cout<<"\tEE:"<<deltacEE/1000.;
+  cout<<"\tFH:"<<deltacFH/1000.;
   cout<<"\tBH:"<<deltacBH/1000.<<endl;
   
   cout<<"kappa:"<<kappa/1000.<<endl;
@@ -252,19 +253,31 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
 
 void Chromosome::Clusterize(string configPath)
 {
-  ConfigurationManager *config = ConfigurationManager::Instance(configPath);
-  gROOT->ProcessLine(".L loader.C+");
+//  ConfigurationManager *config = ConfigurationManager::Instance(configPath);
   
-  ImagingAlgo *algo = new ImagingAlgo();
+  ImagingAlgo *algo = new ImagingAlgo(configPath);
   ClusterMatcher *matcher = new ClusterMatcher();
   
   TH1D *deltaE = new TH1D("Erec-Esim/Esim","Erec-Esim/Esim",100,-1.0,2.0);
   TH1D *separation = new TH1D("separation","separation",100,0,10);
   TH1D *containment = new TH1D("separation","separation",100,0,10);
   
-  for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
+  int minNtuple, maxNtuple, eventsPerTuple, minLayer, maxLayer;
+  string inputPath, scoreOutputPath;
+  bool reachedEEonly;
+  
+  GetParamFomeConfig(configPath, "min_Ntuple", minNtuple);
+  GetParamFomeConfig(configPath, "max_Ntuple", maxNtuple);
+  GetParamFomeConfig(configPath, "input_path", inputPath);
+  GetParamFomeConfig(configPath, "analyze_events_per_tuple", eventsPerTuple);
+  GetParamFomeConfig(configPath, "reachedEE_only", reachedEEonly);
+  GetParamFomeConfig(configPath, "min_layer", minLayer);
+  GetParamFomeConfig(configPath, "max_layer", maxLayer);
+  GetParamFomeConfig(configPath, "score_output_path", scoreOutputPath);
+  
+  for(int nTupleIter=minNtuple; nTupleIter<=maxNtuple; nTupleIter++){
 
-    TFile *inFile = TFile::Open(Form("%s%i.root",config->GetInputPath().c_str(),nTupleIter));
+    TFile *inFile = TFile::Open(Form("%s%i.root",inputPath.c_str(),nTupleIter));
     if(!inFile) continue;
     TTree *tree = (TTree*)inFile->Get("ana/hgc");
     if(!tree) continue;
@@ -275,12 +288,12 @@ void Chromosome::Clusterize(string configPath)
     
     // start event loop
     for(int iEvent=0;iEvent<nEvents;iEvent++){
-      if(iEvent>config->GetMaxEventsPerTuple()) break;
+      if(iEvent>eventsPerTuple) break;
       
       hgCalEvent->GoToEvent(iEvent);
       
       // check if particles reached EE
-      if(config->GetReachedEEonly()){
+      if(reachedEEonly){
         bool skipEvent = false;
         for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
           if(reachedEE==0){
@@ -306,7 +319,7 @@ void Chromosome::Clusterize(string configPath)
       
       
       // perform final analysis, fill in histograms and save to files
-      for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
+      for(int layer=minLayer;layer<maxLayer;layer++){
         
         vector<MatchedClusters*> matchedClusters;
         matcher->MatchClustersByDetID(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
@@ -345,7 +358,7 @@ void Chromosome::Clusterize(string configPath)
     }
     
     ofstream outputFile;
-    outputFile.open(config->GetScoreOutputPath());
+    outputFile.open(scoreOutputPath);
     outputFile<<deltaE->GetMean()<<endl;
     outputFile<<deltaE->GetStdDev()<<endl;
     outputFile<<separation->GetMean()<<endl;

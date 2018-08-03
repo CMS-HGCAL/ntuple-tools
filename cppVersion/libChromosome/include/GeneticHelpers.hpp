@@ -91,8 +91,8 @@ inline void UpdateParamValue(std::string configPath, std::string keyToReplace, T
   system(("mv "+tmpName+" "+configPath).c_str());
 }
 
-
-inline double GetParamFomeConfig(std::string configPath, std::string keyToFind){
+template<class T>
+void GetParamFomeConfig(std::string configPath, std::string keyToFind, T &returnValue){
   std::ifstream is_file(configPath);
   
   std::string line;
@@ -103,13 +103,34 @@ inline double GetParamFomeConfig(std::string configPath, std::string keyToFind){
       std::string value;
       if(std::getline(is_line, value)){
         if(key==keyToFind){
-          return stod(value);
+          std::istringstream is_value(value);
+          returnValue = decltype(returnValue)(is_value);
+          return;
         }
       }
     }
   }
-  return -999999999;
+  return;
 }
+
+//inline double GetParamFomeConfig(std::string configPath, std::string keyToFind){
+//  std::ifstream is_file(configPath);
+//
+//  std::string line;
+//  while(getline(is_file, line)){
+//    std::istringstream is_line(line);
+//    std::string key;
+//    if( std::getline(is_line, key, ':')){
+//      std::string value;
+//      if(std::getline(is_line, value)){
+//        if(key==keyToFind){
+//          return stod(value);
+//        }
+//      }
+//    }
+//  }
+//  return -999999999;
+//}
 
 struct ClusteringOutput {
   ClusteringOutput(){
@@ -172,5 +193,6 @@ inline std::chrono::time_point<std::chrono::system_clock> now()
 {
   return std::chrono::system_clock::now();
 }
+
   
 #endif /* Helpers_h */

@@ -11,7 +11,8 @@
 
 using namespace std;
 
-ImagingAlgo::ImagingAlgo()
+ImagingAlgo::ImagingAlgo() :
+configPath("")
 {
   recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
   config = ConfigurationManager::Instance();
@@ -21,7 +22,13 @@ ImagingAlgo::ImagingAlgo()
   ecut = config->GetEnergyMin();
   minClusters = config->GetMinClusters();
   verbosityLevel = config->GetVerbosityLevel();
-
+  criticalDistanceEE = config->GetCriticalDistance(kEE);
+  criticalDistanceFH = config->GetCriticalDistance(kFH);
+  criticalDistanceBH = config->GetCriticalDistance(kBH);
+  deltacEE = config->GetDeltac(kEE);
+  deltacFH = config->GetDeltac(kFH);
+  deltacBH = config->GetDeltac(kBH);
+  
   if(config->GetEnergyDensityFunction() == "step"){
     // param [0] says what's the limit to include or reject hit (critical distance)
     // param [1] says how much should be added to the energy density if hit is accepted
@@ -46,9 +53,64 @@ ImagingAlgo::ImagingAlgo()
   if(verbosityLevel >= 1){
     cout<<"HGCalImagingAlgo setup: "<<endl;
     cout<<"   dependSensor: "<<dependSensor<<endl;
-    cout<<"   deltac_EE: "<<config->GetDeltac(kEE)<<endl;
-    cout<<"   deltac_FH: "<<config->GetDeltac(kFH)<<endl;
-    cout<<"   deltac_BH: "<<config->GetDeltac(kBH)<<endl;
+    cout<<"   deltac_EE: "<<deltacEE<<endl;
+    cout<<"   deltac_FH: "<<deltacFH<<endl;
+    cout<<"   deltac_BH: "<<deltacBH<<endl;
+    cout<<"   kappa: "<<kappa<<endl;
+    cout<<"   ecut: "<<ecut<<endl;
+    cout<<"   minClusters: "<<minClusters<<endl;
+    cout<<"   verbosityLevel: "<<verbosityLevel<<endl;
+  }
+}
+
+ImagingAlgo::ImagingAlgo(string _configPath) :
+configPath(_configPath),
+config(nullptr)
+{
+  recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
+  
+  dependSensor =  GetIntFomeConfig(configPath, "depend_sensor");
+  kappa = GetDoubleFomeConfig(configPath, "kappa");
+  ecut = GetDoubleFomeConfig(configPath, "energy_min");
+  minClusters = GetIntFomeConfig(configPath, "min_clusters");
+  verbosityLevel = GetIntFomeConfig(configPath, "verbosity_level");
+  criticalDistanceEE = GetDoubleFomeConfig(configPath, "critial_distance_EE");
+  criticalDistanceFH = GetDoubleFomeConfig(configPath, "critial_distance_FH");
+  criticalDistanceBH = GetDoubleFomeConfig(configPath, "critial_distance_BH");
+  deltacEE = GetDoubleFomeConfig(configPath, "deltac_EE");
+  deltacFH = GetDoubleFomeConfig(configPath, "deltac_FH");
+  deltacBH = GetDoubleFomeConfig(configPath, "deltac_BH");
+
+  string energyFunction = GetStringFomeConfig(configPath, "energy_density_function");
+  
+  if(energyFunction == "step"){
+    // param [0] says what's the limit to include or reject hit (critical distance)
+    // param [1] says how much should be added to the energy density if hit is accepted
+    energyDensityFunction = new TF1("step function", "((x < [0]) ? [1] : 0)", -1000, 1000);
+  }
+  else if(energyFunction == "gaus"){
+    // param [0] is the distribution width
+    // param [1] scales the distribution (should be set to something proportional to the energy of the hit)
+    energyDensityFunction = new TF1("gaussian", "[1]/(sqrt(2*TMath::Pi())*[0])*exp(-x*x/(2*[0]*[0]))", -1000, 1000);
+  }
+  else if(energyFunction == "exp"){
+    // param [0] is the critical distance (further than that we don't include hits)
+    // param [1] scales the distribution (should be set to something proportional to the energy of the hit)
+    energyDensityFunction = new TF1("exp", "((x < [0]) ? [1]*exp(-x/[0]) : 0)", -1000, 1000);
+  }
+  else{
+    cout<<"ERROR -- unknown energy density function:"<<energyFunction<<endl;
+    exit(0);
+  }
+  
+  
+  // print out the setup
+  if(verbosityLevel >= 1){
+    cout<<"HGCalImagingAlgo setup: "<<endl;
+    cout<<"   dependSensor: "<<dependSensor<<endl;
+    cout<<"   deltac_EE: "<<deltacEE<<endl;
+    cout<<"   deltac_FH: "<<deltacFH<<endl;
+    cout<<"   deltac_BH: "<<deltacBH<<endl;
     cout<<"   kappa: "<<kappa<<endl;
     cout<<"   ecut: "<<ecut<<endl;
     cout<<"   minClusters: "<<minClusters<<endl;
@@ -67,9 +129,9 @@ double ImagingAlgo::calculateLocalDensity(vector<unique_ptr<Hexel>> &hexels,
   double maxdensity = 0;
   double criticalDistance = 0;
 
-  if(layer <= lastLayerEE)       criticalDistance = config->GetCriticalDistance(kEE);
-  else if(layer <= lastLayerFH)  criticalDistance = config->GetCriticalDistance(kFH);
-  else                           criticalDistance = config->GetCriticalDistance(kBH);
+  if(layer <= lastLayerEE)       criticalDistance = criticalDistanceEE;
+  else if(layer <= lastLayerFH)  criticalDistance = criticalDistanceFH;
+  else                           criticalDistance = criticalDistanceBH;
 
   for(unique_ptr<Hexel> &iNode : hexels){
     // search in a circle of radius "criticalDistance" or "criticalDistance"*sqrt(2) (not identical to search in the box "criticalDistance")
@@ -153,9 +215,9 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   vector<int> ds = sortIndicesDeltaInverted(nodes);
 
   double delta_c=0;
-  if(layer <= lastLayerEE)      delta_c = config->GetDeltac(kEE);
-  else if(layer <= lastLayerFH) delta_c = config->GetDeltac(kFH);
-  else                          delta_c = config->GetDeltac(kBH);
+  if(layer <= lastLayerEE)      delta_c = deltacEE;
+  else if(layer <= lastLayerFH) delta_c = deltacFH;
+  else                          delta_c = deltacBH;
 
   for(uint i=0; i<nodes.size();i++){
     if(nodes[ds[i]]->delta < delta_c) break;  // no more cluster centers to be looked at
@@ -196,9 +258,9 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
 
   double criticalDistance = 0;
   
-  if(layer <= lastLayerEE)       criticalDistance = config->GetCriticalDistance(kEE);
-  else if(layer <= lastLayerFH)  criticalDistance = config->GetCriticalDistance(kFH);
-  else                           criticalDistance = config->GetCriticalDistance(kBH);
+  if(layer <= lastLayerEE)       criticalDistance = criticalDistanceEE;
+  else if(layer <= lastLayerFH)  criticalDistance = criticalDistanceFH;
+  else                           criticalDistance = criticalDistanceBH;
   
   // now loop on all hits again :( and check: if there are hits from another cluster within d_c -> flag as border hit
   for(auto &iNode : nodes){

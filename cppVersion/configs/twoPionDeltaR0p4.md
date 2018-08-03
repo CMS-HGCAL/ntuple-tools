@@ -11,7 +11,7 @@ analyze_events_per_tuple:     999999
 
 ### input and output paths
 
-input_path: ../../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p4_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_
+input_path: ../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p4_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_
 
 output_path: ../../clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/
 

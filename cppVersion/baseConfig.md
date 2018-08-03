@@ -27,7 +27,8 @@ depend_sensor:	0
 ### *step* - include 100% of hit energy if distance smaller than *critical_distance*  
 ### *gaus* - include fraction of hit's energy based on the distance scaled by a gaussian distribution with width *critical_distance*
 ### *exp* - exponential for distances smaller than *critical_distance*, don't include above
-  energy_density_function:  gaus
+
+energy_density_function:  gaus
 
 
 ### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)

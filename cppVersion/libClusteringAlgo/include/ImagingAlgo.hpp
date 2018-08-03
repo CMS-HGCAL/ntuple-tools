@@ -30,6 +30,9 @@ class ImagingAlgo {
 public:
   /// Default constructor
   ImagingAlgo();
+  
+  /// Constructor with config path. The global configuration will be ignored and values will be read directly from this config
+  ImagingAlgo(std::string _configPath);
   ~ImagingAlgo();
   
   /// Get clustered hexels by re-running the clustering algorithm
@@ -38,11 +41,19 @@ public:
   void getRecClusters(std::vector<std::shared_ptr<Hexel>> &hexelsClustered, std::shared_ptr<RecHits> &hits);
   
 private:
+  std::string configPath;
+  
   bool dependSensor;     ///< Should algo depend on the sensor type
   double kappa;          ///< ??
   double ecut;           ///< Minimum hit energy
   int minClusters;       ///< Request at least minClusters+1 2D clusters
   int verbosityLevel;    ///< Current verbosity level
+  double criticalDistanceEE;
+  double criticalDistanceFH;
+  double criticalDistanceBH;
+  double deltacEE;
+  double deltacFH;
+  double deltacBH;
   
   TF1 *energyDensityFunction; ///< Function that will be used to determine energy density for each hit
   

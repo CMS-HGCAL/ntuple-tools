@@ -124,5 +124,42 @@ inline std::chrono::time_point<std::chrono::system_clock> now()
 {
   return std::chrono::system_clock::now();
 }
+
+
+inline std::string GetParamFromConfig(std::string configPath, std::string keyToFind){
+  std::ifstream is_file(configPath);
   
+  int intType;
+  
+  std::string line;
+  while(getline(is_file, line)){
+    std::istringstream is_line(line);
+    std::string key;
+    if( std::getline(is_line, key, ':')){
+      std::string value;
+      if(std::getline(is_line, value)){
+        if(key==keyToFind){
+          return value;
+        }
+      }
+    }
+  }
+  return "";
+}
+
+inline std::string GetStringFomeConfig(std::string configPath, std::string keyToFind){
+  std::string str = GetParamFromConfig(configPath,keyToFind);
+  str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
+  return str;
+}
+
+inline int GetIntFomeConfig(std::string configPath, std::string keyToFind){
+  return stoi(GetParamFromConfig(configPath,keyToFind));
+}
+
+inline double GetDoubleFomeConfig(std::string configPath, std::string keyToFind){
+  return stod(GetParamFromConfig(configPath,keyToFind));
+}
+
+
 #endif /* Helpers_h */

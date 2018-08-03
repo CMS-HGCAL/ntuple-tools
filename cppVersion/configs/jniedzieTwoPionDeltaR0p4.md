@@ -11,7 +11,7 @@ analyze_events_per_tuple:     50
 
 ### input and output paths
 
-input_path: ../../../data/MultiParticleInConeGunProducer_test_jniedzie_20180704/NTUP/merged_NTUP_
+input_path: ../../data/MultiParticleInConeGunProducer_test_jniedzie_20180704/NTUP/merged_NTUP_
 
 output_path: ../../clusteringResultsCXX/twoPions_jniedzie/
 

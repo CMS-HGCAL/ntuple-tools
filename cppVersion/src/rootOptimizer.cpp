@@ -1,10 +1,11 @@
 #include "GeneticHelpers.hpp"
+#include "ConfigurationManager.hpp"
 
 #include <TFitter.h>
 
 using namespace std;
 
-const string configPath = "../configs/autoGenConfig.md";
+const string configPath = "configs/autoGenConfig.md";
 const string outputPath = "autoGenOutput.txt";
 const int nPar = 13;
 
@@ -54,20 +55,28 @@ int main()
   TFitter *fitter = new TFitter(nPar);
   fitter->SetFCN(myfuncf);
   
+  ConfigurationManager *config = ConfigurationManager::Instance(configPath);
+  
+  int densityFunction;
+  string functionString = config->GetEnergyDensityFunction();
+  if(functionString == "step")      densityFunction = 0;
+  else if(functionString == "gaus") densityFunction = 1;
+  else                              densityFunction = 2;
+  
   // set fitter params
-  fitter->SetParameter(0, "depend_sensor",          GetParamFomeConfig(configPath, "depend_sensor"), 1, 0, 1); // 0 - no dependance, 1 - depend on sensor
-  fitter->SetParameter(1, "energy_density_function",GetParamFomeConfig(configPath, "energy_density_function"), 1, 0, 2); // 0 - step, 1 - gaus, 2 - exp
-  fitter->SetParameter(2, "critial_distance_EE",    GetParamFomeConfig(configPath, "critial_distance_EE"), 0.1, 0.0, 200.0);
-  fitter->SetParameter(3, "critial_distance_FH",    GetParamFomeConfig(configPath, "critial_distance_FH"), 0.1, 0.0, 200.0);
-  fitter->SetParameter(4, "critial_distance_BH",    GetParamFomeConfig(configPath, "critial_distance_BH"), 0.1, 0.0, 200.0);
-  fitter->SetParameter(5, "deltac_EE",              GetParamFomeConfig(configPath, "deltac_EE"), 0.1, 0.0, 200.0);
-  fitter->SetParameter(6, "deltac_FH",              GetParamFomeConfig(configPath, "deltac_FH"), 0.1, 0.0, 200.0);
-  fitter->SetParameter(7, "deltac_BH",	            GetParamFomeConfig(configPath, "deltac_BH"), 0.1, 0.0, 200.0);
-  fitter->SetParameter(8, "kappa",                  GetParamFomeConfig(configPath, "kappa"), 0.1, 0.0, 2000.0);
-  fitter->SetParameter(9, "energy_min",             GetParamFomeConfig(configPath, "energy_min"), 0.01, 0.0, 100.0);
-  fitter->SetParameter(10,"min_clusters",           GetParamFomeConfig(configPath, "min_clusters"), 1.0, 0.0, 100.0);
-  fitter->SetParameter(11,"reachedEE_only",         GetParamFomeConfig(configPath, "reachedEE_only"), 1, 0, 1);
-  fitter->SetParameter(12,"matching_max_distance",  GetParamFomeConfig(configPath, "matching_max_distance"), 0.1, 0.0, 100);
+  fitter->SetParameter(0, "depend_sensor",          config->GetDependSensor(), 1, 0, 1); // 0 - no dependance, 1 - depend on sensor
+  fitter->SetParameter(1, "energy_density_function",densityFunction, 1, 0, 2); // 0 - step, 1 - gaus, 2 - exp
+  fitter->SetParameter(2, "critial_distance_EE",    config->GetCriticalDistance(kEE), 0.1, 0.0, 200.0);
+  fitter->SetParameter(3, "critial_distance_FH",    config->GetCriticalDistance(kFH), 0.1, 0.0, 200.0);
+  fitter->SetParameter(4, "critial_distance_BH",    config->GetCriticalDistance(kBH), 0.1, 0.0, 200.0);
+  fitter->SetParameter(5, "deltac_EE",              config->GetDeltac(kEE), 0.1, 0.0, 200.0);
+  fitter->SetParameter(6, "deltac_FH",              config->GetDeltac(kFH), 0.1, 0.0, 200.0);
+  fitter->SetParameter(7, "deltac_BH",	            config->GetDeltac(kBH), 0.1, 0.0, 200.0);
+  fitter->SetParameter(8, "kappa",                  config->GetKappa(), 0.1, 0.0, 2000.0);
+  fitter->SetParameter(9, "energy_min",             config->GetEnergyMin(), 0.01, 0.0, 100.0);
+  fitter->SetParameter(10,"min_clusters",           config->GetMinClusters(), 1.0, 0.0, 100.0);
+  fitter->SetParameter(11,"reachedEE_only",         config->GetReachedEEonly(), 1, 0, 1);
+  fitter->SetParameter(12,"matching_max_distance",  config->GetMachingMaxDistance(), 0.1, 0.0, 100);
   
   double args = 0; // put to 0 for results only, or to -1 for no garbage
   fitter->ExecuteCommand( "SET PRINTOUT"  , &args, 1);

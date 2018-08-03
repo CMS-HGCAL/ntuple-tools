@@ -7,6 +7,7 @@
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TGraph.h>
+#include <TROOT.h>
 
 #include <future>
 #include <thread>
@@ -92,6 +93,8 @@ void TestPopulation(Chromosome *population[populationSize], TH1D *hist, discrete
 
 int main(int argc, char* argv[])
 {
+  gROOT->ProcessLine(".L loader.C+");
+  
   TApplication theApp("App", &argc, argv);
   
   // Set number of events for each member to be tested on
