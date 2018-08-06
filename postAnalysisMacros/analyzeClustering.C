@@ -46,6 +46,7 @@ const int nClusters = 40;
 //string baseDir = "clusteringResultsCXX/oldSamples";
 //string baseDir = "clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/";
 string baseDir = "clusteringResultsCXX/twoPions_jniedzie";
+//string baseDir = "clusteringResultsCXX/geneticOptimizer";
 //string baseDir = "clusteringResultsCXX/singleGamma";
 
 vector<TObject*> getHistsWithName(const char* histFileName, const char* histName)

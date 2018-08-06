@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
       
       cout<<"\nCurrent event:"<<iEvent<<endl;
       
-      shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
+      shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits()->GetHitsAboveNoise();
       shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
       
       // get simulated hits associated with a cluster

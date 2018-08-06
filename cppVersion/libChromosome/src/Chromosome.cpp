@@ -20,6 +20,10 @@
 
 using namespace std;
 
+#define mutationChance 0.002
+#define critialExecutionTime 30.0
+#define executionTimeout 50
+
 Chromosome::Chromosome()
 {
   uniqueID = reinterpret_cast<uint64_t>(this);
@@ -189,11 +193,14 @@ void Chromosome::StoreInConfig()
 
 void Chromosome::RunClustering()
 {
-  cout<<"Running clusterization"<<endl;
+//  cout<<"Running clusterization"<<endl;
   
   auto start = now();
 //  Clusterize(configPath);
   system(("./createQualityPlots "+configPath+" > /dev/null 2>&1").c_str());
+  
+//  system(("./execWithTimeout.sh -t "+to_string(executionTimeout)+" ./createQualityPlots "+configPath+" > /dev/null 2>&1").c_str());
+  
 //  system(("./createQualityPlots "+configPath).c_str());
   auto end = now();
   executionTime = duration(start,end);
@@ -202,7 +209,7 @@ void Chromosome::RunClustering()
   system(("rm "+configPath).c_str());
   system(("rm "+clusteringOutputPath).c_str());
   
-  cout<<"Done. Execution time:"<<executionTime<<endl;
+//  cout<<"Done. Execution time:"<<executionTime<<endl;
 }
 
 void Chromosome::CalculateScore()
@@ -217,10 +224,11 @@ void Chromosome::CalculateScore()
           - clusteringOutput.separationMean               // small separation factor
           - 0.1*fabs(clusteringOutput.separationSigma);   // with small spread
   
-  if(executionTime > 60){
-    score -= (executionTime-30); // add additional penalty for super long execution
-  }
-  
+  // the time measurement we have now is not realiable, can't be used to punish population members...
+//  if(executionTime > critialExecutionTime){
+//    score -= pow((executionTime-critialExecutionTime),2); // add additional penalty for super long execution
+//  }
+//  cout<<"score:"<<score<<endl;
 }
 
 Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
@@ -228,6 +236,7 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
   Chromosome *child = new Chromosome();
   
   // combine chromosomes of parents in a random way
+  // this is a single-point crossover
   for(int i=0;i<3;i++){
     int crossingPoint = RandInt(0, 63);
     uint64_t newBitChromosome = 0;
@@ -250,7 +259,7 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
     
     for(int iBit=0;iBit<BitSize(bits);iBit++){
       double r = RandDouble(0, 1);
-      if(r < 0.1){ // 10% chance for mutation
+      if(r < mutationChance){ // 10% chance for mutation
         ReverseBit(bits, iBit);
       }
     }

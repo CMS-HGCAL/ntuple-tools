@@ -181,8 +181,8 @@ inline ClusteringOutput ReadOutput(std::string fileName){
 /// \param t0 Start time
 /// \param t1 End time
 /// \return Difference between events t0 and t1 in seconds
-inline double duration(std::chrono::time_point<std::chrono::system_clock> t0,
-                       std::chrono::time_point<std::chrono::system_clock> t1)
+template<class T>
+double duration(T t0,T t1)
 {
   auto elapsed_secs = t1-t0;
   typedef std::chrono::duration<float> float_seconds;
@@ -191,9 +191,10 @@ inline double duration(std::chrono::time_point<std::chrono::system_clock> t0,
 }
 
 /// Returns current time
-inline std::chrono::time_point<std::chrono::system_clock> now()
+inline std::chrono::time_point<std::chrono::steady_clock> now()
 {
-  return std::chrono::system_clock::now();
+  return std::chrono::steady_clock::now();
+//  return std::chrono::system_clock::now();
 }
 
   

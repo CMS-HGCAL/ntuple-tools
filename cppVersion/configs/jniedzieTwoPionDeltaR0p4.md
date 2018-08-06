@@ -7,14 +7,15 @@ min_Ntuple:  0
 max_Ntuple:  0
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:     50
+analyze_events_per_tuple:     150
 
 ### input and output paths
 
 input_path: ../../data/MultiParticleInConeGunProducer_test_jniedzie_20180704/NTUP/merged_NTUP_
 
-output_path: ../../clusteringResultsCXX/twoPions_jniedzie/
+output_path: ../clusteringResultsCXX/twoPions_jniedzie/
 
+score_output_path: tmp/output.txt
 
 **HGCal Imaging Algo parameters**
 
@@ -26,7 +27,8 @@ depend_sensor:  0
 ### *step* - include 100% of hit energy if distance smaller than *critical_distance*  
 ### *gaus* - include fraction of hit's energy based on the distance scaled by a gaussian distribution with width *critical_distance*
 ### *exp* - exponential for distances smaller than *critical_distance*, don't include above
-  energy_density_function:  gaus
+
+energy_density_function:  step
 
 
 ### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)
@@ -52,7 +54,7 @@ min_clusters: 3
 
 ### test only within this layers range:
 min_layer: 0
-max_layer: 40
+max_layer: 52
 
 ### Include only events were all particles reached EE before converting
 reachedEE_only: 1

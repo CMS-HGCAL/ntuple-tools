@@ -4,10 +4,12 @@
 
 #include <TMath.h>
 #include <TH1D.h>
+#include <TH2D.h>
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TGraph.h>
 #include <TROOT.h>
+#include <TFile.h>
 
 #include <future>
 #include <thread>
@@ -25,11 +27,15 @@ using namespace std;
 const string configPath = "baseConfig.md";
 const string outputPath = "autoGenOutput.txt";
 
-const int populationSize = 30;  ///< Size of the population, will stay the same for all generations
-const int nGenerations = 20;     ///< Number of iterations
-const int nEventsPerTest = 1;   ///< On how many events each population member will be tested
+const int populationSize = 15;  ///< Size of the population, will stay the same for all generations
+const int nGenerations = 30;     ///< Number of iterations
+const int nEventsPerTest = 5;   ///< On how many events each population member will be tested
 
 mt19937 randGenerator;
+
+TGraph *scoresMean;
+TFile *outfile;
+TH2D *criticalDistanceEE, *criticalDistanceFH, *criticalDistanceBH, *dependSensor, *reachedEE, *kernel, *deltacEE, *deltacFH, *deltacBH, *kappa, *energyMin, *matchingDistance, *minClusters;
 
 void threadFunction(Chromosome *chromo)
 {
@@ -79,7 +85,7 @@ void TestPopulation(Chromosome *population[populationSize], TH1D *hist, discrete
   double normScore;
 
   for(int i=0;i<populationSize;i++){
-    if(scores[i] > -100) normScore = (scores[i]-minScore)/(maxScore-minScore);
+    if(scores[i] > -1000) normScore = (scores[i]-minScore)/(maxScore-minScore);
     else normScore = 0; // kill extremally weak members of population
     
     population[i]->SetScore(normScore);
@@ -89,7 +95,29 @@ void TestPopulation(Chromosome *population[populationSize], TH1D *hist, discrete
   dist = discrete_distribution<double>(scoresNormalized.begin(), scoresNormalized.end());
 }
 
-
+void SaveHists()
+{
+  outfile = new TFile("geneticHists.root","update");
+  outfile->cd();
+  
+  scoresMean->Write("scores",TObject::kOverwrite);
+  criticalDistanceEE->Write("critDistEE",TObject::kOverwrite);
+  criticalDistanceFH->Write("critDistFH",TObject::kOverwrite);
+  criticalDistanceBH->Write("critDistBH",TObject::kOverwrite);
+  dependSensor->Write("sensor",TObject::kOverwrite);
+  reachedEE->Write("reachedEE",TObject::kOverwrite);
+  kernel->Write("kernel",TObject::kOverwrite);
+  deltacEE->Write("deltaEE",TObject::kOverwrite);
+  deltacFH->Write("deltaFH",TObject::kOverwrite);
+  deltacBH->Write("deltaBH",TObject::kOverwrite);
+  kappa->Write("kappa",TObject::kOverwrite);
+  energyMin->Write("eMin",TObject::kOverwrite);
+  matchingDistance->Write("matchingDist",TObject::kOverwrite);
+  minClusters->Write("minCluster",TObject::kOverwrite);
+  
+  outfile->Close();
+  delete outfile;
+}
 
 int main(int argc, char* argv[])
 {
@@ -104,6 +132,25 @@ int main(int argc, char* argv[])
   randGenerator.seed((unsigned int)time(0));
   
   TH1D *scoresDist[nGenerations];
+  scoresMean = new TGraph();
+  criticalDistanceEE = new TH2D("critical distance EE","critical distance EE",nGenerations,0,nGenerations,100,0.0,100.0);
+  criticalDistanceFH = new TH2D("critical distance FH","critical distance FH",nGenerations,0,nGenerations,100,0.0,100.0);
+  criticalDistanceBH = new TH2D("critical distance BH","critical distance BH",nGenerations,0,nGenerations,100,0.0,100.0);
+  dependSensor = new TH2D("depend sensor","depend sensor",nGenerations,0,nGenerations,2,0,2);
+  reachedEE = new TH2D("reached EE","reached EE",nGenerations,0,nGenerations,2, 0, 2);
+  kernel = new TH2D("kernel","kernel",nGenerations,0,nGenerations,3, 0, 3);
+  deltacEE = new TH2D("delta c EE","delta c EE",nGenerations,0,nGenerations,100, 0.0,100.0);
+  deltacFH = new TH2D("delta c FH","delta c FH",nGenerations,0,nGenerations,100, 0.0,100.0);
+  deltacBH = new TH2D("delta c BH","delta c BH",nGenerations,0,nGenerations,100, 0.0,100.0);
+  kappa = new TH2D("kappa","kappa",nGenerations,0,nGenerations,10000, 0.0,10000.0);
+  energyMin = new TH2D("energy threshold","energy threshold",nGenerations,0,nGenerations,10000,0.0,100.0);
+  matchingDistance = new TH2D("matching distance","matching distance",nGenerations,0,nGenerations,100, 0.0,100.0);
+  minClusters = new TH2D("min clusters","min clusters",nGenerations,0,nGenerations,10, 0,10);
+  
+  // make sure to recreate output file
+  outfile = new TFile("geneticHists.root","recreate");
+  outfile->Close();
+  delete outfile;
   
   Chromosome* population[populationSize];
   discrete_distribution<double> scores;
@@ -147,6 +194,26 @@ int main(int argc, char* argv[])
     
     TestPopulation(population, scoresDist[iGeneration], scores);
     
+    for(int i=0;i<populationSize;i++){
+      criticalDistanceEE->Fill(iGeneration,population[i]->GetCriticalDistanceEE());
+      criticalDistanceFH->Fill(iGeneration,population[i]->GetCriticalDistanceFH());
+      criticalDistanceBH->Fill(iGeneration,population[i]->GetCriticalDistanceBH());
+      dependSensor->Fill(iGeneration,population[i]->GetDependSensor());
+      reachedEE->Fill(iGeneration,population[i]->GetReachedEE());
+      kernel->Fill(iGeneration,population[i]->GetKernel());
+      deltacEE->Fill(iGeneration,population[i]->GetDeltacEE());
+      deltacFH->Fill(iGeneration,population[i]->GetDeltacFH());
+      deltacBH->Fill(iGeneration,population[i]->GetDeltacBH());
+      kappa->Fill(iGeneration,population[i]->GetKappa());
+      energyMin->Fill(iGeneration,population[i]->GetEnergyMin());
+      matchingDistance->Fill(iGeneration,population[i]->GetMatchingDistance());
+      minClusters->Fill(iGeneration,population[i]->GetMinClusters());
+    }
+    scoresMean->SetPoint(iGeneration, iGeneration, scoresDist[iGeneration]->GetMean());
+    
+    // Save updated histograms after each iteration
+    SaveHists();
+    
     if(iGeneration == 0 || iGeneration == nGenerations-1){
       cout<<"\n\nPopulation:\n\n"<<endl;
       for(int i=0;i<populationSize;i++){
@@ -156,24 +223,45 @@ int main(int argc, char* argv[])
   }
   
   cout<<"plotting"<<endl;
-  TCanvas *c1 = new TCanvas("c1","c1",800,600);
-  TGraph *scoresMean = new TGraph();
+  TCanvas *c1 = new TCanvas("c1","c1",2880,1800);
+  c1->Divide(4,4);
   
-  c1->Divide(1,2);
   c1->cd(1);
-  for(int iGeneration=0;iGeneration<nGenerations;iGeneration++){
-    scoresDist[iGeneration]->Draw(iGeneration==0 ? "" : "same");
-    scoresDist[iGeneration]->SetLineColor(iGeneration);
-    
-    scoresMean->SetPoint(iGeneration, iGeneration, scoresDist[iGeneration]->GetMean());
-  }
-  c1->cd(2);
   scoresMean->SetMarkerSize(1.0);
   scoresMean->SetMarkerStyle(20);
   scoresMean->SetMarkerColor(kGreen+2);
   scoresMean->Draw("AP");
+
+  c1->cd(2);
+  criticalDistanceEE->Draw("colz");
+  c1->cd(3);
+  criticalDistanceFH->Draw("colz");
+  c1->cd(4);
+  criticalDistanceBH->Draw("colz");
+  c1->cd(5);
+  dependSensor->Draw("colz");
+  c1->cd(6);
+  reachedEE->Draw("colz");
+  c1->cd(7);
+  kernel->Draw("colz");
+  c1->cd(8);
+  deltacEE->Draw("colz");
+  c1->cd(9);
+  deltacFH->Draw("colz");
+  c1->cd(10);
+  deltacBH->Draw("colz");
+  c1->cd(11);
+  kappa->Draw("colz");
+  c1->cd(12);
+  energyMin->Draw("colz");
+  c1->cd(13);
+  matchingDistance->Draw("colz");
+  c1->cd(14);
+  minClusters->Draw("colz");
+  c1->cd(15);
   
   c1->Update();
+  
   theApp.Run();
   return 0;
 }
