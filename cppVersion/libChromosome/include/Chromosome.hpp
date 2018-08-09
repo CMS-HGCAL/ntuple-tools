@@ -21,18 +21,18 @@ public:
   static Chromosome* GetRandom();
   
   // Setters
-  inline void SetCriticalDistanceEE(float val){criticalDistanceEE = (uint16_t)(val*1000);}
-  inline void SetCriticalDistanceFH(float val){criticalDistanceFH = (uint16_t)(val*1000);}
-  inline void SetCriticalDistanceBH(float val){criticalDistanceBH = (uint16_t)(val*1000);}
+  inline void SetCriticalDistanceEE(float val){criticalDistanceEE = (uint32_t)(val*1000);}
+  inline void SetCriticalDistanceFH(float val){criticalDistanceFH = (uint32_t)(val*1000);}
+  inline void SetCriticalDistanceBH(float val){criticalDistanceBH = (uint32_t)(val*1000);}
   inline void SetDependSensor(bool val){dependSensor = val;}
   inline void SetReachedEE(bool val){reachedEE = val;}
   inline void SetKernel(int val){kernel = (uint16_t)val;} // 0 - step, 1 - gaus, 2 - exp
-  inline void SetDeltacEE(float val){deltacEE = (uint16_t)(val*1000);}
-  inline void SetDeltacFH(float val){deltacFH = (uint16_t)(val*1000);}
-  inline void SetDeltacBH(float val){deltacBH = (uint16_t)(val*1000);}
-  inline void SetKappa(float val){kappa = (uint16_t)(val*1000);}
-  inline void SetEnergyMin(float val){energyMin = (uint16_t)(val*100000);}
-  inline void SetMatchingDistance(float val){matchingDistance = (uint16_t)(val*1000);}
+  inline void SetDeltacEE(float val){deltacEE = (uint32_t)(val*1000);}
+  inline void SetDeltacFH(float val){deltacFH = (uint32_t)(val*1000);}
+  inline void SetDeltacBH(float val){deltacBH = (uint32_t)(val*1000);}
+  inline void SetKappa(float val){kappa = (uint32_t)(val*1000);}
+  inline void SetEnergyMin(float val){energyMin = (uint32_t)(val*100000);}
+  inline void SetMatchingDistance(float val){matchingDistance = (uint32_t)(val*1000);}
   inline void SetMinClusters(float val){minClusters = (uint16_t)val;}
   
   inline void SetScore(double val){score = val;}
@@ -66,26 +66,32 @@ public:
   Chromosome* ProduceChildWith(Chromosome *partner);
   
 private:
-  // 52 bits (1st choromosome)
-  uint16_t criticalDistanceEE;
-  uint16_t criticalDistanceFH;
-  uint16_t criticalDistanceBH;
+  // 1st chromosome
+  uint32_t criticalDistanceEE;
+  uint32_t criticalDistanceFH;
+  
+  // 2nd chromosome
+  uint32_t criticalDistanceBH;
   bool dependSensor;          // 2 bits
   bool reachedEE;             // 2 bits
   
-  // 64 bits (2nd chromosome)
-  uint16_t kernel;
-  uint16_t deltacEE;
-  uint16_t deltacFH;
-  uint16_t deltacBH;
+  // 3rd chromosome
+  uint32_t kernel;
+  uint32_t deltacEE;
   
-  // 64 bits (3d chromosome)
-  uint16_t kappa;
-  uint16_t energyMin;
-  uint16_t matchingDistance;
+  // 4th chromosome
+  uint32_t deltacFH;
+  uint32_t deltacBH;
+  
+  // 5th chromosome
+  uint32_t kappa;
+  uint32_t energyMin;
+  
+  // 6th chromosome
+  uint32_t matchingDistance;
   uint16_t minClusters;
   
-  uint64_t bitChromosome[3]; // 64 bit
+  std::vector<uint64_t> bitChromosome; // 64 bit
   
   uint64_t uniqueID;
   std::string configPath;

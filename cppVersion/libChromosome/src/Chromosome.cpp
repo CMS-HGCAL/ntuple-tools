@@ -24,13 +24,36 @@ using namespace std;
 #define critialExecutionTime 30.0
 #define executionTimeout 50
 
-Chromosome::Chromosome()
+Chromosome::Chromosome() :
+criticalDistanceEE(0.0),
+criticalDistanceFH(0.0),
+criticalDistanceBH(0.0),
+dependSensor(false),
+reachedEE(false),
+kernel(0),
+deltacEE(0.0),
+deltacFH(0.0),
+deltacBH(0.0),
+kappa(0.0),
+energyMin(0.0),
+matchingDistance(0.0),
+minClusters(0)
 {
+  int nChromosomes = 6;
+  for(int i=0;i<nChromosomes;i++){bitChromosome.push_back(0);}
+  
+  clusteringOutput.resolutionMean = 999999;
+  clusteringOutput.resolutionSigma = 999999;
+  clusteringOutput.separationMean = 999999;
+  clusteringOutput.separationSigma = 999999;
+  clusteringOutput.containmentMean = 999999;
+  clusteringOutput.containmentSigma = 999999;
+    
   uniqueID = reinterpret_cast<uint64_t>(this);
   configPath = "tmp/config_"+to_string(uniqueID)+".md";
   clusteringOutputPath = "tmp/output_"+to_string(uniqueID)+".txt";
-  executionTime = 9999999;
-  score = -999999;
+  executionTime = 99999;
+  score = -99999;
 } 
 
 Chromosome::~Chromosome()
@@ -42,18 +65,18 @@ Chromosome* Chromosome::GetRandom()
 {
   Chromosome *result = new Chromosome();
   
-  result->SetCriticalDistanceEE(RandFloat(0.0, 100.0));
-  result->SetCriticalDistanceFH(RandFloat(0.0, 100.0));
-  result->SetCriticalDistanceBH(RandFloat(0.0, 100.0));
+  result->SetCriticalDistanceEE(RandFloat(0.0, criticalDistanceEEmax));
+  result->SetCriticalDistanceFH(RandFloat(0.0, criticalDistanceFHmax));
+  result->SetCriticalDistanceBH(RandFloat(0.0, criticalDistanceBHmax));
   result->SetDependSensor(RandBool());
   result->SetReachedEE(RandBool());
   result->SetKernel(RandInt(0, 2));
-  result->SetDeltacEE(RandFloat(0.0, 100.0));
-  result->SetDeltacFH(RandFloat(0.0, 100.0));
-  result->SetDeltacBH(RandFloat(0.0, 100.0));
-  result->SetKappa(RandFloat(0.0, 10000.0));
-  result->SetEnergyMin(RandFloat(0.0, 100.0));
-  result->SetMatchingDistance(RandFloat(0.0, 100.0));
+  result->SetDeltacEE(RandFloat(0.0, deltacEEmax));
+  result->SetDeltacFH(RandFloat(0.0, deltacFHmax));
+  result->SetDeltacBH(RandFloat(0.0, deltacBHmax));
+  result->SetKappa(RandFloat(0.0, kappaMax));
+  result->SetEnergyMin(RandFloat(0.0, energyThresholdMax));
+  result->SetMatchingDistance(RandFloat(0.0, matchingDistanceMax));
   result->SetMinClusters(RandInt(0, 10));
   
   return result;
@@ -61,58 +84,75 @@ Chromosome* Chromosome::GetRandom()
 
 void Chromosome::SaveToBitChromosome()
 {
-  int currentShift = 0;
-  bitChromosome[0] = 0;
-  bitChromosome[1] = 0;
-  bitChromosome[2] = 0;
+  for(int i=0;i<bitChromosome.size();i++){bitChromosome[i] = 0;}
   
   // load values to 1st chromosome
-  ShiftIntoChromosome(criticalDistanceEE,currentShift,0);
-  ShiftIntoChromosome(criticalDistanceFH,currentShift,0);
-  ShiftIntoChromosome(criticalDistanceBH,currentShift,0);
-  ShiftIntoChromosome(dependSensor,currentShift,0);
-  ShiftIntoChromosome(reachedEE,currentShift,0);
+  int currentShift = 0;
+  int chromoIndex = 0;
+  ShiftIntoChromosome(criticalDistanceEE,currentShift,chromoIndex);
+  ShiftIntoChromosome(criticalDistanceFH,currentShift,chromoIndex);
   
-  // load values to 2st chromosome
   currentShift = 0;
-  ShiftIntoChromosome(kernel,currentShift,1);
-  ShiftIntoChromosome(deltacEE,currentShift,1);
-  ShiftIntoChromosome(deltacFH,currentShift,1);
-  ShiftIntoChromosome(deltacBH,currentShift,1);
+  chromoIndex++;
+  ShiftIntoChromosome(criticalDistanceBH,currentShift,chromoIndex);
+  ShiftIntoChromosome(dependSensor,currentShift,chromoIndex);
+  ShiftIntoChromosome(reachedEE,currentShift,chromoIndex);
   
-  // load values to 3st chromosome
+  
   currentShift = 0;
-  ShiftIntoChromosome(kappa,currentShift,2);
-  ShiftIntoChromosome(energyMin,currentShift,2);
-  ShiftIntoChromosome(matchingDistance,currentShift,2);
-  ShiftIntoChromosome(minClusters,currentShift,2);
+  chromoIndex++;
+  ShiftIntoChromosome(kernel,currentShift,chromoIndex);
+  ShiftIntoChromosome(deltacEE,currentShift,chromoIndex);
   
+  currentShift = 0;
+  chromoIndex++;
+  ShiftIntoChromosome(deltacFH,currentShift,chromoIndex);
+  ShiftIntoChromosome(deltacBH,currentShift,chromoIndex);
+  
+  currentShift = 0;
+  chromoIndex++;
+  ShiftIntoChromosome(kappa,currentShift,chromoIndex);
+  ShiftIntoChromosome(energyMin,currentShift,chromoIndex);
+  
+  currentShift = 0;
+  chromoIndex++;
+  ShiftIntoChromosome(matchingDistance,currentShift,chromoIndex);
+  ShiftIntoChromosome(minClusters,currentShift,chromoIndex);
 }
 
 void Chromosome::ReadFromBitChromosome()
 {
+  // read 1st chromosome
   int currentShift = 0;
+  int chromoIndex = 0;
+  SetValueFromChromosome(criticalDistanceEE, currentShift, chromoIndex);
+  SetValueFromChromosome(criticalDistanceFH, currentShift, chromoIndex);
   
-  // read 1st chromosome
-  SetValueFromChromosome(criticalDistanceEE, currentShift, 0);
-  SetValueFromChromosome(criticalDistanceFH, currentShift, 0);
-  SetValueFromChromosome(criticalDistanceBH, currentShift, 0);
-  SetValueFromChromosome(dependSensor, currentShift, 0);
-  SetValueFromChromosome(reachedEE, currentShift, 0);
-  
-  // read 1st chromosome
   currentShift = 0;
-  SetValueFromChromosome(kernel, currentShift, 1);
-  SetValueFromChromosome(deltacEE, currentShift, 1);
-  SetValueFromChromosome(deltacFH, currentShift, 1);
-  SetValueFromChromosome(deltacBH, currentShift, 1);
-  
-  // read 2st chromosome
+  chromoIndex++;
+  SetValueFromChromosome(criticalDistanceBH, currentShift, chromoIndex);
+  SetValueFromChromosome(dependSensor, currentShift, chromoIndex);
+  SetValueFromChromosome(reachedEE, currentShift, chromoIndex);
+
   currentShift = 0;
-  SetValueFromChromosome(kappa, currentShift, 2);
-  SetValueFromChromosome(energyMin, currentShift, 2);
-  SetValueFromChromosome(matchingDistance, currentShift, 2);
-  SetValueFromChromosome(minClusters, currentShift, 2);
+  chromoIndex++;
+  SetValueFromChromosome(kernel, currentShift, chromoIndex);
+  SetValueFromChromosome(deltacEE, currentShift, chromoIndex);
+  
+  currentShift = 0;
+  chromoIndex++;
+  SetValueFromChromosome(deltacFH, currentShift, chromoIndex);
+  SetValueFromChromosome(deltacBH, currentShift, chromoIndex);
+  
+  currentShift = 0;
+  chromoIndex++;
+  SetValueFromChromosome(kappa, currentShift, chromoIndex);
+  SetValueFromChromosome(energyMin, currentShift, chromoIndex);
+  
+  currentShift = 0;
+  chromoIndex++;
+  SetValueFromChromosome(matchingDistance, currentShift, chromoIndex);
+  SetValueFromChromosome(minClusters, currentShift, chromoIndex);
 }
 
 void Chromosome::Print()
@@ -217,18 +257,23 @@ void Chromosome::CalculateScore()
   StoreInConfig();
   RunClustering();
   
-  score =   clusteringOutput.containmentMean              // we want high containment
-          - 0.1*fabs(clusteringOutput.containmentSigma)   // with small spread (but not that important)
-          - fabs(clusteringOutput.resolutionMean)         // with good resolution
-          - 0.1*fabs(clusteringOutput.resolutionSigma)    // also with small spread (with lower weight)
-          - clusteringOutput.separationMean               // small separation factor
-          - 0.1*fabs(clusteringOutput.separationSigma);   // with small spread
+  double distance =     fabs(clusteringOutput.containmentMean-1)
+                      +      clusteringOutput.containmentSigma
+                      + fabs(clusteringOutput.resolutionMean)
+                      +      clusteringOutput.resolutionSigma
+                      +      clusteringOutput.separationMean
+                      +      clusteringOutput.separationSigma;
+  
+  score = 1./distance;
+  
+  if(clusteringOutput.resolutionMean > 1000){ // this means that clustering failed completely
+    score = 0;
+  }
   
   // the time measurement we have now is not realiable, can't be used to punish population members...
 //  if(executionTime > critialExecutionTime){
 //    score -= pow((executionTime-critialExecutionTime),2); // add additional penalty for super long execution
 //  }
-//  cout<<"score:"<<score<<endl;
 }
 
 Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
@@ -237,7 +282,7 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
   
   // combine chromosomes of parents in a random way
   // this is a single-point crossover
-  for(int i=0;i<3;i++){
+  for(int i=0;i<bitChromosome.size();i++){
     int crossingPoint = RandInt(0, 63);
     uint64_t newBitChromosome = 0;
     
@@ -254,7 +299,7 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
   }
   
   // perform child genes mutation
-  for(int i=0;i<3;i++){
+  for(int i=0;i<bitChromosome.size();i++){
     uint64_t bits = child->GetBitChromosome(i);
     
     for(int iBit=0;iBit<BitSize(bits);iBit++){

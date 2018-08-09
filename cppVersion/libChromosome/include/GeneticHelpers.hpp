@@ -16,6 +16,16 @@
 
 #include <TMath.h>
 
+#define criticalDistanceEEmax 100.0
+#define criticalDistanceFHmax 100.0
+#define criticalDistanceBHmax 100.0
+#define deltacEEmax 100.0
+#define deltacFHmax 100.0
+#define deltacBHmax 100.0
+#define kappaMax 10000.0
+#define energyThresholdMax 100.0
+#define matchingDistanceMax 100.0
+
 enum EDet {
   kEE,  ///< electromagneric endcap (silicon)
   kFH,  ///< front hadronic endcap (silicon)
@@ -163,6 +173,12 @@ inline ClusteringOutput ReadOutput(std::string fileName){
   std::string line;
   int iter=0;
   ClusteringOutput output;
+  output.resolutionMean = 999999;
+  output.resolutionSigma = 999999;
+  output.separationMean = 999999;
+  output.separationSigma = 999999;
+  output.containmentMean = 999999;
+  output.containmentSigma = 999999;
   
   while(getline(is_file, line)){
     std::istringstream is_line(line);

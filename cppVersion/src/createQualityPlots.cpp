@@ -42,9 +42,9 @@ int main(int argc, char* argv[])
   ImagingAlgo *algo = new ImagingAlgo();
   ClusterMatcher *matcher = new ClusterMatcher();
   
-  TH1D *deltaE = new TH1D("Erec-Esim/Esim","Erec-Esim/Esim",100,-1.0,2.0);
-  TH1D *separation = new TH1D("separation","separation",100,0,10);
-  TH1D *containment = new TH1D("separation","separation",100,0,10);
+  TH1D *deltaE = new TH1D("resolution","resolution",200,-10,10);
+  TH1D *separation = new TH1D("separation","separation",200,-10,10);
+  TH1D *containment = new TH1D("containment","containment",200,-10,10);
   
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
@@ -174,15 +174,39 @@ int main(int argc, char* argv[])
       
     }
     
+    
+    deltaE->SaveAs(Form("%s/resolution.root",config->GetOutputPath().c_str()));
+    separation->SaveAs(Form("%s/separation.root",config->GetOutputPath().c_str()));
+    containment->SaveAs(Form("%s/containment.root",config->GetOutputPath().c_str()));
+    
     ofstream outputFile;
     cout<<"writing output to:"<<config->GetScoreOutputPath()<<endl;
     outputFile.open(config->GetScoreOutputPath());
-    outputFile<<deltaE->GetMean()<<endl;
-    outputFile<<deltaE->GetStdDev()<<endl;
-    outputFile<<separation->GetMean()<<endl;
-    outputFile<<separation->GetStdDev()<<endl;
-    outputFile<<containment->GetMean()<<endl;
-    outputFile<<containment->GetStdDev()<<endl;
+    
+    if(deltaE && deltaE->GetEntries()>0){
+      outputFile<<deltaE->GetMean()<<endl;
+      outputFile<<deltaE->GetStdDev()<<endl;
+    }
+    else{
+      outputFile<<999999<<endl;
+      outputFile<<999999<<endl;
+    }
+    if(separation && separation->GetEntries()>0){
+      outputFile<<separation->GetMean()<<endl;
+      outputFile<<separation->GetStdDev()<<endl;
+    }
+    else{
+      outputFile<<999999<<endl;
+      outputFile<<999999<<endl;
+    }
+    if(containment && containment->GetEntries()>0){
+      outputFile<<containment->GetMean()<<endl;
+      outputFile<<containment->GetStdDev()<<endl;
+    }
+    else{
+      outputFile<<999999<<endl;
+      outputFile<<999999<<endl;
+    }
     outputFile.close();
     
     cout<<"Average resolution per event:"<<deltaE->GetMean()<<endl;

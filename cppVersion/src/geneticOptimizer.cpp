@@ -65,7 +65,6 @@ void TestPopulation(Chromosome *population[populationSize], TH1D *hist, discrete
   //  cout<<"\n\nTime passed\n\n"<<endl;
   
   vector<double> scores;
-  vector<double> scoresNormalized;
   double minScore=99999, maxScore=-99999;
   
   for(int i=0;i<populationSize;i++){
@@ -74,19 +73,22 @@ void TestPopulation(Chromosome *population[populationSize], TH1D *hist, discrete
     //    if(threads[i]->joinable()) threads[i]->join();
     
     threads[i]->join();
+    
     double score = population[i]->GetScore();
-    if(score < minScore && score > -100) minScore = score; // make sure to remove veeery bad results
+    if(score < minScore) minScore = score; // make sure to remove veeery bad results
     if(score > maxScore) maxScore = score;
     hist->Fill(score);
     scores.push_back(score);
   }
   
   // re-assing normalized points to population members
+  vector<double> scoresNormalized;
   double normScore;
 
   for(int i=0;i<populationSize;i++){
-    if(scores[i] > -1000) normScore = (scores[i]-minScore)/(maxScore-minScore);
-    else normScore = 0; // kill extremally weak members of population
+    normScore = (scores[i]-minScore)/(maxScore-minScore);
+    
+    cout<<"Score:"<<scores[i]<<"\t normalized:"<<normScore<<endl;
     
     population[i]->SetScore(normScore);
     scoresNormalized.push_back(normScore);
@@ -122,7 +124,6 @@ void SaveHists()
 int main(int argc, char* argv[])
 {
   gROOT->ProcessLine(".L loader.C+");
-  
   TApplication theApp("App", &argc, argv);
   
   // Set number of events for each member to be tested on
@@ -133,18 +134,18 @@ int main(int argc, char* argv[])
   
   TH1D *scoresDist[nGenerations];
   scoresMean = new TGraph();
-  criticalDistanceEE = new TH2D("critical distance EE","critical distance EE",nGenerations,0,nGenerations,100,0.0,100.0);
-  criticalDistanceFH = new TH2D("critical distance FH","critical distance FH",nGenerations,0,nGenerations,100,0.0,100.0);
-  criticalDistanceBH = new TH2D("critical distance BH","critical distance BH",nGenerations,0,nGenerations,100,0.0,100.0);
+  criticalDistanceEE = new TH2D("critical distance EE","critical distance EE",nGenerations,0,nGenerations,100,0.0,criticalDistanceEEmax);
+  criticalDistanceFH = new TH2D("critical distance FH","critical distance FH",nGenerations,0,nGenerations,100,0.0,criticalDistanceFHmax);
+  criticalDistanceBH = new TH2D("critical distance BH","critical distance BH",nGenerations,0,nGenerations,100,0.0,criticalDistanceBHmax);
   dependSensor = new TH2D("depend sensor","depend sensor",nGenerations,0,nGenerations,2,0,2);
   reachedEE = new TH2D("reached EE","reached EE",nGenerations,0,nGenerations,2, 0, 2);
   kernel = new TH2D("kernel","kernel",nGenerations,0,nGenerations,3, 0, 3);
-  deltacEE = new TH2D("delta c EE","delta c EE",nGenerations,0,nGenerations,100, 0.0,100.0);
-  deltacFH = new TH2D("delta c FH","delta c FH",nGenerations,0,nGenerations,100, 0.0,100.0);
-  deltacBH = new TH2D("delta c BH","delta c BH",nGenerations,0,nGenerations,100, 0.0,100.0);
-  kappa = new TH2D("kappa","kappa",nGenerations,0,nGenerations,10000, 0.0,10000.0);
-  energyMin = new TH2D("energy threshold","energy threshold",nGenerations,0,nGenerations,10000,0.0,100.0);
-  matchingDistance = new TH2D("matching distance","matching distance",nGenerations,0,nGenerations,100, 0.0,100.0);
+  deltacEE = new TH2D("delta c EE","delta c EE",nGenerations,0,nGenerations,100, 0.0,deltacEEmax);
+  deltacFH = new TH2D("delta c FH","delta c FH",nGenerations,0,nGenerations,100, 0.0,deltacFHmax);
+  deltacBH = new TH2D("delta c BH","delta c BH",nGenerations,0,nGenerations,100, 0.0,deltacBHmax);
+  kappa = new TH2D("kappa","kappa",nGenerations,0,nGenerations,10000, 0.0,kappaMax);
+  energyMin = new TH2D("energy threshold","energy threshold",nGenerations,0,nGenerations,10000,0.0,energyThresholdMax);
+  matchingDistance = new TH2D("matching distance","matching distance",nGenerations,0,nGenerations,100, 0.0,matchingDistanceMax);
   minClusters = new TH2D("min clusters","min clusters",nGenerations,0,nGenerations,10, 0,10);
   
   // make sure to recreate output file
