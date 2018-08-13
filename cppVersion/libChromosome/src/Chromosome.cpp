@@ -13,16 +13,20 @@
 #include "GeneticHelpers.hpp"
 
 #include <TMath.h>
-#include <iostream>
 #include <TROOT.h>
 #include <TH1D.h>
 #include <TFile.h>
 
+#include <iostream>
+#include <stdio.h>
+#include <unistd.h>
+
 using namespace std;
 
 #define mutationChance 0.002
+#define severityFactor 0.1 // larger the value, more easily population members will die
 #define critialExecutionTime 30.0
-#define executionTimeout 50
+#define executionTimeout 5
 
 Chromosome::Chromosome() :
 criticalDistanceEE(0.0),
@@ -48,12 +52,13 @@ minClusters(0)
   clusteringOutput.separationSigma = 999999;
   clusteringOutput.containmentMean = 999999;
   clusteringOutput.containmentSigma = 999999;
-    
+  
   uniqueID = reinterpret_cast<uint64_t>(this);
   configPath = "tmp/config_"+to_string(uniqueID)+".md";
   clusteringOutputPath = "tmp/output_"+to_string(uniqueID)+".txt";
   executionTime = 99999;
   score = -99999;
+  normalizedScore = -999999;
 } 
 
 Chromosome::~Chromosome()
@@ -65,19 +70,20 @@ Chromosome* Chromosome::GetRandom()
 {
   Chromosome *result = new Chromosome();
   
-  result->SetCriticalDistanceEE(RandFloat(0.0, criticalDistanceEEmax));
-  result->SetCriticalDistanceFH(RandFloat(0.0, criticalDistanceFHmax));
-  result->SetCriticalDistanceBH(RandFloat(0.0, criticalDistanceBHmax));
+  result->SetCriticalDistanceEE(RandFloat(criticalDistanceEEmin, criticalDistanceEEmax));
+  result->SetCriticalDistanceFH(RandFloat(criticalDistanceFHmin, criticalDistanceFHmax));
+  result->SetCriticalDistanceBH(RandFloat(criticalDistanceBHmin, criticalDistanceBHmax));
   result->SetDependSensor(RandBool());
   result->SetReachedEE(RandBool());
-  result->SetKernel(RandInt(0, 2));
-  result->SetDeltacEE(RandFloat(0.0, deltacEEmax));
-  result->SetDeltacFH(RandFloat(0.0, deltacFHmax));
-  result->SetDeltacBH(RandFloat(0.0, deltacBHmax));
-  result->SetKappa(RandFloat(0.0, kappaMax));
-  result->SetEnergyMin(RandFloat(0.0, energyThresholdMax));
-  result->SetMatchingDistance(RandFloat(0.0, matchingDistanceMax));
-  result->SetMinClusters(RandInt(0, 10));
+  result->SetKernel(RandInt(kernelMin, kernelMax));
+  result->SetDeltacEE(RandFloat(deltacEEmin, deltacEEmax));
+  result->SetDeltacFH(RandFloat(deltacFHmin, deltacFHmax));
+  result->SetDeltacBH(RandFloat(deltacBHmin, deltacBHmax));
+  result->SetKappa(RandFloat(kappaMin, kappaMax));
+  result->SetEnergyMin( RandFloat(result->GetDependSensor() ? energyThresholdMin : energyThresholdMinNoSensor,
+                                  result->GetDependSensor() ? energyThresholdMax : energyThresholdMaxNoSensor));
+  result->SetMatchingDistance(RandFloat(matchingDistanceMin, matchingDistanceMax));
+  result->SetMinClusters(RandInt(minClustersMin, minClustersMax));
   
   return result;
 }
@@ -186,6 +192,7 @@ void Chromosome::Print()
   clusteringOutput.Print();
   cout<<"execution time:"<<executionTime<<endl;
   cout<<"score:"<<score<<endl;
+  cout<<"normalized score:"<<normalizedScore<<endl;
   cout<<"================================================="<<endl;
 }
 
@@ -231,31 +238,17 @@ void Chromosome::StoreInConfig()
   UpdateParamValue(configPath, "score_output_path",clusteringOutputPath);
 }
 
-void Chromosome::RunClustering()
-{
-//  cout<<"Running clusterization"<<endl;
-  
-  auto start = now();
-//  Clusterize(configPath);
-  system(("./createQualityPlots "+configPath+" > /dev/null 2>&1").c_str());
-  
-//  system(("./execWithTimeout.sh -t "+to_string(executionTimeout)+" ./createQualityPlots "+configPath+" > /dev/null 2>&1").c_str());
-  
-//  system(("./createQualityPlots "+configPath).c_str());
-  auto end = now();
-  executionTime = duration(start,end);
-  clusteringOutput = ReadOutput(clusteringOutputPath);
-  
-  system(("rm "+configPath).c_str());
-  system(("rm "+clusteringOutputPath).c_str());
-  
-//  cout<<"Done. Execution time:"<<executionTime<<endl;
-}
-
 void Chromosome::CalculateScore()
 {
-  StoreInConfig();
-  RunClustering();
+  cout<<"Reading output for chromosome "<<uniqueID<<endl;
+  clusteringOutput = ReadOutput(clusteringOutputPath);
+  
+  cout<<"Removing files:"<<endl;
+//  cout<<"\t"<<configPath<<endl;
+  cout<<"\t"<<clusteringOutputPath<<endl;
+  
+//  system(("rm "+configPath).c_str());
+  system(("rm "+clusteringOutputPath).c_str());
   
   double distance =     fabs(clusteringOutput.containmentMean-1)
                       +      clusteringOutput.containmentSigma
@@ -264,7 +257,8 @@ void Chromosome::CalculateScore()
                       +      clusteringOutput.separationMean
                       +      clusteringOutput.separationSigma;
   
-  score = 1./distance;
+  score = severityFactor/distance;
+  cout<<"Calculated score:"<<score<<endl;
   
   if(clusteringOutput.resolutionMean > 1000){ // this means that clustering failed completely
     score = 0;
@@ -310,136 +304,50 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
     }
     child->SetBitChromosome(i, bits);
   }
-  
   child->ReadFromBitChromosome();
+  
+  // make sure that after crossing and mutation all parameters are within limits
+  child->BackToLimits();
+  
   return child;
 }
 
-
-void Chromosome::Clusterize(string configPath)
+void Chromosome::BackToLimits()
 {
-//  ConfigurationManager *config = ConfigurationManager::Instance(configPath);
-  
-  ImagingAlgo *algo = new ImagingAlgo(configPath);
-  ClusterMatcher *matcher = new ClusterMatcher();
-  
-  TH1D *deltaE = new TH1D("Erec-Esim/Esim","Erec-Esim/Esim",100,-1.0,2.0);
-  TH1D *separation = new TH1D("separation","separation",100,0,10);
-  TH1D *containment = new TH1D("separation","separation",100,0,10);
-  
-  int minNtuple, maxNtuple, eventsPerTuple, minLayer, maxLayer;
-  string inputPath, scoreOutputPath;
-  bool reachedEEonly;
-  
-  GetParamFomeConfig(configPath, "min_Ntuple", minNtuple);
-  GetParamFomeConfig(configPath, "max_Ntuple", maxNtuple);
-  GetParamFomeConfig(configPath, "input_path", inputPath);
-  GetParamFomeConfig(configPath, "analyze_events_per_tuple", eventsPerTuple);
-  GetParamFomeConfig(configPath, "reachedEE_only", reachedEEonly);
-  GetParamFomeConfig(configPath, "min_layer", minLayer);
-  GetParamFomeConfig(configPath, "max_layer", maxLayer);
-  GetParamFomeConfig(configPath, "score_output_path", scoreOutputPath);
-  
-  for(int nTupleIter=minNtuple; nTupleIter<=maxNtuple; nTupleIter++){
-
-    TFile *inFile = TFile::Open(Form("%s%i.root",inputPath.c_str(),nTupleIter));
-    if(!inFile) continue;
-    TTree *tree = (TTree*)inFile->Get("ana/hgc");
-    if(!tree) continue;
-    long long nEvents = tree->GetEntries();
-    cout<<"n entries:"<<nEvents<<endl;
-    
-    unique_ptr<Event> hgCalEvent(new Event(tree));
-    
-    // start event loop
-    for(int iEvent=0;iEvent<nEvents;iEvent++){
-      if(iEvent>eventsPerTuple) break;
-      
-      hgCalEvent->GoToEvent(iEvent);
-      
-      // check if particles reached EE
-      if(reachedEEonly){
-        bool skipEvent = false;
-        for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
-          if(reachedEE==0){
-            skipEvent = true;
-            break;
-          }
-        }
-        if(skipEvent) continue;
-      }
-      shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
-      shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
-      
-      // get simulated hits associated with a cluster
-      vector<RecHits*> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
-      
-      // re-run clustering with HGCalAlgo
-      std::vector<shared_ptr<Hexel>> recClusters;
-      algo->getRecClusters(recClusters, recHitsRaw);
-      
-      vector<RecHits*> recHitsPerClusterArray;
-      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
-      
-      
-      // perform final analysis, fill in histograms and save to files
-      for(int layer=minLayer;layer<maxLayer;layer++){
-        
-        vector<MatchedClusters*> matchedClusters;
-        matcher->MatchClustersByDetID(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
-        if(matchedClusters.size()==0) continue;
-        
-        for(MatchedClusters *clusters : matchedClusters){
-          if(clusters->simClusters->size() == 0) continue;
-          
-          double recEnergy = clusters->GetTotalRecEnergy();
-          double simEnergy = clusters->GetTotalSimEnergy();
-          
-          deltaE->Fill((recEnergy-simEnergy)/simEnergy);
-          containment->Fill(clusters->GetSharedFraction());
-        }
-        
-        for(uint i=0;i<matchedClusters.size();i++){
-          for(uint j=(i+1);j<matchedClusters.size();j++){
-            
-            BasicCluster *recCluster1 = matchedClusters[i]->GetMergedRecCluster();
-            BasicCluster *recCluster2 = matchedClusters[j]->GetMergedRecCluster();
-            
-            double distance = sqrt(pow(recCluster1->GetX()-recCluster2->GetX(),2)+
-                                   pow(recCluster1->GetY()-recCluster2->GetY(),2));
-            
-            double sigma1 = recCluster1->GetRadius();
-            double sigma2 = recCluster2->GetRadius();
-            
-            if(sigma1+sigma2 == 0) continue;
-            
-            separation->Fill(distance/(sigma1+sigma2));
-          }
-        }
-      }
-      recHitsPerClusterArray.clear();
-      simHitsPerClusterArray.clear();
-    }
-    
-    ofstream outputFile;
-    outputFile.open(scoreOutputPath);
-    outputFile<<deltaE->GetMean()<<endl;
-    outputFile<<deltaE->GetStdDev()<<endl;
-    outputFile<<separation->GetMean()<<endl;
-    outputFile<<separation->GetStdDev()<<endl;
-    outputFile<<containment->GetMean()<<endl;
-    outputFile<<containment->GetStdDev()<<endl;
-    outputFile.close();
-    
-    delete tree;
-    inFile->Close();
-    delete inFile;
-    
+  if(GetCriticalDistanceEE() < criticalDistanceEEmin || GetCriticalDistanceEE() > criticalDistanceEEmax){
+    SetCriticalDistanceEE(RandFloat(criticalDistanceEEmin, criticalDistanceEEmax));
   }
-  delete algo;
-  delete matcher;
+  
+  if(GetCriticalDistanceFH() < criticalDistanceFHmin || GetCriticalDistanceFH() > criticalDistanceFHmax){
+    SetCriticalDistanceFH(RandFloat(criticalDistanceFHmin, criticalDistanceFHmax));
+  }
+  if(GetCriticalDistanceBH() < criticalDistanceBHmin || GetCriticalDistanceBH() > criticalDistanceBHmax){
+    SetCriticalDistanceBH(RandFloat(criticalDistanceBHmin, criticalDistanceBHmax));
+  }
+  
+  if(GetKernel() < kernelMin || GetKernel() > kernelMax) SetKernel(RandInt(kernelMin, kernelMax));
+  
+  if(GetDeltacEE() < deltacEEmin || GetDeltacEE() > deltacEEmax) SetDeltacEE(RandFloat(deltacEEmin, deltacEEmax));
+  if(GetDeltacFH() < deltacFHmin || GetDeltacFH() > deltacFHmax) SetDeltacFH(RandFloat(deltacFHmin, deltacFHmax));
+  if(GetDeltacBH() < deltacBHmin || GetDeltacBH() > deltacBHmax) SetDeltacBH(RandFloat(deltacBHmin, deltacBHmax));
+  
+  if(GetKappa() < kappaMin || GetKappa() > kappaMax) SetKappa(RandFloat(kappaMin, kappaMax));
+  
+  if(GetDependSensor()){
+    if(GetEnergyMin() < energyThresholdMin || GetEnergyMin() > energyThresholdMax){
+      SetEnergyMin(RandFloat(energyThresholdMin, energyThresholdMax));
+    }
+  }
+  else{
+    if(GetEnergyMin() < energyThresholdMinNoSensor || GetEnergyMin() > energyThresholdMaxNoSensor){
+      SetEnergyMin(RandFloat(energyThresholdMinNoSensor, energyThresholdMaxNoSensor));
+    }
+  }
+    
+  if(GetMatchingDistance() < matchingDistanceMin || GetMatchingDistance() > matchingDistanceMax){
+    SetMatchingDistance(RandFloat(matchingDistanceMin, matchingDistanceMax));
+  }
+  if(GetMinClusters() < minClustersMin || GetMinClusters() > minClustersMax){
+    SetMinClusters(RandInt(minClustersMin, minClustersMax));
+  }
 }
-
-
-

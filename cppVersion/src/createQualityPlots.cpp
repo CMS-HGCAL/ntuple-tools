@@ -57,6 +57,7 @@ int main(int argc, char* argv[])
     cout<<"n entries:"<<nEvents<<endl;
     
     unique_ptr<Event> hgCalEvent(new Event(tree));
+//    gDebug = 2;
     
     // start event loop
     for(int iEvent=0;iEvent<nEvents;iEvent++){
@@ -80,7 +81,7 @@ int main(int argc, char* argv[])
       
       cout<<"\nCurrent event:"<<iEvent<<endl;
       
-      shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits()->GetHitsAboveNoise();
+      shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
       shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
       
       // get simulated hits associated with a cluster
@@ -91,6 +92,11 @@ int main(int argc, char* argv[])
       std::vector<shared_ptr<Hexel>> recClusters;
       algo->getRecClusters(recClusters, recHitsRaw);
       
+      if(recClusters.size() == 0){
+        cout<<"ERROR - algorithm couldn't find any rec clusters!!!"<<endl;
+        continue;
+      }
+      
       vector<RecHits*> recHitsPerClusterArray;
       recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
     
@@ -98,7 +104,7 @@ int main(int argc, char* argv[])
       // perform final analysis, fill in histograms and save to files
       TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
       TH2D *sigmaEvsEta = new TH2D("sigma(E) vs. eta","sigma(E) vs. eta",100,1.5,3.2,100,-10,10);
-      TH2D *sigmaEvsEtaEsim = new TH2D("sigma(E)Esim vs. eta","sigma(E)Esim vs. eta",100,1.5,3.2,100,-1.5,0.5);
+      TH2D *sigmaEvsEtaEsim = new TH2D("sigma(E)Esim vs. eta","sigma(E)Esim vs. eta",100,1.5,3.2,100,-1.5,1.0);
       TH1D *twoSeparation = new TH1D("two clusters separation","two clusters separation",1000,0,10);
       TH1D *twoSeparationJer = new TH1D("two clusters separation","two clusters separation",1000,0,10);
       TH2D *NrecNsim = new TH2D("NrecNsim","NrecNsim",20,1,20,20,1,20);
@@ -173,7 +179,7 @@ int main(int argc, char* argv[])
       simHitsPerClusterArray.clear();
       
     }
-    
+    cout<<endl<<endl;
     
     deltaE->SaveAs(Form("%s/resolution.root",config->GetOutputPath().c_str()));
     separation->SaveAs(Form("%s/separation.root",config->GetOutputPath().c_str()));
@@ -216,7 +222,7 @@ int main(int argc, char* argv[])
     cout<<"Average containment per event:"<<containment->GetMean()<<endl;
     cout<<"Containment sigma:"<<containment->GetStdDev()<<endl;
     
-    delete tree;
+//    delete tree;
     inFile->Close();
     delete inFile;
     

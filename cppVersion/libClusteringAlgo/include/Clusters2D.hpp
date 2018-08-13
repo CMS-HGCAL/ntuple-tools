@@ -22,6 +22,8 @@ public:
   Clusters2D(TTree *_tree);
   ~Clusters2D();
   
+  void Clean();
+  
   /// Returns number of stored RecHit objects
   inline int N(){return (int)energy->size();}
   

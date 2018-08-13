@@ -26,6 +26,8 @@ public:
   RecHits(TTree *_tree);
   ~RecHits();
   
+  void Clean();
+  
   /// Returns number of stored RecHit objects
   inline int N(){return (int)eta->size();}
   

@@ -17,3 +17,8 @@ GenParticles::~GenParticles()
 {
   if(reachedEE){ reachedEE->clear(); delete reachedEE;}
 }
+
+void GenParticles::Clean()
+{
+  if(reachedEE){reachedEE->clear(); delete reachedEE; reachedEE = nullptr;}
+}

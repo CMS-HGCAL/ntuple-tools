@@ -16,15 +16,41 @@
 
 #include <TMath.h>
 
+#define criticalDistanceEEmin 0.01
 #define criticalDistanceEEmax 100.0
+
+#define criticalDistanceFHmin 0.01
 #define criticalDistanceFHmax 100.0
+
+#define criticalDistanceBHmin 0.01
 #define criticalDistanceBHmax 100.0
-#define deltacEEmax 100.0
+
+#define kernelMin 0
+#define kernelMax 3
+
+#define deltacEEmin 0.5   // if this is too small, algorithm cannot find clusters
+#define deltacEEmax 40.0  // this is critical, above ~30 problems start to occur
+
+#define deltacFHmin 0.01
 #define deltacFHmax 100.0
+
+#define deltacBHmin 0.01
 #define deltacBHmax 100.0
-#define kappaMax 10000.0
-#define energyThresholdMax 100.0
+
+#define kappaMin 1.0  // below 1.0 algorithm doesn't wor
+#define kappaMax 500.0
+
+#define energyThresholdMin 0.0001
+#define energyThresholdMax 30.0
+
+#define energyThresholdMinNoSensor 0.0001
+#define energyThresholdMaxNoSensor 0.5
+
+#define matchingDistanceMin 0.01
 #define matchingDistanceMax 100.0
+
+#define minClustersMin 0
+#define minClustersMax 10
 
 enum EDet {
   kEE,  ///< electromagneric endcap (silicon)
@@ -73,7 +99,7 @@ T BitSize(T&)
 
 template<class T>
 inline void UpdateParamValue(std::string configPath, std::string keyToReplace, T newValue){
-  std::string tmpName = "tmp/tmp_"+std::to_string(RandInt(0, 10000000))+".md";
+  std::string tmpName = "tmp/tmp_"+std::to_string(RandInt(0, 100000))+".md";
   
 //  std::cout<<"tmp name:"<<tmpName<<std::endl;
 //  std::cout<<"config path:"<<configPath<<std::endl;

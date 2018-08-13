@@ -38,7 +38,13 @@ Clusters2D::~Clusters2D()
   if(layer){ layer->clear(); delete layer;}
 }
 
-
+void Clusters2D::Clean()
+{
+  if(eta){ eta->clear(); delete eta; eta = nullptr;}
+  if(phi){ phi->clear(); delete phi; phi = nullptr;}
+  if(energy){ energy->clear(); delete energy; energy = nullptr;}
+  if(layer){ layer->clear(); delete layer; layer = nullptr;}
+}
 
 void Clusters2D::GetClustersInLayer(std::unique_ptr<Clusters2D> &clustersInLayer, int _layer)
 {

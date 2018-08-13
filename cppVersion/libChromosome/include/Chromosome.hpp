@@ -26,18 +26,22 @@ public:
   inline void SetCriticalDistanceBH(float val){criticalDistanceBH = (uint32_t)(val*1000);}
   inline void SetDependSensor(bool val){dependSensor = val;}
   inline void SetReachedEE(bool val){reachedEE = val;}
-  inline void SetKernel(int val){kernel = (uint16_t)val;} // 0 - step, 1 - gaus, 2 - exp
+  inline void SetKernel(int val){kernel = (uint8_t)val;} // 0 - step, 1 - gaus, 2 - exp
   inline void SetDeltacEE(float val){deltacEE = (uint32_t)(val*1000);}
   inline void SetDeltacFH(float val){deltacFH = (uint32_t)(val*1000);}
   inline void SetDeltacBH(float val){deltacBH = (uint32_t)(val*1000);}
   inline void SetKappa(float val){kappa = (uint32_t)(val*1000);}
   inline void SetEnergyMin(float val){energyMin = (uint32_t)(val*100000);}
   inline void SetMatchingDistance(float val){matchingDistance = (uint32_t)(val*1000);}
-  inline void SetMinClusters(float val){minClusters = (uint16_t)val;}
+  inline void SetMinClusters(int val){minClusters = (uint8_t)val;}
   
   inline void SetScore(double val){score = val;}
+  inline void SetNormalizedScore(double val){normalizedScore = val;}
   
   inline void SetBitChromosome(int i, uint64_t bits){bitChromosome[i] = bits;}
+  
+  inline void SetExecutionTime(double val){executionTime = val;}
+  
   
   // Getters
   inline float  GetCriticalDistanceEE(){return criticalDistanceEE/1000.;}
@@ -52,19 +56,25 @@ public:
   inline float  GetKappa(){return kappa/1000.;}
   inline float  GetEnergyMin(){return energyMin/100000.;}
   inline float  GetMatchingDistance(){return matchingDistance/1000.;}
-  inline float  GetMinClusters(){return minClusters;}
+  inline int    GetMinClusters(){return minClusters;}
   
   inline double  GetScore(){return score;}
+  inline double  GetNormalizedScore(){return normalizedScore;}
   inline uint64_t GetBitChromosome(int i){return bitChromosome[i];}
+  
+  inline std::string GetConfigPath(){return configPath;}
+  inline uint64_t GetUniqueID(){return uniqueID;}
   
   void SaveToBitChromosome();
   void ReadFromBitChromosome();
+  
+  void StoreInConfig();
   
   void Print();
   void CalculateScore();
   
   Chromosome* ProduceChildWith(Chromosome *partner);
-  
+  void BackToLimits();
 private:
   // 1st chromosome
   uint32_t criticalDistanceEE;
@@ -76,7 +86,7 @@ private:
   bool reachedEE;             // 2 bits
   
   // 3rd chromosome
-  uint32_t kernel;
+  uint8_t kernel;
   uint32_t deltacEE;
   
   // 4th chromosome
@@ -89,7 +99,7 @@ private:
   
   // 6th chromosome
   uint32_t matchingDistance;
-  uint16_t minClusters;
+  uint8_t  minClusters;
   
   std::vector<uint64_t> bitChromosome; // 64 bit
   
@@ -100,15 +110,13 @@ private:
   ClusteringOutput clusteringOutput;
   double executionTime;
   double score;
+  double normalizedScore;
   
   template<class T>
   void ShiftIntoChromosome(T value, int &shift, int chromoIndex);
   
   template<class T>
   void SetValueFromChromosome(T &value, int &shift, int chromoIndex);
-  
-  void StoreInConfig();
-  void RunClustering();
   
   void Clusterize(std::string configPath);
 };

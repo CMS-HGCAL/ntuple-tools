@@ -10,6 +10,7 @@ SimClusters::SimClusters(TTree *_tree):
 eta(nullptr),
 phi(nullptr),
 energy(nullptr),
+pt(nullptr),
 hits(nullptr)
 {
   _tree->SetBranchAddress("simcluster_eta",&eta);
@@ -26,4 +27,12 @@ SimClusters::~SimClusters()
   if(phi){ phi->clear(); delete phi;}
   if(energy){ energy->clear(); delete energy;}
   if(hits){ hits->clear(); delete hits;}
+}
+
+void SimClusters::Clean()
+{
+  if(eta){ eta->clear(); delete eta; eta = nullptr;}
+  if(phi){ phi->clear(); delete phi; phi = nullptr;}
+  if(energy){ energy->clear(); delete energy; energy = nullptr;}
+  if(hits){ hits->clear(); delete hits; hits = nullptr;}
 }

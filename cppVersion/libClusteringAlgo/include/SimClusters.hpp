@@ -17,6 +17,8 @@ public:
   SimClusters(TTree *_tree);
   ~SimClusters();
   
+  void Clean();
+  
   /// Returns number of clusters
   inline int N(){return (int)eta->size();}
   

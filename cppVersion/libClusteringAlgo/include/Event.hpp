@@ -23,7 +23,12 @@ public:
   
   /// Jump to event
   inline void GoToEvent(int event){
-    tree->GetEvent(event);
+    genParticles->Clean();
+    recHits->Clean();
+    simClusters->Clean();
+    clusters2D->Clean();
+    
+    tree->GetEntry(event);
   }
   
   /// Returns collection of generated particles

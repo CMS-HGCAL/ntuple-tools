@@ -21,15 +21,19 @@
 #include <cstring>
 #include <pthread.h>
 #include <random>
+#include <unistd.h>
+#include <signal.h>
 
 using namespace std;
 
 const string configPath = "baseConfig.md";
 const string outputPath = "autoGenOutput.txt";
 
-const int populationSize = 15;  ///< Size of the population, will stay the same for all generations
+const int populationSize = 20;  ///< Size of the population, will stay the same for all generations
 const int nGenerations = 30;     ///< Number of iterations
-const int nEventsPerTest = 5;   ///< On how many events each population member will be tested
+const int nEventsPerTest = 20;   ///< On how many events each population member will be tested
+
+const int processTimeout = 20; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
 
 mt19937 randGenerator;
 
@@ -37,9 +41,48 @@ TGraph *scoresMean;
 TFile *outfile;
 TH2D *criticalDistanceEE, *criticalDistanceFH, *criticalDistanceBH, *dependSensor, *reachedEE, *kernel, *deltacEE, *deltacFH, *deltacBH, *kappa, *energyMin, *matchingDistance, *minClusters;
 
-void threadFunction(Chromosome *chromo)
+TH2D *criticalDistanceEEwgt, *criticalDistanceFHwgt, *criticalDistanceBHwgt, *dependSensorwgt, *reachedEEwgt, *kernelwgt, *deltacEEwgt, *deltacFHwgt, *deltacBHwgt, *kappawgt, *energyMinwgt, *matchingDistancewgt, *minClusterswgt;
+
+
+int scheduleClustering(Chromosome *chromo)
 {
-  chromo->CalculateScore();
+  chromo->StoreInConfig();
+  
+  cout<<"Running clustering with config "<<chromo->GetConfigPath()<<endl;
+  string command = "./createQualityPlots "+chromo->GetConfigPath()+" > /dev/null 2>&1";
+  
+  int pid = ::fork();
+  
+  if(pid==0){
+    system(command.c_str());
+    exit(0);
+  }
+  else return pid;
+}
+
+void waitGently(vector<int> childPid)
+{
+  for(int i=0;i<childPid.size();i++){
+//    cout<<"Waiting for process "<<childPid[i]<<" to terminate"<<endl;
+    int status;
+    waitpid(childPid[i],&status,0);
+//    cout<<"Child "<<childPid[i]<<"\t status:"<<status<<endl;
+  }
+}
+
+void killChildrenAfterTimeout(vector<int> childPid, int timeout)
+{
+  int timeElapsed=0;
+  while(timeElapsed < timeout){
+    sleep(10);
+    timeElapsed+=10;
+    cout<<"Time elapsed:"<<timeElapsed<<" (killing after "<<processTimeout<<" s.)"<<endl;
+  }
+    
+  cout<<"Killing all children"<<endl;
+  for(int pid : childPid){
+    kill(pid,SIGKILL);
+  }
 }
 
 int GetWeightedRandom(discrete_distribution<double> dist)
@@ -47,33 +90,28 @@ int GetWeightedRandom(discrete_distribution<double> dist)
   return dist(randGenerator);
 }
 
-void TestPopulation(Chromosome *population[populationSize], TH1D *hist, discrete_distribution<double> &dist)
+void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distribution<double> &dist)
 {
-  // Starting Threads & move the future object in lambda function by reference
-  thread *threads[populationSize];
+   std::vector<int> childPid;
   
-  //  thread::native_handle_type threadHandles[populationSize];
-  
-  for(int i=0;i<populationSize;i++){
-    threads[i] = new thread(threadFunction, population[i]);
-    //    threadHandles[i] = threads[i]->native_handle();
-    //    threads[i]->detach();
+  for(int i=0;i<population.size();i++){
+    int pid = scheduleClustering(population[i]);
+    if(pid > 0) childPid.push_back(pid);
   }
+
+  std::cout<<"\n\nall forks created\n\n"<<std::endl;
   
-  //Wait for 10 sec and then ask thread to join
-  //  this_thread::sleep_for(std::chrono::seconds(10));
-  //  cout<<"\n\nTime passed\n\n"<<endl;
+  thread *waitThread = new thread(waitGently,childPid);
+  thread *killThread = new thread(killChildrenAfterTimeout,childPid,processTimeout);
+  
+  waitThread->join();
+  killThread->join();
   
   vector<double> scores;
   double minScore=99999, maxScore=-99999;
   
   for(int i=0;i<populationSize;i++){
-    //    pthread_cancel(threadHandles[i]);
-    //    pthread_kill(threadHandles[i], 1);
-    //    if(threads[i]->joinable()) threads[i]->join();
-    
-    threads[i]->join();
-    
+    population[i]->CalculateScore();
     double score = population[i]->GetScore();
     if(score < minScore) minScore = score; // make sure to remove veeery bad results
     if(score > maxScore) maxScore = score;
@@ -90,7 +128,7 @@ void TestPopulation(Chromosome *population[populationSize], TH1D *hist, discrete
     
     cout<<"Score:"<<scores[i]<<"\t normalized:"<<normScore<<endl;
     
-    population[i]->SetScore(normScore);
+    population[i]->SetNormalizedScore(normScore);
     scoresNormalized.push_back(normScore);
   }
 
@@ -116,6 +154,20 @@ void SaveHists()
   energyMin->Write("eMin",TObject::kOverwrite);
   matchingDistance->Write("matchingDist",TObject::kOverwrite);
   minClusters->Write("minCluster",TObject::kOverwrite);
+
+  criticalDistanceEEwgt->Write("critDistEEwgt",TObject::kOverwrite);
+  criticalDistanceFHwgt->Write("critDistFHwgt",TObject::kOverwrite);
+  criticalDistanceBHwgt->Write("critDistBHwgt",TObject::kOverwrite);
+  dependSensorwgt->Write("sensorwgt",TObject::kOverwrite);
+  reachedEEwgt->Write("reachedEEwgt",TObject::kOverwrite);
+  kernelwgt->Write("kernelwgt",TObject::kOverwrite);
+  deltacEEwgt->Write("deltaEEwgt",TObject::kOverwrite);
+  deltacFHwgt->Write("deltaFHwgt",TObject::kOverwrite);
+  deltacBHwgt->Write("deltaBHwgt",TObject::kOverwrite);
+  kappawgt->Write("kappawgt",TObject::kOverwrite);
+  energyMinwgt->Write("eMinwgt",TObject::kOverwrite);
+  matchingDistancewgt->Write("matchingDistwgt",TObject::kOverwrite);
+  minClusterswgt->Write("minClusterwgt",TObject::kOverwrite);
   
   outfile->Close();
   delete outfile;
@@ -148,12 +200,26 @@ int main(int argc, char* argv[])
   matchingDistance = new TH2D("matching distance","matching distance",nGenerations,0,nGenerations,100, 0.0,matchingDistanceMax);
   minClusters = new TH2D("min clusters","min clusters",nGenerations,0,nGenerations,10, 0,10);
   
+  criticalDistanceEEwgt = new TH2D("critical distance EE wgt","critical distance EE wgt",nGenerations,0,nGenerations,100,0.0,criticalDistanceEEmax);
+  criticalDistanceFHwgt = new TH2D("critical distance FH wgt","critical distance FH wgt",nGenerations,0,nGenerations,100,0.0,criticalDistanceFHmax);
+  criticalDistanceBHwgt = new TH2D("critical distance BH wgt","critical distance BH wgt",nGenerations,0,nGenerations,100,0.0,criticalDistanceBHmax);
+  dependSensorwgt = new TH2D("depend sensor wgt","depend sensor wgt",nGenerations,0,nGenerations,2,0,2);
+  reachedEEwgt = new TH2D("reached EE wgt","reached EE wgt",nGenerations,0,nGenerations,2, 0, 2);
+  kernelwgt = new TH2D("kernel wgt","kernel wgt",nGenerations,0,nGenerations,3, 0, 3);
+  deltacEEwgt = new TH2D("delta c EE wgt","delta c EE wgt",nGenerations,0,nGenerations,100, 0.0,deltacEEmax);
+  deltacFHwgt = new TH2D("delta c FH wgt","delta c FH wgt",nGenerations,0,nGenerations,100, 0.0,deltacFHmax);
+  deltacBHwgt = new TH2D("delta c BH wgt","delta c BH wgt",nGenerations,0,nGenerations,100, 0.0,deltacBHmax);
+  kappawgt = new TH2D("kappa wgt","kappa wgt",nGenerations,0,nGenerations,10000, 0.0,kappaMax);
+  energyMinwgt = new TH2D("energy threshold wgt","energy threshold wgt",nGenerations,0,nGenerations,10000,0.0,energyThresholdMax);
+  matchingDistancewgt = new TH2D("matching distance wgt","matching distance wgt",nGenerations,0,nGenerations,100, 0.0,matchingDistanceMax);
+  minClusterswgt = new TH2D("min clusters wgt","min clusters wgt",nGenerations,0,nGenerations,10, 0,10);
+  
   // make sure to recreate output file
   outfile = new TFile("geneticHists.root","recreate");
   outfile->Close();
   delete outfile;
   
-  Chromosome* population[populationSize];
+  vector<Chromosome*> population;
   discrete_distribution<double> scores;
   
   for(int iGeneration=0;iGeneration<nGenerations;iGeneration++){
@@ -165,11 +231,13 @@ int main(int argc, char* argv[])
         Chromosome *chromo;
         chromo = Chromosome::GetRandom();
         chromo->SaveToBitChromosome();
-        population[i] = chromo;
+        population.push_back(chromo);
       }
     }
     else{
       // draw new population
+      population.clear();
+      
       for(int i=0;i<populationSize;i++){
         Chromosome *mom, *dad;
         
@@ -184,8 +252,7 @@ int main(int argc, char* argv[])
         } while (mom==dad);
 
         Chromosome *child = dad->ProduceChildWith(mom);
-        delete population[i];
-        population[i] = child;
+        population.push_back(child);
       }
     }
     
@@ -209,6 +276,20 @@ int main(int argc, char* argv[])
       energyMin->Fill(iGeneration,population[i]->GetEnergyMin());
       matchingDistance->Fill(iGeneration,population[i]->GetMatchingDistance());
       minClusters->Fill(iGeneration,population[i]->GetMinClusters());
+      
+      criticalDistanceEEwgt->Fill(iGeneration,population[i]->GetCriticalDistanceEE(),population[i]->GetScore());
+      criticalDistanceFHwgt->Fill(iGeneration,population[i]->GetCriticalDistanceFH(),population[i]->GetScore());
+      criticalDistanceBHwgt->Fill(iGeneration,population[i]->GetCriticalDistanceBH(),population[i]->GetScore());
+      dependSensorwgt->Fill(iGeneration,population[i]->GetDependSensor(),population[i]->GetScore());
+      reachedEEwgt->Fill(iGeneration,population[i]->GetReachedEE(),population[i]->GetScore());
+      kernelwgt->Fill(iGeneration,population[i]->GetKernel(),population[i]->GetScore());
+      deltacEEwgt->Fill(iGeneration,population[i]->GetDeltacEE(),population[i]->GetScore());
+      deltacFHwgt->Fill(iGeneration,population[i]->GetDeltacFH(),population[i]->GetScore());
+      deltacBHwgt->Fill(iGeneration,population[i]->GetDeltacBH(),population[i]->GetScore());
+      kappawgt->Fill(iGeneration,population[i]->GetKappa(),population[i]->GetScore());
+      energyMinwgt->Fill(iGeneration,population[i]->GetEnergyMin(),population[i]->GetScore());
+      matchingDistancewgt->Fill(iGeneration,population[i]->GetMatchingDistance(),population[i]->GetScore());
+      minClusterswgt->Fill(iGeneration,population[i]->GetMinClusters(),population[i]->GetScore());
     }
     scoresMean->SetPoint(iGeneration, iGeneration, scoresDist[iGeneration]->GetMean());
     

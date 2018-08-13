@@ -75,6 +75,22 @@ RecHits::~RecHits()
   if(cluster2d){ cluster2d->clear(); delete cluster2d;}
 }
 
+void RecHits::Clean()
+{
+  if(eta){ eta->clear(); delete eta; eta = new vector<float>;}
+  if(phi){ phi->clear(); delete phi; phi = new vector<float>;}
+  if(energy){ energy->clear(); delete energy; energy = new vector<float>;}
+  if(x){ x->clear(); delete x; x = new vector<float>;}
+  if(y){ y->clear(); delete y; y = new vector<float>;}
+  if(z){ z->clear(); delete z; z = new vector<float>;}
+  if(layer){ layer->clear(); delete layer; layer = new vector<int>;}
+  if(detid){ detid->clear(); delete detid; detid = new vector<unsigned int>;}
+  if(thickness){ thickness->clear(); delete thickness; thickness = new vector<float>;}
+  if(isHalf){ isHalf->clear(); delete isHalf; isHalf = new vector<bool>;}
+  if(time){ time->clear(); delete time; time = new vector<float>;}
+  if(cluster2d){ cluster2d->clear(); delete cluster2d; cluster2d = new vector<int>;}
+}
+
 unique_ptr<RecHit> RecHits::GetHit(int index)
 {
   unique_ptr<RecHit> hit(new RecHit(eta->at(index),phi->at(index),energy->at(index),x->at(index),y->at(index),z->at(index), layer->at(index),detid->at(index),thickness->at(index),isHalf->at(index),time->at(index),cluster2d->at(index)));
