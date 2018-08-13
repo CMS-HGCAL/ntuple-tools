@@ -240,14 +240,11 @@ void Chromosome::StoreInConfig()
 
 void Chromosome::CalculateScore()
 {
-  cout<<"Reading output for chromosome "<<uniqueID<<endl;
   clusteringOutput = ReadOutput(clusteringOutputPath);
   
-  cout<<"Removing files:"<<endl;
 //  cout<<"\t"<<configPath<<endl;
-  cout<<"\t"<<clusteringOutputPath<<endl;
+  //  system(("rm "+configPath).c_str());
   
-//  system(("rm "+configPath).c_str());
   system(("rm "+clusteringOutputPath).c_str());
   
   double distance =     fabs(clusteringOutput.containmentMean-1)
@@ -258,7 +255,6 @@ void Chromosome::CalculateScore()
                       +      clusteringOutput.separationSigma;
   
   score = severityFactor/distance;
-  cout<<"Calculated score:"<<score<<endl;
   
   if(clusteringOutput.resolutionMean > 1000){ // this means that clustering failed completely
     score = 0;
@@ -304,10 +300,14 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
     }
     child->SetBitChromosome(i, bits);
   }
+  // populate fields
   child->ReadFromBitChromosome();
   
   // make sure that after crossing and mutation all parameters are within limits
   child->BackToLimits();
+  
+  // update the bits after updating values!!
+  child->SaveToBitChromosome();
   
   return child;
 }

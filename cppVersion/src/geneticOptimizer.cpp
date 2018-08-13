@@ -67,6 +67,7 @@ void waitGently(vector<int> childPid)
   for(int i=0;i<childPid.size();i++){
     int status;
     waitpid(childPid[i],&status,0);
+    cout<<"Child with pid "<<childPid[i]<<" finished"<<endl;
   }
   allKidsFinished = true;
 }
@@ -80,13 +81,13 @@ void killChildrenAfterTimeout(vector<int> childPid, int timeout)
     cout<<"Time elapsed:"<<timeElapsed<<" (killing after "<<processTimeout<<" s.)"<<endl;
   }
   if(!allKidsFinished){
-    cout<<"Killing all children"<<endl;
+    cout<<"\nKilling all children\n\n"<<endl;
     for(int pid : childPid){
       kill(pid,SIGKILL);
     }
   }
   else{
-    cout<<"It seems that all child processes already finished"<<endl;
+    cout<<"\nIt seems that all child processes already finished\n\n"<<endl;
   }
 }
 
@@ -133,7 +134,7 @@ void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distrib
   for(int i=0;i<populationSize;i++){
     normScore = (scores[i]-minScore)/(maxScore-minScore);
     
-    cout<<"Score:"<<scores[i]<<"\t normalized:"<<normScore<<endl;
+    cout<<"ID: "<<population[i]->GetUniqueID()<<"\tscore:\t"<<scores[i]<<"\tnormalized:\t"<<normScore<<endl;
     
     population[i]->SetNormalizedScore(normScore);
     scoresNormalized.push_back(normScore);
@@ -303,12 +304,12 @@ int main(int argc, char* argv[])
     // Save updated histograms after each iteration
     SaveHists();
     
-    if(iGeneration == 0 || iGeneration == nGenerations-1){
-      cout<<"\n\nPopulation:\n\n"<<endl;
-      for(int i=0;i<populationSize;i++){
-        population[i]->Print();
-      }
-    }
+//    if(iGeneration == 0 || iGeneration == nGenerations-1){
+//      cout<<"\n\nPopulation:\n\n"<<endl;
+//      for(int i=0;i<populationSize;i++){
+//        population[i]->Print();
+//      }
+//    }
   }
   
   cout<<"plotting"<<endl;
