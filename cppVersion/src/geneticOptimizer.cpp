@@ -33,7 +33,7 @@ const int populationSize = 20;  ///< Size of the population, will stay the same 
 const int nGenerations = 30;     ///< Number of iterations
 const int nEventsPerTest = 20;   ///< On how many events each population member will be tested
 
-const int processTimeout = 20; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
+const int processTimeout = 60; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
 
 mt19937 randGenerator;
 
@@ -43,6 +43,8 @@ TH2D *criticalDistanceEE, *criticalDistanceFH, *criticalDistanceBH, *dependSenso
 
 TH2D *criticalDistanceEEwgt, *criticalDistanceFHwgt, *criticalDistanceBHwgt, *dependSensorwgt, *reachedEEwgt, *kernelwgt, *deltacEEwgt, *deltacFHwgt, *deltacBHwgt, *kappawgt, *energyMinwgt, *matchingDistancewgt, *minClusterswgt;
 
+
+atomic<bool> allKidsFinished;
 
 int scheduleClustering(Chromosome *chromo)
 {
@@ -63,25 +65,28 @@ int scheduleClustering(Chromosome *chromo)
 void waitGently(vector<int> childPid)
 {
   for(int i=0;i<childPid.size();i++){
-//    cout<<"Waiting for process "<<childPid[i]<<" to terminate"<<endl;
     int status;
     waitpid(childPid[i],&status,0);
-//    cout<<"Child "<<childPid[i]<<"\t status:"<<status<<endl;
   }
+  allKidsFinished = true;
 }
 
 void killChildrenAfterTimeout(vector<int> childPid, int timeout)
 {
   int timeElapsed=0;
-  while(timeElapsed < timeout){
-    sleep(10);
-    timeElapsed+=10;
+  while(timeElapsed < timeout && !allKidsFinished){
+    sleep(1);
+    timeElapsed++;
     cout<<"Time elapsed:"<<timeElapsed<<" (killing after "<<processTimeout<<" s.)"<<endl;
   }
-    
-  cout<<"Killing all children"<<endl;
-  for(int pid : childPid){
-    kill(pid,SIGKILL);
+  if(!allKidsFinished){
+    cout<<"Killing all children"<<endl;
+    for(int pid : childPid){
+      kill(pid,SIGKILL);
+    }
+  }
+  else{
+    cout<<"It seems that all child processes already finished"<<endl;
   }
 }
 
@@ -100,6 +105,8 @@ void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distrib
   }
 
   std::cout<<"\n\nall forks created\n\n"<<std::endl;
+  
+  allKidsFinished = false;
   
   thread *waitThread = new thread(waitGently,childPid);
   thread *killThread = new thread(killChildrenAfterTimeout,childPid,processTimeout);
