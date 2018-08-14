@@ -26,14 +26,18 @@
 
 using namespace std;
 
-const string configPath = "baseConfig.md";
-const string outputPath = "autoGenOutput.txt";
+int populationSize = 100;  ///< Size of the population, will stay the same for all generations
+int nGenerations = 100;     ///< Number of iterations
+int nEventsPerTest = 10;   ///< On how many events each population member will be tested
 
-const int populationSize = 100;  ///< Size of the population, will stay the same for all generations
-const int nGenerations = 100;     ///< Number of iterations
-const int nEventsPerTest = 10;   ///< On how many events each population member will be tested
+int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
 
-const int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
+double mutationChance = 0.002;
+double severityFactor = 1.0;
+
+string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ ";
+
+string outputPath = "../clusteringResultsCXX/geneticOptimizer/";
 
 mt19937 randGenerator;
 
@@ -48,21 +52,15 @@ atomic<bool> allKidsFinished;
 
 int scheduleClustering(Chromosome *chromo)
 {
-//  chromo->StoreInConfig();
-  
-  cout<<"Running clustering with config "<<chromo->GetConfigPath()<<endl;
-//  string command = "./createQualityPlots "+chromo->GetConfigPath()+" > /dev/null 2>&1";
-  
   string kernel;
   if(chromo->GetKernel() == 0) kernel = "step";
   if(chromo->GetKernel() == 1) kernel = "gaus";
   if(chromo->GetKernel() == 2) kernel = "exp";
   
-  
   string command = "./createQualityPlots "
   +to_string(chromo->GetDependSensor())+" "
-  +"../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ "
-  +"../clusteringResultsCXX/geneticOptimizer/ "
+  +dataPath+" "
+  +outputPath+" "
   +to_string(chromo->GetDeltacEE())+" "
   +to_string(chromo->GetDeltacFH())+" "
   +to_string(chromo->GetDeltacBH())+" "
@@ -84,8 +82,7 @@ int scheduleClustering(Chromosome *chromo)
   +chromo->GetClusteringOutputPath()+" "
   +" > /dev/null 2>&1";
   
-//  cout<<"Executing command:"<<command<<endl;
-  
+  cout<<"Forking"<<endl;
   int pid = ::fork();
   
   if(pid==0){
@@ -217,6 +214,24 @@ void SaveHists()
 
 int main(int argc, char* argv[])
 {
+  if(argc > 1 && argc!=9){
+    cout<<"Usage:"<<endl;
+    cout<<"./geneticOptimizer"<<endl;
+    cout<<"or with custom parameters:"<<endl;
+    cout<<"./ geneticOptimizer populationSize nGenerations nEventsPerTest processTimeout mutationChance severityFactor dataPath outputPath"<<endl;
+    exit(0);
+  }
+  if(argc == 9){
+    populationSize = atoi(argv[1]);
+    nGenerations = atoi(argv[2]);
+    nEventsPerTest = atoi(argv[3]);
+    processTimeout = atoi(argv[4]);
+    mutationChance = atof(argv[5]);
+    severityFactor = atof(argv[6]);
+    dataPath = argv[7];
+    outputPath = argv[8];
+  }
+  
   gROOT->ProcessLine(".L loader.C+");
   TApplication theApp("App", &argc, argv);
   
@@ -273,6 +288,8 @@ int main(int argc, char* argv[])
         Chromosome *chromo;
         chromo = Chromosome::GetRandom();
         chromo->SaveToBitChromosome();
+        chromo->SetMutationChance(mutationChance);
+        chromo->SetSeverityFactor(severityFactor);
         population.push_back(chromo);
       }
     }

@@ -35,13 +35,13 @@ public:
   inline void SetMatchingDistance(float val){matchingDistance = (uint32_t)(val*1000);}
   inline void SetMinClusters(int val){minClusters = (uint8_t)val;}
   
-  inline void SetScore(double val){score = val;}
-  inline void SetNormalizedScore(double val){normalizedScore = val;}
-  
   inline void SetBitChromosome(int i, uint64_t bits){bitChromosome[i] = bits;}
   
+  inline void SetScore(double val){score = val;}
+  inline void SetNormalizedScore(double val){normalizedScore = val;}
   inline void SetExecutionTime(double val){executionTime = val;}
-  
+  inline void SetMutationChance(double val){mutationChance = val;}
+  inline void SetSeverityFactor(double val){severityFactor = val;}
   
   // Getters
   inline float  GetCriticalDistanceEE(){return criticalDistanceEE/1000.;}
@@ -58,12 +58,12 @@ public:
   inline float  GetMatchingDistance(){return matchingDistance/1000.;}
   inline int    GetMinClusters(){return minClusters;}
   
-  inline double  GetScore(){return score;}
-  inline double  GetNormalizedScore(){return normalizedScore;}
   inline uint64_t GetBitChromosome(int i){return bitChromosome[i];}
   
-  inline std::string GetConfigPath(){return configPath;}
+  inline double  GetScore(){return score;}
+  inline double  GetNormalizedScore(){return normalizedScore;}
   inline uint64_t GetUniqueID(){return uniqueID;}
+  inline std::string GetConfigPath(){return configPath;}
   inline std::string GetClusteringOutputPath(){return clusteringOutputPath;}
   
   void SaveToBitChromosome();
@@ -104,9 +104,13 @@ private:
   
   std::vector<uint64_t> bitChromosome; // 64 bit
   
+  
+  // other variables not stored in bit chromosome
   uint64_t uniqueID;
   std::string configPath;
   std::string clusteringOutputPath;
+  double mutationChance;
+  double severityFactor;  // larger the value, more easily population members will die
   
   ClusteringOutput clusteringOutput;
   double executionTime;

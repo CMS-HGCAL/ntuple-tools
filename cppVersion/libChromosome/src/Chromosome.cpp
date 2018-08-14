@@ -23,11 +23,6 @@
 
 using namespace std;
 
-#define mutationChance 0.002
-#define severityFactor 1.0 // larger the value, more easily population members will die
-#define critialExecutionTime 30.0
-#define executionTimeout 5
-
 Chromosome::Chromosome() :
 criticalDistanceEE(0.0),
 criticalDistanceFH(0.0),
@@ -59,6 +54,9 @@ minClusters(0)
   executionTime = 99999;
   score = -99999;
   normalizedScore = -999999;
+  
+  mutationChance = 0.002;
+  severityFactor = 1.0;
 } 
 
 Chromosome::~Chromosome()
@@ -242,9 +240,7 @@ void Chromosome::CalculateScore()
 {
   clusteringOutput = ReadOutput(clusteringOutputPath);
   
-//  cout<<"\t"<<configPath<<endl;
-  //  system(("rm "+configPath).c_str());
-  
+  system(("rm "+configPath).c_str());
   system(("rm "+clusteringOutputPath).c_str());
   
   double distance =     fabs(clusteringOutput.containmentMean-1)
@@ -262,11 +258,6 @@ void Chromosome::CalculateScore()
   if(score < 1E-5){ // just round down to zero if score it extremaly poor
     score = 0;
   }
-  
-  // the time measurement we have now is not realiable, can't be used to punish population members...
-//  if(executionTime > critialExecutionTime){
-//    score -= pow((executionTime-critialExecutionTime),2); // add additional penalty for super long execution
-//  }
 }
 
 Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
@@ -311,6 +302,10 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
   
   // update the bits after updating values!!
   child->SaveToBitChromosome();
+  
+  // set other parameters
+  child->SetMutationChance(mutationChance);
+  child->SetSeverityFactor(severityFactor);
   
   return child;
 }
