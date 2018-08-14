@@ -27,6 +27,60 @@ ConfigurationManager* ConfigurationManager::Instance(string _configPath)
   return instance;
 }
 
+ConfigurationManager* ConfigurationManager::Instance(bool _dependSensor,
+                                                     std::string _inputPath,
+                                                     std::string _outputPath,
+                                                     double _deltac_EE,
+                                                     double _deltac_FH,
+                                                     double _deltac_BH,
+                                                     double _minEnergy,
+                                                     int _minClusters,
+                                                     double _criticalDistance_EE,
+                                                     double _criticalDistance_FH,
+                                                     double _criticalDistance_BH,
+                                                     double _kappa,
+                                                     int _verbosityLevel,
+                                                     int _minNtuple,
+                                                     int _maxNtuple,
+                                                     int _minLayer,
+                                                     int _maxLayer,
+                                                     int _eventsPerTuple,
+                                                     std::string _energyDensityFunction,
+                                                     bool _reachedEEonly,
+                                                     double _matchingMaxDistance,
+                                                     std::string _scoreOutputPath)
+{
+  if(instance){
+    cout<<"WARNING - Configuration Manager was already created!!"<<endl;
+  }
+  else{
+    instance = new ConfigurationManager(_dependSensor,
+                                        _inputPath,
+                                        _outputPath,
+                                        _deltac_EE,
+                                        _deltac_FH,
+                                        _deltac_BH,
+                                        _minEnergy,
+                                        _minClusters,
+                                        _criticalDistance_EE,
+                                        _criticalDistance_FH,
+                                        _criticalDistance_BH,
+                                        _kappa,
+                                        _verbosityLevel,
+                                        _minNtuple,
+                                        _maxNtuple,
+                                        _minLayer,
+                                        _maxLayer,
+                                        _eventsPerTuple,
+                                        _energyDensityFunction,
+                                        _reachedEEonly,
+                                        _matchingMaxDistance,
+                                        _scoreOutputPath
+                                        );
+  }
+  return instance;
+}
+
 ConfigurationManager::ConfigurationManager(string _configPath) :
 configPath(_configPath)
 {
@@ -82,6 +136,56 @@ configPath(_configPath)
   matchingMaxDistance = settings->GetValue("matching_max_distance",-1);
   
   scoreOutputPath = settings->GetValue("score_output_path","./output.txt");
+}
+
+ConfigurationManager::ConfigurationManager(bool _dependSensor,
+                                                     std::string _inputPath,
+                                                     std::string _outputPath,
+                                                     double _deltac_EE,
+                                                     double _deltac_FH,
+                                                     double _deltac_BH,
+                                                     double _minEnergy,
+                                                     int _minClusters,
+                                                     double _criticalDistance_EE,
+                                                     double _criticalDistance_FH,
+                                                     double _criticalDistance_BH,
+                                                     double _kappa,
+                                                     int _verbosityLevel,
+                                                     int _minNtuple,
+                                                     int _maxNtuple,
+                                                     int _minLayer,
+                                                     int _maxLayer,
+                                                     int _eventsPerTuple,
+                                                     std::string _energyDensityFunction,
+                                                     bool _reachedEEonly,
+                                                     double _matchingMaxDistance,
+                                                     std::string _scoreOutputPath)
+{
+  dependSensor = _dependSensor;
+//  cout<<"depend sensor:"<<dependSensor<<endl;
+  inputPath = _inputPath;
+//  cout<<"input:"<<inputPath<<endl;
+  outputPath = _outputPath;
+//  cout<<"output:"<<outputPath<<endl;
+  deltac_EE = _deltac_EE;
+  deltac_FH = _deltac_FH;
+  deltac_BH = _deltac_BH;
+  minEnergy = _minEnergy;
+  minClusters = _minClusters;
+  criticalDistance_EE = _criticalDistance_EE;
+  criticalDistance_FH = _criticalDistance_FH;
+  criticalDistance_BH = _criticalDistance_BH;
+  kappa = _kappa;
+  verbosityLevel = _verbosityLevel;
+  minNtuple = _minNtuple;
+  maxNtuple = _maxNtuple;
+  minLayer = _minLayer;
+  maxLayer = _maxLayer;
+  eventsPerTuple = _eventsPerTuple;
+  energyDensityFunction = _energyDensityFunction;
+  reachedEEonly = _reachedEEonly;
+  matchingMaxDistance = _matchingMaxDistance;
+  scoreOutputPath = _scoreOutputPath;
 }
 
 double ConfigurationManager::GetDeltac(EDet det)

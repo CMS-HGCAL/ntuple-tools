@@ -64,6 +64,7 @@ public:
   
   inline std::string GetConfigPath(){return configPath;}
   inline uint64_t GetUniqueID(){return uniqueID;}
+  inline std::string GetClusteringOutputPath(){return clusteringOutputPath;}
   
   void SaveToBitChromosome();
   void ReadFromBitChromosome();

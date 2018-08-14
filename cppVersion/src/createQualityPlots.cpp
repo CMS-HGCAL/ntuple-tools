@@ -28,12 +28,45 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-  if(argc != 2){
+  cout<<"argc:"<<argc<<endl;
+  if((argc != 2) && (argc != 23)){
     cout<<"Usage: createQualityPlots path_to_config"<<endl;
     exit(0);
   }
-  string configPath(argv[1]);
-  ConfigurationManager *config = ConfigurationManager::Instance(configPath);
+  
+  ConfigurationManager *config = nullptr;
+  
+  if(argc == 2){
+    string configPath(argv[1]);
+    config = ConfigurationManager::Instance(configPath);
+  }
+  if(argc == 23){
+    config = ConfigurationManager::Instance(atoi(argv[1]), // depend sensor
+                                            argv[2], // input path
+                                            argv[3], // output path
+                                            atof(argv[4]), // deltac EE
+                                            atof(argv[5]), // deltac FH
+                                            atof(argv[6]), // deltac BH
+                                            atof(argv[7]), // energy threshold
+                                            atoi(argv[8]), // min clusters
+                                            atof(argv[9]), // crit dist EE
+                                            atof(argv[10]),// crit dist FH
+                                            atof(argv[11]),// crit dist BH
+                                            atof(argv[12]),// kappa
+                                            atoi(argv[13]),// verbosity
+                                            atoi(argv[14]),// min n tuple
+                                            atoi(argv[15]),// max n tuple
+                                            atoi(argv[16]),// min layer
+                                            atoi(argv[17]),// max layer
+                                            atoi(argv[18]),// events per tuple
+                                            argv[19],// energy density function
+                                            atoi(argv[20]),// reached EE only
+                                            atof(argv[21]),// matching distance
+                                            argv[22] // score output path
+                                            );
+  }
+  
+  
   
   gROOT->ProcessLine(".L loader.C+");
   
@@ -189,38 +222,44 @@ int main(int argc, char* argv[])
     cout<<"writing output to:"<<config->GetScoreOutputPath()<<endl;
     outputFile.open(config->GetScoreOutputPath());
     
-    if(deltaE && deltaE->GetEntries()>0){
+    if(deltaE && deltaE->GetEntries()>0 && deltaE->GetStdDev() != 0){
       outputFile<<deltaE->GetMean()<<endl;
       outputFile<<deltaE->GetStdDev()<<endl;
+      cout<<"Average resolution per event:"<<deltaE->GetMean()<<endl;
+      cout<<"Resolution sigma:"<<deltaE->GetStdDev()<<endl;
     }
     else{
       outputFile<<999999<<endl;
       outputFile<<999999<<endl;
+      cout<<"Average resolution per event:"<<999999<<endl;
+      cout<<"Resolution sigma:"<<999999<<endl;
     }
-    if(separation && separation->GetEntries()>0){
+    if(separation && separation->GetEntries()>0 && separation->GetStdDev() != 0){
       outputFile<<separation->GetMean()<<endl;
       outputFile<<separation->GetStdDev()<<endl;
+      cout<<"Average separation per event:"<<separation->GetMean()<<endl;
+      cout<<"Separation sigma:"<<separation->GetStdDev()<<endl;
     }
     else{
       outputFile<<999999<<endl;
       outputFile<<999999<<endl;
+      cout<<"Average separation per event:"<<999999<<endl;
+      cout<<"Separation sigma:"<<999999<<endl;
     }
-    if(containment && containment->GetEntries()>0){
+    if(containment && containment->GetEntries()>0 && containment->GetStdDev() != 0){
       outputFile<<containment->GetMean()<<endl;
       outputFile<<containment->GetStdDev()<<endl;
+      cout<<"Average containment per event:"<<containment->GetMean()<<endl;
+      cout<<"Containment sigma:"<<containment->GetStdDev()<<endl;
     }
     else{
       outputFile<<999999<<endl;
       outputFile<<999999<<endl;
+      cout<<"Average containment per event:"<<999999<<endl;
+      cout<<"Containment sigma:"<<999999<<endl;
     }
     outputFile.close();
     
-    cout<<"Average resolution per event:"<<deltaE->GetMean()<<endl;
-    cout<<"Resolution sigma:"<<deltaE->GetStdDev()<<endl;
-    cout<<"Average separation per event:"<<separation->GetMean()<<endl;
-    cout<<"Separation sigma:"<<separation->GetStdDev()<<endl;
-    cout<<"Average containment per event:"<<containment->GetMean()<<endl;
-    cout<<"Containment sigma:"<<containment->GetStdDev()<<endl;
     
 //    delete tree;
     inFile->Close();

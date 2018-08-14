@@ -29,11 +29,11 @@ using namespace std;
 const string configPath = "baseConfig.md";
 const string outputPath = "autoGenOutput.txt";
 
-const int populationSize = 20;  ///< Size of the population, will stay the same for all generations
-const int nGenerations = 30;     ///< Number of iterations
-const int nEventsPerTest = 20;   ///< On how many events each population member will be tested
+const int populationSize = 100;  ///< Size of the population, will stay the same for all generations
+const int nGenerations = 100;     ///< Number of iterations
+const int nEventsPerTest = 10;   ///< On how many events each population member will be tested
 
-const int processTimeout = 60; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
+const int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
 
 mt19937 randGenerator;
 
@@ -48,10 +48,43 @@ atomic<bool> allKidsFinished;
 
 int scheduleClustering(Chromosome *chromo)
 {
-  chromo->StoreInConfig();
+//  chromo->StoreInConfig();
   
   cout<<"Running clustering with config "<<chromo->GetConfigPath()<<endl;
-  string command = "./createQualityPlots "+chromo->GetConfigPath()+" > /dev/null 2>&1";
+//  string command = "./createQualityPlots "+chromo->GetConfigPath()+" > /dev/null 2>&1";
+  
+  string kernel;
+  if(chromo->GetKernel() == 0) kernel = "step";
+  if(chromo->GetKernel() == 1) kernel = "gaus";
+  if(chromo->GetKernel() == 2) kernel = "exp";
+  
+  
+  string command = "./createQualityPlots "
+  +to_string(chromo->GetDependSensor())+" "
+  +"../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ "
+  +"../clusteringResultsCXX/geneticOptimizer/ "
+  +to_string(chromo->GetDeltacEE())+" "
+  +to_string(chromo->GetDeltacFH())+" "
+  +to_string(chromo->GetDeltacBH())+" "
+  +to_string(chromo->GetEnergyMin())+" "
+  +to_string(chromo->GetMinClusters())+" "
+  +to_string(chromo->GetCriticalDistanceEE())+" "
+  +to_string(chromo->GetCriticalDistanceFH())+" "
+  +to_string(chromo->GetCriticalDistanceBH())+" "
+  +to_string(chromo->GetKappa())+" "
+  +"0 " // verbosity
+  +"1 " // min n tuple
+  +"1 " // max n tuple
+  +"0 " // min layer
+  +"52 " // max layer
+  +to_string(nEventsPerTest)+" "
+  +kernel+" "
+  +to_string(chromo->GetReachedEE())+" "
+  +to_string(chromo->GetMatchingDistance())+" "
+  +chromo->GetClusteringOutputPath()+" "
+  +" > /dev/null 2>&1";
+  
+//  cout<<"Executing command:"<<command<<endl;
   
   int pid = ::fork();
   
@@ -133,6 +166,7 @@ void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distrib
 
   for(int i=0;i<populationSize;i++){
     normScore = (scores[i]-minScore)/(maxScore-minScore);
+    if(normScore < 1E-5) normScore = 0;
     
     cout<<"ID: "<<population[i]->GetUniqueID()<<"\tscore:\t"<<scores[i]<<"\tnormalized:\t"<<normScore<<endl;
     

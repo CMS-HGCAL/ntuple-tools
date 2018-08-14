@@ -24,7 +24,7 @@
 using namespace std;
 
 #define mutationChance 0.002
-#define severityFactor 0.1 // larger the value, more easily population members will die
+#define severityFactor 1.0 // larger the value, more easily population members will die
 #define critialExecutionTime 30.0
 #define executionTimeout 5
 
@@ -257,6 +257,9 @@ void Chromosome::CalculateScore()
   score = severityFactor/distance;
   
   if(clusteringOutput.resolutionMean > 1000){ // this means that clustering failed completely
+    score = 0;
+  }
+  if(score < 1E-5){ // just round down to zero if score it extremaly poor
     score = 0;
   }
   
