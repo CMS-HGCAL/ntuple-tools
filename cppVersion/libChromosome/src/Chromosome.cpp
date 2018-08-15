@@ -240,8 +240,8 @@ void Chromosome::CalculateScore()
 {
   clusteringOutput = ReadOutput(clusteringOutputPath);
   
-  system(("rm "+configPath).c_str());
-  system(("rm "+clusteringOutputPath).c_str());
+  system(("rm -f "+configPath).c_str());
+  system(("rm -f "+clusteringOutputPath).c_str());
   
   double distance =     fabs(clusteringOutput.containmentMean-1)
                       +      clusteringOutput.containmentSigma
@@ -260,25 +260,32 @@ void Chromosome::CalculateScore()
   }
 }
 
+uint64_t Chromosome::SinglePointCrossover(uint64_t a, uint64_t b)
+{
+  int crossingPoint = RandInt(0, 63);
+  uint64_t newBitChromosome = 0;
+  
+  uint64_t maskA = 0;
+  for(int j=0;j<BitSize(maskA)-crossingPoint;j++){maskA |= 1ull << (j+crossingPoint);}
+  
+  uint64_t maskB = 0;
+  for(int j=(int)BitSize(maskB)-crossingPoint;j<BitSize(maskB);j++){maskB |= 1ull << j;}
+  
+  newBitChromosome = a & maskA;
+  newBitChromosome |= b & maskB;
+  
+  return newBitChromosome;
+}
+
 Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
 {
   Chromosome *child = new Chromosome();
   
   // combine chromosomes of parents in a random way
+  
   // this is a single-point crossover
   for(int i=0;i<bitChromosome.size();i++){
-    int crossingPoint = RandInt(0, 63);
-    uint64_t newBitChromosome = 0;
-    
-    uint64_t maskA = 0;
-    for(int j=0;j<BitSize(maskA)-crossingPoint;j++){maskA |= 1ull << (j+crossingPoint);}
-    
-    uint64_t maskB = 0;
-    for(int j=(int)BitSize(maskB)-crossingPoint;j<BitSize(maskB);j++){maskB |= 1ull << j;}
-    
-    newBitChromosome = bitChromosome[0] & maskA;
-    newBitChromosome |= partner->GetBitChromosome(0) & maskB;
-    
+    uint64_t newBitChromosome = SinglePointCrossover(GetBitChromosome(i), partner->GetBitChromosome(i));
     child->SetBitChromosome(i, newBitChromosome);
   }
   

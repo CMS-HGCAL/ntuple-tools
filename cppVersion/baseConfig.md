@@ -7,7 +7,7 @@ min_Ntuple:  1
 max_Ntuple:  1
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:	10
+analyze_events_per_tuple:	5
 
 ### input and output paths
 

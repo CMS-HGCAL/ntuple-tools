@@ -124,6 +124,8 @@ private:
   void SetValueFromChromosome(T &value, int &shift, int chromoIndex);
   
   void Clusterize(std::string configPath);
+  
+  uint64_t SinglePointCrossover(uint64_t a, uint64_t b);
 };
 
 #endif /* Chromosome_hpp */

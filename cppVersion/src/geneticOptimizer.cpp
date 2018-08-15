@@ -26,14 +26,14 @@
 
 using namespace std;
 
-int populationSize = 100;  ///< Size of the population, will stay the same for all generations
-int nGenerations = 100;     ///< Number of iterations
-int nEventsPerTest = 10;   ///< On how many events each population member will be tested
+int populationSize = 30;  ///< Size of the population, will stay the same for all generations
+int nGenerations = 30;     ///< Number of iterations
+int nEventsPerTest = 5;   ///< On how many events each population member will be tested
 
 int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
 
 double mutationChance = 0.002;
-double severityFactor = 1.0;
+double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
 
 string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ ";
 
@@ -82,7 +82,7 @@ int scheduleClustering(Chromosome *chromo)
   +chromo->GetClusteringOutputPath()+" "
   +" > /dev/null 2>&1";
   
-  cout<<"Forking"<<endl;
+  cout<<".";
   int pid = ::fork();
   
   if(pid==0){
@@ -97,7 +97,7 @@ void waitGently(vector<int> childPid)
   for(int i=0;i<childPid.size();i++){
     int status;
     waitpid(childPid[i],&status,0);
-    cout<<"Child with pid "<<childPid[i]<<" finished"<<endl;
+//    cout<<"Child with pid "<<childPid[i]<<" finished"<<endl;
   }
   allKidsFinished = true;
 }
@@ -108,7 +108,7 @@ void killChildrenAfterTimeout(vector<int> childPid, int timeout)
   while(timeElapsed < timeout && !allKidsFinished){
     sleep(1);
     timeElapsed++;
-    cout<<"Time elapsed:"<<timeElapsed<<" (killing after "<<processTimeout<<" s.)"<<endl;
+    cout<<"Time elapsed:"<<timeElapsed<<" (killing after "<<processTimeout<<" s.) \r";
   }
   if(!allKidsFinished){
     cout<<"\nKilling all children\n\n"<<endl;
