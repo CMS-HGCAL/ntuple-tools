@@ -41,13 +41,13 @@
 #define kappaMax 500.0
 
 #define energyThresholdMin 2.0
-#define energyThresholdMax 30.0
+#define energyThresholdMax 10.0
 
 #define energyThresholdMinNoSensor 0.0001
-#define energyThresholdMaxNoSensor 0.5
+#define energyThresholdMaxNoSensor 0.1
 
 #define matchingDistanceMin 0.01
-#define matchingDistanceMax 100.0
+#define matchingDistanceMax 30.0
 
 #define minClustersMin 0
 #define minClustersMax 10

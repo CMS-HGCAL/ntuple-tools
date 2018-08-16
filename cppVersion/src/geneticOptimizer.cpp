@@ -28,12 +28,12 @@ using namespace std;
 
 int populationSize = 30;  ///< Size of the population, will stay the same for all generations
 int nGenerations = 30;     ///< Number of iterations
-int nEventsPerTest = 5;   ///< On how many events each population member will be tested
+int nEventsPerTest = 50;   ///< On how many events each population member will be tested
 
 int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
 
 double mutationChance = 0.002;
-double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
+double severityFactor = 1.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
 
 string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ ";
 

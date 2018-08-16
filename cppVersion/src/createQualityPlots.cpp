@@ -241,6 +241,9 @@ int main(int argc, char* argv[])
       cout<<"Separation sigma:"<<separation->GetStdDev()<<endl;
     }
     else{
+      cout<<separation<<endl;
+      cout<<separation->GetEntries()<<endl;
+      cout<<separation->GetStdDev()<<endl;
       outputFile<<999999<<endl;
       outputFile<<999999<<endl;
       cout<<"Average separation per event:"<<999999<<endl;

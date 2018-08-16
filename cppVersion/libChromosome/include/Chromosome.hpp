@@ -21,19 +21,44 @@ public:
   static Chromosome* GetRandom();
   
   // Setters
-  inline void SetCriticalDistanceEE(float val){criticalDistanceEE = (uint32_t)(val*1000);}
-  inline void SetCriticalDistanceFH(float val){criticalDistanceFH = (uint32_t)(val*1000);}
-  inline void SetCriticalDistanceBH(float val){criticalDistanceBH = (uint32_t)(val*1000);}
+  inline void SetCriticalDistanceEE(double val){
+    criticalDistanceEE = (uint16_t)(std::numeric_limits<uint16_t>::max()/(criticalDistanceEEmax-criticalDistanceEEmin)*(val-criticalDistanceEEmin));
+  }
+  inline void SetCriticalDistanceFH(double val){
+    criticalDistanceFH = (uint16_t)(std::numeric_limits<uint16_t>::max()/(criticalDistanceFHmax-criticalDistanceFHmin)*(val-criticalDistanceFHmin));
+  }
+  inline void SetCriticalDistanceBH(double val){
+    criticalDistanceBH = (uint16_t)(std::numeric_limits<uint16_t>::max()/(criticalDistanceBHmax-criticalDistanceBHmin)*(val-criticalDistanceBHmin));
+  }
   inline void SetDependSensor(bool val){dependSensor = val;}
   inline void SetReachedEE(bool val){reachedEE = val;}
-  inline void SetKernel(int val){kernel = (uint8_t)val;} // 0 - step, 1 - gaus, 2 - exp
-  inline void SetDeltacEE(float val){deltacEE = (uint32_t)(val*1000);}
-  inline void SetDeltacFH(float val){deltacFH = (uint32_t)(val*1000);}
-  inline void SetDeltacBH(float val){deltacBH = (uint32_t)(val*1000);}
-  inline void SetKappa(float val){kappa = (uint32_t)(val*1000);}
-  inline void SetEnergyMin(float val){energyMin = (uint32_t)(val*100000);}
-  inline void SetMatchingDistance(float val){matchingDistance = (uint32_t)(val*1000);}
-  inline void SetMinClusters(int val){minClusters = (uint8_t)val;}
+  
+
+  inline void SetDeltacEE(double val){
+    deltacEE = (uint16_t)(std::numeric_limits<uint16_t>::max()/(deltacEEmax-deltacEEmin)*(val-deltacEEmin));
+  }
+  inline void SetDeltacFH(double val){
+    deltacFH = (uint16_t)(std::numeric_limits<uint16_t>::max()/(deltacFHmax-deltacFHmin)*(val-deltacFHmin));
+  }
+  inline void SetDeltacBH(double val){
+    deltacBH = (uint16_t)(std::numeric_limits<uint16_t>::max()/(deltacBHmax-deltacBHmin)*(val-deltacBHmin));
+  }
+  inline void SetKappa(double val){
+    kappa = (uint16_t)(std::numeric_limits<uint16_t>::max()/(kappaMax-kappaMin)*(val-kappaMin));
+  }
+  inline void SetEnergyMin(double val){
+    energyMin = (uint16_t)(std::numeric_limits<uint16_t>::max()/(energyThresholdMax-energyThresholdMinNoSensor)*(val-energyThresholdMinNoSensor));
+  }
+  inline void SetMatchingDistance(double val){
+    matchingDistance = (uint16_t)(std::numeric_limits<uint16_t>::max()/(matchingDistanceMax-matchingDistanceMin)*(val-matchingDistanceMin));
+  }
+  
+  inline void SetKernel(int val){// 0 - step, 1 - gaus, 2 - exp
+    kernel = (uint8_t)(std::numeric_limits<uint8_t>::max()/(kernelMax-kernelMin)*((double)val-kernelMin));
+  }
+  inline void SetMinClusters(int val){
+    minClusters = (uint8_t)(std::numeric_limits<uint8_t>::max()/(minClustersMax-minClustersMin)*((double)val-minClustersMin));
+  }
   
   inline void SetBitChromosome(int i, uint64_t bits){bitChromosome[i] = bits;}
   
@@ -44,19 +69,42 @@ public:
   inline void SetSeverityFactor(double val){severityFactor = val;}
   
   // Getters
-  inline float  GetCriticalDistanceEE(){return criticalDistanceEE/1000.;}
-  inline float  GetCriticalDistanceFH(){return criticalDistanceFH/1000.;}
-  inline float  GetCriticalDistanceBH(){return criticalDistanceBH/1000.;}
+  inline double  GetCriticalDistanceEE(){
+    return criticalDistanceEEmin + criticalDistanceEE*(criticalDistanceEEmax-criticalDistanceEEmin)/std::numeric_limits<uint16_t>::max();
+  }
+  inline double  GetCriticalDistanceFH(){
+    return criticalDistanceFHmin + criticalDistanceFH*(criticalDistanceFHmax-criticalDistanceFHmin)/std::numeric_limits<uint16_t>::max();
+  }
+  inline double  GetCriticalDistanceBH(){
+    return criticalDistanceBHmin + criticalDistanceBH*(criticalDistanceBHmax-criticalDistanceBHmin)/std::numeric_limits<uint16_t>::max();
+  }
   inline bool   GetDependSensor(){return dependSensor;}
   inline bool   GetReachedEE(){return reachedEE;}
-  inline int    GetKernel(){return kernel;} // 0 - step, 1 - gaus, 2 - exp
-  inline float  GetDeltacEE(){return deltacEE/1000.;}
-  inline float  GetDeltacFH(){return deltacFH/1000.;}
-  inline float  GetDeltacBH(){return deltacBH/1000.;}
-  inline float  GetKappa(){return kappa/1000.;}
-  inline float  GetEnergyMin(){return energyMin/100000.;}
-  inline float  GetMatchingDistance(){return matchingDistance/1000.;}
-  inline int    GetMinClusters(){return minClusters;}
+
+  inline double  GetDeltacEE(){
+    return deltacEEmin + deltacEE*(deltacEEmax-deltacEEmin)/std::numeric_limits<uint16_t>::max();
+  }
+  inline double  GetDeltacFH(){
+    return deltacFHmin + deltacFH*(deltacFHmax-deltacFHmin)/std::numeric_limits<uint16_t>::max();
+  }
+  inline double  GetDeltacBH(){
+    return deltacBHmin + deltacBH*(deltacBHmax-deltacBHmin)/std::numeric_limits<uint16_t>::max();
+  }
+  inline double  GetKappa(){
+    return kappaMin + kappa*(kappaMax-kappaMin)/std::numeric_limits<uint16_t>::max();
+  }
+  inline double  GetEnergyMin(){
+    return energyThresholdMinNoSensor + energyMin*(energyThresholdMax-energyThresholdMinNoSensor)/std::numeric_limits<uint16_t>::max();
+  }
+  inline double  GetMatchingDistance(){
+    return matchingDistanceMin + matchingDistance*(matchingDistanceMax-matchingDistanceMin)/std::numeric_limits<uint16_t>::max();
+  }
+  inline int GetKernel(){// 0 - step, 1 - gaus, 2 - exp
+    return round(kernelMin + kernel*(kernelMax-kernelMin)/std::numeric_limits<uint8_t>::max());
+  }
+  inline int GetMinClusters(){
+    return round(minClustersMin + minClusters*(minClustersMax-minClustersMin)/std::numeric_limits<uint8_t>::max());
+  }
   
   inline uint64_t GetBitChromosome(int i){return bitChromosome[i];}
   
@@ -75,31 +123,25 @@ public:
   void CalculateScore();
   
   Chromosome* ProduceChildWith(Chromosome *partner);
-  void BackToLimits();
+  
 private:
   // 1st chromosome
-  uint32_t criticalDistanceEE;
-  uint32_t criticalDistanceFH;
-  
-  // 2nd chromosome
-  uint32_t criticalDistanceBH;
+  uint16_t criticalDistanceEE;
+  uint16_t criticalDistanceFH;
+  uint16_t criticalDistanceBH;
   bool dependSensor;          // 2 bits
   bool reachedEE;             // 2 bits
   
   // 3rd chromosome
   uint8_t kernel;
-  uint32_t deltacEE;
-  
-  // 4th chromosome
-  uint32_t deltacFH;
-  uint32_t deltacBH;
+  uint16_t deltacEE;
+  uint16_t deltacFH;
+  uint16_t deltacBH;
   
   // 5th chromosome
-  uint32_t kappa;
-  uint32_t energyMin;
-  
-  // 6th chromosome
-  uint32_t matchingDistance;
+  uint16_t kappa;
+  uint16_t energyMin;
+  uint16_t matchingDistance;
   uint8_t  minClusters;
   
   std::vector<uint64_t> bitChromosome; // 64 bit
@@ -126,6 +168,7 @@ private:
   void Clusterize(std::string configPath);
   
   uint64_t SinglePointCrossover(uint64_t a, uint64_t b);
+  int BackToLimits();
 };
 
 #endif /* Chromosome_hpp */

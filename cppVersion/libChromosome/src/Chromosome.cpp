@@ -95,9 +95,6 @@ void Chromosome::SaveToBitChromosome()
   int chromoIndex = 0;
   ShiftIntoChromosome(criticalDistanceEE,currentShift,chromoIndex);
   ShiftIntoChromosome(criticalDistanceFH,currentShift,chromoIndex);
-  
-  currentShift = 0;
-  chromoIndex++;
   ShiftIntoChromosome(criticalDistanceBH,currentShift,chromoIndex);
   ShiftIntoChromosome(dependSensor,currentShift,chromoIndex);
   ShiftIntoChromosome(reachedEE,currentShift,chromoIndex);
@@ -107,9 +104,6 @@ void Chromosome::SaveToBitChromosome()
   chromoIndex++;
   ShiftIntoChromosome(kernel,currentShift,chromoIndex);
   ShiftIntoChromosome(deltacEE,currentShift,chromoIndex);
-  
-  currentShift = 0;
-  chromoIndex++;
   ShiftIntoChromosome(deltacFH,currentShift,chromoIndex);
   ShiftIntoChromosome(deltacBH,currentShift,chromoIndex);
   
@@ -117,9 +111,6 @@ void Chromosome::SaveToBitChromosome()
   chromoIndex++;
   ShiftIntoChromosome(kappa,currentShift,chromoIndex);
   ShiftIntoChromosome(energyMin,currentShift,chromoIndex);
-  
-  currentShift = 0;
-  chromoIndex++;
   ShiftIntoChromosome(matchingDistance,currentShift,chromoIndex);
   ShiftIntoChromosome(minClusters,currentShift,chromoIndex);
 }
@@ -131,9 +122,6 @@ void Chromosome::ReadFromBitChromosome()
   int chromoIndex = 0;
   SetValueFromChromosome(criticalDistanceEE, currentShift, chromoIndex);
   SetValueFromChromosome(criticalDistanceFH, currentShift, chromoIndex);
-  
-  currentShift = 0;
-  chromoIndex++;
   SetValueFromChromosome(criticalDistanceBH, currentShift, chromoIndex);
   SetValueFromChromosome(dependSensor, currentShift, chromoIndex);
   SetValueFromChromosome(reachedEE, currentShift, chromoIndex);
@@ -142,9 +130,6 @@ void Chromosome::ReadFromBitChromosome()
   chromoIndex++;
   SetValueFromChromosome(kernel, currentShift, chromoIndex);
   SetValueFromChromosome(deltacEE, currentShift, chromoIndex);
-  
-  currentShift = 0;
-  chromoIndex++;
   SetValueFromChromosome(deltacFH, currentShift, chromoIndex);
   SetValueFromChromosome(deltacBH, currentShift, chromoIndex);
   
@@ -152,9 +137,6 @@ void Chromosome::ReadFromBitChromosome()
   chromoIndex++;
   SetValueFromChromosome(kappa, currentShift, chromoIndex);
   SetValueFromChromosome(energyMin, currentShift, chromoIndex);
-  
-  currentShift = 0;
-  chromoIndex++;
   SetValueFromChromosome(matchingDistance, currentShift, chromoIndex);
   SetValueFromChromosome(minClusters, currentShift, chromoIndex);
 }
@@ -162,30 +144,30 @@ void Chromosome::ReadFromBitChromosome()
 void Chromosome::Print()
 {
   cout<<"================================================="<<endl;
-  cout<<"Chromosome "<<uniqueID<<endl;
+  cout<<"Chromosome "<<GetUniqueID()<<endl;
   
   cout<<"Critical distance:";
-  cout<<"\tEE:"<<criticalDistanceEE/1000.;
-  cout<<"\tFH:"<<criticalDistanceFH/1000.;
-  cout<<"\tBH:"<<criticalDistanceBH/1000.<<endl;
+  cout<<"\tEE:"<<GetCriticalDistanceEE();
+  cout<<"\tFH:"<<GetCriticalDistanceFH();
+  cout<<"\tBH:"<<GetCriticalDistanceBH()<<endl;
   
-  cout<<"Depend on sensor:"<<dependSensor<<endl;
-  cout<<"Reached EE only:"<<reachedEE<<endl;
+  cout<<"Depend on sensor:"<<GetDependSensor()<<endl;
+  cout<<"Reached EE only:"<<GetReachedEE()<<endl;
   
   cout<<"Kernel: ";
-  if(kernel==0)       cout<<"step"<<endl;
-  else if(kernel==1)  cout<<"gaus"<<endl;
-  else                cout<<"exp"<<endl;
+  if(GetKernel()==0)        cout<<"step"<<endl;
+  else if(GetKernel()==1)   cout<<"gaus"<<endl;
+  else                      cout<<"exp"<<endl;
   
   cout<<"Critical #delta:";
-  cout<<"\tEE:"<<deltacEE/1000.;
-  cout<<"\tFH:"<<deltacFH/1000.;
-  cout<<"\tBH:"<<deltacBH/1000.<<endl;
+  cout<<"\tEE:"<<GetDeltacEE();
+  cout<<"\tFH:"<<GetDeltacFH();
+  cout<<"\tBH:"<<GetDeltacBH()<<endl;
   
-  cout<<"kappa:"<<kappa/1000.<<endl;
-  cout<<"energy threshold:"<<energyMin/100000.<<endl;
-  cout<<"max matching distance:"<<matchingDistance/1000.<<endl;
-  cout<<"min clusters:"<<minClusters<<endl;
+  cout<<"kappa:"<<GetKappa()<<endl;
+  cout<<"energy threshold:"<<GetEnergyMin()<<endl;
+  cout<<"max matching distance:"<<GetMatchingDistance()<<endl;
+  cout<<"min clusters:"<<GetMinClusters()<<endl;
   
   clusteringOutput.Print();
   cout<<"execution time:"<<executionTime<<endl;
@@ -258,6 +240,11 @@ void Chromosome::CalculateScore()
   if(score < 1E-5){ // just round down to zero if score it extremaly poor
     score = 0;
   }
+  
+  if(score==0){
+    cout<<"This chromosome failed completely:"<<endl;
+    Print();
+  }
 }
 
 uint64_t Chromosome::SinglePointCrossover(uint64_t a, uint64_t b)
@@ -305,7 +292,10 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
   child->ReadFromBitChromosome();
   
   // make sure that after crossing and mutation all parameters are within limits
-  child->BackToLimits();
+  int wasOutside = child->BackToLimits();
+  if(wasOutside > 0){
+//    cout<<"produced child was outside of limits ("<<wasOutside<<")"<<endl;
+  }
   
   // update the bits after updating values!!
   child->SaveToBitChromosome();
@@ -317,42 +307,79 @@ Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
   return child;
 }
 
-void Chromosome::BackToLimits()
+int Chromosome::BackToLimits()
 {
+  int wasOutside = 0;
+  
   if(GetCriticalDistanceEE() < criticalDistanceEEmin || GetCriticalDistanceEE() > criticalDistanceEEmax){
     SetCriticalDistanceEE(RandFloat(criticalDistanceEEmin, criticalDistanceEEmax));
+    wasOutside++;
+    cout<<"a"<<endl;
   }
   
   if(GetCriticalDistanceFH() < criticalDistanceFHmin || GetCriticalDistanceFH() > criticalDistanceFHmax){
     SetCriticalDistanceFH(RandFloat(criticalDistanceFHmin, criticalDistanceFHmax));
+    wasOutside++;
+    cout<<"b"<<endl;
   }
   if(GetCriticalDistanceBH() < criticalDistanceBHmin || GetCriticalDistanceBH() > criticalDistanceBHmax){
     SetCriticalDistanceBH(RandFloat(criticalDistanceBHmin, criticalDistanceBHmax));
+    wasOutside++;
+    cout<<"c"<<endl;
   }
   
-  if(GetKernel() < kernelMin || GetKernel() > kernelMax) SetKernel(RandInt(kernelMin, kernelMax));
-  
-  if(GetDeltacEE() < deltacEEmin || GetDeltacEE() > deltacEEmax) SetDeltacEE(RandFloat(deltacEEmin, deltacEEmax));
-  if(GetDeltacFH() < deltacFHmin || GetDeltacFH() > deltacFHmax) SetDeltacFH(RandFloat(deltacFHmin, deltacFHmax));
-  if(GetDeltacBH() < deltacBHmin || GetDeltacBH() > deltacBHmax) SetDeltacBH(RandFloat(deltacBHmin, deltacBHmax));
-  
-  if(GetKappa() < kappaMin || GetKappa() > kappaMax) SetKappa(RandFloat(kappaMin, kappaMax));
+  if(GetKernel() < kernelMin || GetKernel() > kernelMax){
+    SetKernel(RandInt(kernelMin, kernelMax));
+    wasOutside++;
+    cout<<"d"<<endl;
+  }
+    
+  if(GetDeltacEE() < deltacEEmin || GetDeltacEE() > deltacEEmax){
+    SetDeltacEE(RandFloat(deltacEEmin, deltacEEmax));
+    wasOutside++;
+    cout<<"e"<<endl;
+  }
+  if(GetDeltacFH() < deltacFHmin || GetDeltacFH() > deltacFHmax){
+    SetDeltacFH(RandFloat(deltacFHmin, deltacFHmax));
+    wasOutside++;
+    cout<<"f"<<endl;
+  }
+  if(GetDeltacBH() < deltacBHmin || GetDeltacBH() > deltacBHmax){
+    SetDeltacBH(RandFloat(deltacBHmin, deltacBHmax));
+    wasOutside++;
+    cout<<"g"<<endl;
+  }
+    
+  if(GetKappa() < kappaMin || GetKappa() > kappaMax){
+    SetKappa(RandFloat(kappaMin, kappaMax));
+    wasOutside++;
+    cout<<"h"<<endl;
+  }
   
   if(GetDependSensor()){
     if(GetEnergyMin() < energyThresholdMin || GetEnergyMin() > energyThresholdMax){
       SetEnergyMin(RandFloat(energyThresholdMin, energyThresholdMax));
+      wasOutside++;
+      cout<<"i"<<endl;
     }
   }
   else{
     if(GetEnergyMin() < energyThresholdMinNoSensor || GetEnergyMin() > energyThresholdMaxNoSensor){
       SetEnergyMin(RandFloat(energyThresholdMinNoSensor, energyThresholdMaxNoSensor));
+      wasOutside++;
+      cout<<"j";
     }
   }
     
   if(GetMatchingDistance() < matchingDistanceMin || GetMatchingDistance() > matchingDistanceMax){
     SetMatchingDistance(RandFloat(matchingDistanceMin, matchingDistanceMax));
+    wasOutside++;
+    cout<<"k"<<endl;
   }
   if(GetMinClusters() < minClustersMin || GetMinClusters() > minClustersMax){
     SetMinClusters(RandInt(minClustersMin, minClustersMax));
+    wasOutside++;
+    cout<<"l"<<endl;
   }
+  return wasOutside;
 }

@@ -7,7 +7,7 @@ min_Ntuple:  1
 max_Ntuple:  1
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:	5
+analyze_events_per_tuple:	50
 
 ### input and output paths
 
@@ -33,24 +33,24 @@ energy_density_function:  step
 
 ### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than d_c from given hit will not be included in the energy density calculation for this hit.
-critial_distance_EE:	2.0
-critial_distance_FH:	2.0
-critial_distance_BH:	2.0
+critial_distance_EE:	11.0935
+critial_distance_FH:	17.0952
+critial_distance_BH:	26.8063
 
 ### Critical distance to higher ρ hit (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than δ_c from any hit with higher ρ will be considered as potential cluster seeds.
-deltac_EE:	2.0
-deltac_FH:	2.0
-deltac_BH:	5.0
+deltac_EE:	25.5958
+deltac_FH:	28.7594
+deltac_BH:	26.1318
 
 ### Critical energy density is defined as ρ_c = max(ρ)/κ. Hits with ρ > ρ_c will be considered as potential cluster seeds.
-kappa:  9.0
+kappa:  147.331
 
 ### cut on energy (relative to the noise):
-energy_min:	3.00
+energy_min:	3.63708
 
 ### Request at least minClusters+1 2D clusters  (*clarification needed*)
-min_clusters:	3
+min_clusters:	0
 
 ### test only within this layers range:
 min_layer: 0
@@ -63,5 +63,5 @@ reachedEE_only:	1
 **Cluster Matching parameters**
 
 ### Sim clusters further than matching_max_distance from the clostest rec cluster will not be matched 
-matching_max_distance:	5.0
+matching_max_distance:	5.5772
 
