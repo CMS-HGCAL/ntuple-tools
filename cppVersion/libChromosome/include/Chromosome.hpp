@@ -12,6 +12,12 @@
 class Chromosome
 {
 public:
+  enum ECrossover{
+    kUniform,       ///< each bit has a chance to be exchaned between parents
+    kSinglePoint,   ///< one chromosome gets crossed, the rest stays the same or is exchaned intact
+    kMultiPoint     ///< each chromosome is crossed at a random point
+  };
+  
   /// Default constructor
   Chromosome();
   
@@ -117,12 +123,12 @@ public:
   void SaveToBitChromosome();
   void ReadFromBitChromosome();
   
-  void StoreInConfig();
+  void StoreInConfig(std::string path="");
   
   void Print();
   void CalculateScore();
   
-  Chromosome* ProduceChildWith(Chromosome *partner);
+  std::vector<Chromosome*> ProduceChildWith(Chromosome *partner);
   
 private:
   // 1st chromosome
@@ -154,6 +160,8 @@ private:
   double mutationChance;
   double severityFactor;  // larger the value, more easily population members will die
   
+  ECrossover crossover;
+  
   ClusteringOutput clusteringOutput;
   double executionTime;
   double score;
@@ -167,7 +175,7 @@ private:
   
   void Clusterize(std::string configPath);
   
-  uint64_t SinglePointCrossover(uint64_t a, uint64_t b);
+  std::vector<uint64_t> SinglePointCrossover(uint64_t a, uint64_t b);
   int BackToLimits();
 };
 

@@ -16,41 +16,53 @@
 
 #include <TMath.h>
 
-#define criticalDistanceEEmin 0.01
+#define criticalDistanceEEmin 0.00
 #define criticalDistanceEEmax 30.0
+#define criticalDistanceEEstart 15.0
 
-#define criticalDistanceFHmin 0.01
+#define criticalDistanceFHmin 0.00
 #define criticalDistanceFHmax 30.0
+#define criticalDistanceFHstart 0.9
 
 #define criticalDistanceBHmin 0.01
-#define criticalDistanceBHmax 30.0
+#define criticalDistanceBHmax 50.0
+#define criticalDistanceBHstart 42.6
 
 #define kernelMin 0
-#define kernelMax 3
+#define kernelMax 2
+#define kernelStart 0
 
-#define deltacEEmin 0.5   // if this is too small, algorithm cannot find clusters
+#define deltacEEmin 0.01  // if this is too small, algorithm cannot find clusters
 #define deltacEEmax 30.0  // this is critical, above ~30 problems start to occur
+#define deltacEEstart 27.2
 
 #define deltacFHmin 0.01
-#define deltacFHmax 30.0
+#define deltacFHmax 40.0
+#define deltacFHstart 33.7
 
 #define deltacBHmin 0.01
-#define deltacBHmax 30.0
+#define deltacBHmax 40.0
+#define deltacBHstart 34.4
 
-#define kappaMin 1.0  // below 1.0 algorithm doesn't wor
+#define kappaMin 0.1  // below 1.0 algorithm doesn't work
 #define kappaMax 500.0
+#define kappaStart 108.1
 
 #define energyThresholdMin 2.0
 #define energyThresholdMax 10.0
+#define energyThresholdStart 3.53
 
 #define energyThresholdMinNoSensor 0.0001
 #define energyThresholdMaxNoSensor 0.1
+#define energyThresholdStartNoSensor 0.005
 
 #define matchingDistanceMin 0.01
 #define matchingDistanceMax 30.0
+#define matchingDistanceStart 0.2
 
 #define minClustersMin 0
-#define minClustersMax 10
+#define minClustersMax 20
+#define minClustersStart 3
 
 enum EDet {
   kEE,  ///< electromagneric endcap (silicon)

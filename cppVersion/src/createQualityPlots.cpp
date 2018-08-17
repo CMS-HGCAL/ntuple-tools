@@ -28,7 +28,6 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-  cout<<"argc:"<<argc<<endl;
   if((argc != 2) && (argc != 23)){
     cout<<"Usage: createQualityPlots path_to_config"<<endl;
     exit(0);

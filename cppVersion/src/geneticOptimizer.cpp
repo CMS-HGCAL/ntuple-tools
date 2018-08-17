@@ -26,14 +26,18 @@
 
 using namespace std;
 
-int populationSize = 30;  ///< Size of the population, will stay the same for all generations
-int nGenerations = 30;     ///< Number of iterations
-int nEventsPerTest = 50;   ///< On how many events each population member will be tested
+int populationSize = 300;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
+int maxBatchSize = 50;  ///< execute this number of jobs simultaneously
+int nGenerations = 100;     ///< Number of iterations
+int nEventsPerTest = 30;   ///< On how many events each population member will be tested
 
-int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event ( processTimeout ~ 2*populationSize
+int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
-double mutationChance = 0.002;
-double severityFactor = 1.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
+double mutationChance = 0.005;
+double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
+
+int minNtuple = 1;
+int maxNtuple = 1;
 
 string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ ";
 
@@ -71,8 +75,8 @@ int scheduleClustering(Chromosome *chromo)
   +to_string(chromo->GetCriticalDistanceBH())+" "
   +to_string(chromo->GetKappa())+" "
   +"0 " // verbosity
-  +"1 " // min n tuple
-  +"1 " // max n tuple
+  +to_string(minNtuple)+" " // min n tuple
+  +to_string(maxNtuple)+" " // max n tuple
   +"0 " // min layer
   +"52 " // max layer
   +to_string(nEventsPerTest)+" "
@@ -128,32 +132,41 @@ int GetWeightedRandom(discrete_distribution<double> dist)
 
 void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distribution<double> &dist)
 {
-   std::vector<int> childPid;
+  std::vector<int> childPid;
   
-  for(int i=0;i<population.size();i++){
-    int pid = scheduleClustering(population[i]);
-    if(pid > 0) childPid.push_back(pid);
-  }
+  for(int iBatch=0;iBatch<ceil(populationSize/(double)maxBatchSize);iBatch++){
+    cout<<"Batch "<<iBatch<<"/"<<ceil(populationSize/(double)maxBatchSize)-1<<endl;
+    
+    for(int i=0;i<maxBatchSize;i++){
+      if(iBatch*maxBatchSize+i >= populationSize) break;
+      int pid = scheduleClustering(population[iBatch*maxBatchSize+i]);
+      if(pid > 0) childPid.push_back(pid);
+    }
 
-  std::cout<<"\n\nall forks created\n\n"<<std::endl;
+    std::cout<<"\n\nall forks created\n\n"<<std::endl;
   
-  allKidsFinished = false;
+    allKidsFinished = false;
   
-  thread *waitThread = new thread(waitGently,childPid);
-  thread *killThread = new thread(killChildrenAfterTimeout,childPid,processTimeout);
+    thread *waitThread = new thread(waitGently,childPid);
+    thread *killThread = new thread(killChildrenAfterTimeout,childPid,processTimeout);
   
-  waitThread->join();
-  killThread->join();
-  
+    waitThread->join();
+    killThread->join();
+  }
+    
   vector<double> scores;
   double minScore=99999, maxScore=-99999;
+  int bestGuyIndex = -1;
   
   for(int i=0;i<populationSize;i++){
     population[i]->CalculateScore();
     double score = population[i]->GetScore();
-    if(score < minScore) minScore = score; // make sure to remove veeery bad results
-    if(score > maxScore) maxScore = score;
-    hist->Fill(score);
+    if(score < minScore && score > 1E-5) minScore = score; // make sure to remove veeery bad results
+    if(score > maxScore){
+      maxScore = score;
+      bestGuyIndex = i;
+    }
+    if(score > 1E-5) hist->Fill(score);
     scores.push_back(score);
   }
   
@@ -171,6 +184,11 @@ void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distrib
     scoresNormalized.push_back(normScore);
   }
 
+  cout<<"\n\n================================================="<<endl;
+  cout<<"The best guy in this generation was..."<<endl;
+  population[bestGuyIndex]->Print();
+  population[bestGuyIndex]->StoreInConfig("bestGenetic.md");
+  
   dist = discrete_distribution<double>(scoresNormalized.begin(), scoresNormalized.end());
 }
 
@@ -297,7 +315,7 @@ int main(int argc, char* argv[])
       // draw new population
       population.clear();
       
-      for(int i=0;i<populationSize;i++){
+      for(int i=0;i<populationSize/2;i++){
         Chromosome *mom, *dad;
         
         int iter=0;
@@ -310,8 +328,9 @@ int main(int argc, char* argv[])
           dad = population[(int)scores(randGenerator)];
         } while (mom==dad);
 
-        Chromosome *child = dad->ProduceChildWith(mom);
-        population.push_back(child);
+        vector<Chromosome*> children = dad->ProduceChildWith(mom);
+        population.push_back(children[0]);
+        population.push_back(children[1]);
       }
     }
     

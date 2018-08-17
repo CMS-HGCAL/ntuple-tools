@@ -40,6 +40,8 @@ minClusters(0)
 {
   int nChromosomes = 6;
   for(int i=0;i<nChromosomes;i++){bitChromosome.push_back(0);}
+ 
+  crossover = kSinglePoint;
   
   clusteringOutput.resolutionMean = 999999;
   clusteringOutput.resolutionSigma = 999999;
@@ -195,27 +197,29 @@ void Chromosome::SetValueFromChromosome(T &value, int &shift, int chromoIndex)
 }
 
 
-void Chromosome::StoreInConfig()
+void Chromosome::StoreInConfig(string path)
 {
-  system(("cp baseConfig.md "+configPath).c_str());
+  string currentConfigPath = path=="" ? configPath : path;
   
-  UpdateParamValue(configPath, "depend_sensor",GetDependSensor());
-  if(GetKernel() == 0)      UpdateParamValue(configPath, "energy_density_function","step");
-  else if(GetKernel() == 1) UpdateParamValue(configPath, "energy_density_function","gaus");
-  else                      UpdateParamValue(configPath, "energy_density_function","exp");
+  system(("cp baseConfig.md "+currentConfigPath).c_str());
   
-  UpdateParamValue(configPath, "critial_distance_EE",GetCriticalDistanceEE());
-  UpdateParamValue(configPath, "critial_distance_FH",GetCriticalDistanceFH());
-  UpdateParamValue(configPath, "critial_distance_BH",GetCriticalDistanceBH());
-  UpdateParamValue(configPath, "deltac_EE",GetDeltacEE());
-  UpdateParamValue(configPath, "deltac_FH",GetDeltacFH());
-  UpdateParamValue(configPath, "deltac_BH",GetDeltacBH());
-  UpdateParamValue(configPath, "kappa",GetKappa());
-  UpdateParamValue(configPath, "energy_min",GetEnergyMin());
-  UpdateParamValue(configPath, "min_clusters",GetMinClusters());
-  UpdateParamValue(configPath, "reachedEE_only",GetReachedEE());
-  UpdateParamValue(configPath, "matching_max_distance",GetMatchingDistance());
-  UpdateParamValue(configPath, "score_output_path",clusteringOutputPath);
+  UpdateParamValue(currentConfigPath, "depend_sensor",GetDependSensor());
+  if(GetKernel() == 0)      UpdateParamValue(currentConfigPath, "energy_density_function","step");
+  else if(GetKernel() == 1) UpdateParamValue(currentConfigPath, "energy_density_function","gaus");
+  else                      UpdateParamValue(currentConfigPath, "energy_density_function","exp");
+  
+  UpdateParamValue(currentConfigPath, "critial_distance_EE",GetCriticalDistanceEE());
+  UpdateParamValue(currentConfigPath, "critial_distance_FH",GetCriticalDistanceFH());
+  UpdateParamValue(currentConfigPath, "critial_distance_BH",GetCriticalDistanceBH());
+  UpdateParamValue(currentConfigPath, "deltac_EE",GetDeltacEE());
+  UpdateParamValue(currentConfigPath, "deltac_FH",GetDeltacFH());
+  UpdateParamValue(currentConfigPath, "deltac_BH",GetDeltacBH());
+  UpdateParamValue(currentConfigPath, "kappa",GetKappa());
+  UpdateParamValue(currentConfigPath, "energy_min",GetEnergyMin());
+  UpdateParamValue(currentConfigPath, "min_clusters",GetMinClusters());
+  UpdateParamValue(currentConfigPath, "reachedEE_only",GetReachedEE());
+  UpdateParamValue(currentConfigPath, "matching_max_distance",GetMatchingDistance());
+  UpdateParamValue(currentConfigPath, "score_output_path",clusteringOutputPath);
 }
 
 void Chromosome::CalculateScore()
@@ -234,7 +238,11 @@ void Chromosome::CalculateScore()
   
   score = severityFactor/distance;
   
-  if(clusteringOutput.resolutionMean > 1000){ // this means that clustering failed completely
+  if(   clusteringOutput.resolutionMean  > 1000
+     || clusteringOutput.separationMean  > 1000
+     || clusteringOutput.containmentMean > 1000
+    )
+  { // this means that clustering failed completely
     score = 0;
   }
   if(score < 1E-5){ // just round down to zero if score it extremaly poor
@@ -247,10 +255,10 @@ void Chromosome::CalculateScore()
   }
 }
 
-uint64_t Chromosome::SinglePointCrossover(uint64_t a, uint64_t b)
+vector<uint64_t> Chromosome::SinglePointCrossover(uint64_t a, uint64_t b)
 {
   int crossingPoint = RandInt(0, 63);
-  uint64_t newBitChromosome = 0;
+  vector<uint64_t> newBitChromosomes = {0,0};
   
   uint64_t maskA = 0;
   for(int j=0;j<BitSize(maskA)-crossingPoint;j++){maskA |= 1ull << (j+crossingPoint);}
@@ -258,53 +266,84 @@ uint64_t Chromosome::SinglePointCrossover(uint64_t a, uint64_t b)
   uint64_t maskB = 0;
   for(int j=(int)BitSize(maskB)-crossingPoint;j<BitSize(maskB);j++){maskB |= 1ull << j;}
   
-  newBitChromosome = a & maskA;
-  newBitChromosome |= b & maskB;
+  newBitChromosomes[0] = a & maskA;
+  newBitChromosomes[0] |= b & maskB;
   
-  return newBitChromosome;
+  newBitChromosomes[1] = b & maskA;
+  newBitChromosomes[1] |= a & maskB;
+  
+  return newBitChromosomes;
 }
 
-Chromosome* Chromosome::ProduceChildWith(Chromosome *partner)
+vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
 {
-  Chromosome *child = new Chromosome();
-  
+  vector<Chromosome*> children = {new Chromosome(),new Chromosome()};
   // combine chromosomes of parents in a random way
   
-  // this is a single-point crossover
-  for(int i=0;i<bitChromosome.size();i++){
-    uint64_t newBitChromosome = SinglePointCrossover(GetBitChromosome(i), partner->GetBitChromosome(i));
-    child->SetBitChromosome(i, newBitChromosome);
+  if(crossover == kMultiPoint){ // single-point crossover in each chromosome
+    for(int i=0;i<bitChromosome.size();i++){
+      vector<uint64_t> newBitChromosomes = SinglePointCrossover(GetBitChromosome(i), partner->GetBitChromosome(i));
+      
+      children[0]->SetBitChromosome(i, newBitChromosomes[0]);
+      children[1]->SetBitChromosome(i, newBitChromosomes[1]);
+    }
+  }
+  else if(crossover == kSinglePoint){ // true single-point crossover
+    int crossingChromo = RandInt(0, (int)bitChromosome.size()-1);
+    
+    for(int i=0;i<bitChromosome.size();i++){
+    
+      if(i < crossingChromo){
+        children[0]->SetBitChromosome(i, this->GetBitChromosome(i));
+        children[1]->SetBitChromosome(i, partner->GetBitChromosome(i));
+      }
+      else if(i == crossingChromo){
+        vector<uint64_t> newBitChromosomes = SinglePointCrossover(this->GetBitChromosome(i),
+                                                                  partner->GetBitChromosome(i));
+        children[0]->SetBitChromosome(i, newBitChromosomes[0]);
+        children[1]->SetBitChromosome(i, newBitChromosomes[1]);
+      }
+      else{
+        children[0]->SetBitChromosome(i, partner->GetBitChromosome(i));
+        children[1]->SetBitChromosome(i, this->GetBitChromosome(i));
+      }
+    }
+  }
+  else if(crossover == kUniform){
+    
   }
   
   // perform child genes mutation
-  for(int i=0;i<bitChromosome.size();i++){
-    uint64_t bits = child->GetBitChromosome(i);
-    
-    for(int iBit=0;iBit<BitSize(bits);iBit++){
-      double r = RandDouble(0, 1);
-      if(r < mutationChance){ // 10% chance for mutation
-        ReverseBit(bits, iBit);
+  for(int iChild=0;iChild<2;iChild++){
+    for(int i=0;i<bitChromosome.size();i++){
+      uint64_t bits = children[iChild]->GetBitChromosome(i);
+      
+      for(int iBit=0;iBit<BitSize(bits);iBit++){
+        double r = RandDouble(0, 1);
+        if(r < mutationChance){ // 10% chance for mutation
+          ReverseBit(bits, iBit);
+        }
       }
+      children[iChild]->SetBitChromosome(i, bits);
     }
-    child->SetBitChromosome(i, bits);
+    // populate fields
+    children[iChild]->ReadFromBitChromosome();
+    
+    // make sure that after crossing and mutation all parameters are within limits
+    int wasOutside = children[iChild]->BackToLimits();
+    if(wasOutside > 0){
+  //    cout<<"produced child was outside of limits ("<<wasOutside<<")"<<endl;
+    }
+    
+    // update the bits after updating values!!
+    children[iChild]->SaveToBitChromosome();
+    
+    // set other parameters
+    children[iChild]->SetMutationChance(mutationChance);
+    children[iChild]->SetSeverityFactor(severityFactor);
   }
-  // populate fields
-  child->ReadFromBitChromosome();
   
-  // make sure that after crossing and mutation all parameters are within limits
-  int wasOutside = child->BackToLimits();
-  if(wasOutside > 0){
-//    cout<<"produced child was outside of limits ("<<wasOutside<<")"<<endl;
-  }
-  
-  // update the bits after updating values!!
-  child->SaveToBitChromosome();
-  
-  // set other parameters
-  child->SetMutationChance(mutationChance);
-  child->SetSeverityFactor(severityFactor);
-  
-  return child;
+  return children;
 }
 
 int Chromosome::BackToLimits()
