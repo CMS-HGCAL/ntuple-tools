@@ -348,6 +348,19 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
   return children;
 }
 
+template<class T>
+T Chromosome::DoubleInRangeToUint(double val, double min, double max, T output)
+{
+  return static_cast<decltype(output)>(std::numeric_limits<decltype(output)>::max()/(max-min)*(val-min));
+}
+
+template<class T>
+double Chromosome::UintToDoubleInRange(T input, double min, double max)
+{
+  return min + (double)input*(max-min)/std::numeric_limits<decltype(input)>::max();
+}
+
+
 int Chromosome::BackToLimits()
 {
   int wasOutside = 0;

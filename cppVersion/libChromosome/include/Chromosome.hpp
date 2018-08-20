@@ -9,6 +9,9 @@
 
 #include "GeneticHelpers.hpp"
 
+template <typename T,typename K>
+class AlgoParam;
+
 class Chromosome
 {
 public:
@@ -16,6 +19,12 @@ public:
     kUniform,       ///< each bit has a chance to be exchaned between parents
     kSinglePoint,   ///< one chromosome gets crossed, the rest stays the same or is exchaned intact
     kMultiPoint     ///< each chromosome is crossed at a random point
+  };
+  
+  enum EParam{
+    kCriticalDistanceEE,
+    kCriticalDistanceFH,
+    kCriticalDiscanceBH
   };
   
   /// Default constructor
@@ -28,42 +37,44 @@ public:
   
   // Setters
   inline void SetCriticalDistanceEE(double val){
-    criticalDistanceEE = (uint16_t)(std::numeric_limits<uint16_t>::max()/(criticalDistanceEEmax-criticalDistanceEEmin)*(val-criticalDistanceEEmin));
+    criticalDistanceEE = DoubleInRangeToUint(val, criticalDistanceEEmin, criticalDistanceEEmax, criticalDistanceEE);
   }
   inline void SetCriticalDistanceFH(double val){
-    criticalDistanceFH = (uint16_t)(std::numeric_limits<uint16_t>::max()/(criticalDistanceFHmax-criticalDistanceFHmin)*(val-criticalDistanceFHmin));
+    criticalDistanceFH = DoubleInRangeToUint(val, criticalDistanceFHmin, criticalDistanceFHmax, criticalDistanceFH);
   }
   inline void SetCriticalDistanceBH(double val){
-    criticalDistanceBH = (uint16_t)(std::numeric_limits<uint16_t>::max()/(criticalDistanceBHmax-criticalDistanceBHmin)*(val-criticalDistanceBHmin));
+    criticalDistanceBH = DoubleInRangeToUint(val, criticalDistanceBHmin, criticalDistanceBHmax, criticalDistanceBH);
   }
-  inline void SetDependSensor(bool val){dependSensor = val;}
-  inline void SetReachedEE(bool val){reachedEE = val;}
-  
+  inline void SetDependSensor(bool val){
+    dependSensor = DoubleInRangeToUint(val, 0, 1, dependSensor);
+  }
+  inline void SetReachedEE(bool val){
+    reachedEE = DoubleInRangeToUint(val, 0, 1, reachedEE);
+  }
 
   inline void SetDeltacEE(double val){
-    deltacEE = (uint16_t)(std::numeric_limits<uint16_t>::max()/(deltacEEmax-deltacEEmin)*(val-deltacEEmin));
+    deltacEE = DoubleInRangeToUint(val, deltacEEmin, deltacEEmax, deltacEE);
   }
   inline void SetDeltacFH(double val){
-    deltacFH = (uint16_t)(std::numeric_limits<uint16_t>::max()/(deltacFHmax-deltacFHmin)*(val-deltacFHmin));
+    deltacFH = DoubleInRangeToUint(val, deltacFHmin, deltacFHmax, deltacFH);
   }
   inline void SetDeltacBH(double val){
-    deltacBH = (uint16_t)(std::numeric_limits<uint16_t>::max()/(deltacBHmax-deltacBHmin)*(val-deltacBHmin));
+    deltacBH = DoubleInRangeToUint(val, deltacBHmin, deltacBHmax, deltacBH);
   }
   inline void SetKappa(double val){
-    kappa = (uint16_t)(std::numeric_limits<uint16_t>::max()/(kappaMax-kappaMin)*(val-kappaMin));
+    kappa = DoubleInRangeToUint(val, kappaMin, kappaMax, kappa);
   }
   inline void SetEnergyMin(double val){
-    energyMin = (uint16_t)(std::numeric_limits<uint16_t>::max()/(energyThresholdMax-energyThresholdMin)*(val-energyThresholdMin));
+    energyMin = DoubleInRangeToUint(val, energyThresholdMin, energyThresholdMax, energyMin);
   }
   inline void SetMatchingDistance(double val){
-    matchingDistance = (uint16_t)(std::numeric_limits<uint16_t>::max()/(matchingDistanceMax-matchingDistanceMin)*(val-matchingDistanceMin));
+    matchingDistance = DoubleInRangeToUint(val, matchingDistanceMin, matchingDistanceMax, matchingDistance);
   }
-  
   inline void SetKernel(int val){// 0 - step, 1 - gaus, 2 - exp
-    kernel = (uint8_t)(std::numeric_limits<uint8_t>::max()/(kernelMax-kernelMin)*((double)val-kernelMin));
+    kernel = DoubleInRangeToUint(val, kernelMin, kernelMax, kernel);
   }
   inline void SetMinClusters(int val){
-    minClusters = (uint8_t)(std::numeric_limits<uint8_t>::max()/(minClustersMax-minClustersMin)*((double)val-minClustersMin));
+    minClusters = DoubleInRangeToUint(val, minClustersMin, minClustersMax, minClusters);
   }
   
   inline void SetBitChromosome(int i, uint64_t bits){bitChromosome[i] = bits;}
@@ -76,41 +87,48 @@ public:
   inline void SetCrossover(ECrossover val){crossover = val;}
   
   // Getters
-  inline double  GetCriticalDistanceEE(){
-    return criticalDistanceEEmin + criticalDistanceEE*(criticalDistanceEEmax-criticalDistanceEEmin)/std::numeric_limits<uint16_t>::max();
+  inline double GetCriticalDistanceEE(){
+    return UintToDoubleInRange(criticalDistanceEE, criticalDistanceEEmin, criticalDistanceEEmax);
   }
   inline double  GetCriticalDistanceFH(){
-    return criticalDistanceFHmin + criticalDistanceFH*(criticalDistanceFHmax-criticalDistanceFHmin)/std::numeric_limits<uint16_t>::max();
+    return UintToDoubleInRange(criticalDistanceFH, criticalDistanceFHmin, criticalDistanceFHmax);
   }
   inline double  GetCriticalDistanceBH(){
-    return criticalDistanceBHmin + criticalDistanceBH*(criticalDistanceBHmax-criticalDistanceBHmin)/std::numeric_limits<uint16_t>::max();
+    return UintToDoubleInRange(criticalDistanceBH, criticalDistanceBHmin, criticalDistanceBHmax);
   }
-  inline bool   GetDependSensor(){return dependSensor;}
-  inline bool   GetReachedEE(){return reachedEE;}
-
+  inline bool   GetDependSensor(){
+    double val = UintToDoubleInRange(dependSensor, 0, 1);
+    return static_cast<bool>(val);
+  }
+  inline bool   GetReachedEE(){
+    double val = UintToDoubleInRange(reachedEE, 0, 1);
+    return static_cast<bool>(val);
+  }
   inline double  GetDeltacEE(){
-    return deltacEEmin + deltacEE*(deltacEEmax-deltacEEmin)/std::numeric_limits<uint16_t>::max();
+    return UintToDoubleInRange(deltacEE, deltacEEmin, deltacEEmax);
   }
   inline double  GetDeltacFH(){
-    return deltacFHmin + deltacFH*(deltacFHmax-deltacFHmin)/std::numeric_limits<uint16_t>::max();
+    return UintToDoubleInRange(deltacFH, deltacFHmin, deltacFHmax);
   }
   inline double  GetDeltacBH(){
-    return deltacBHmin + deltacBH*(deltacBHmax-deltacBHmin)/std::numeric_limits<uint16_t>::max();
+    return UintToDoubleInRange(deltacBH, deltacBHmin, deltacBHmax);
   }
   inline double  GetKappa(){
-    return kappaMin + kappa*(kappaMax-kappaMin)/std::numeric_limits<uint16_t>::max();
+    return UintToDoubleInRange(kappa, kappaMin, kappaMax);
   }
   inline double  GetEnergyMin(){
-    return energyThresholdMin + energyMin*(energyThresholdMax-energyThresholdMin)/std::numeric_limits<uint16_t>::max();
+    return UintToDoubleInRange(energyMin, energyThresholdMin, energyThresholdMax);
   }
   inline double  GetMatchingDistance(){
-    return matchingDistanceMin + matchingDistance*(matchingDistanceMax-matchingDistanceMin)/std::numeric_limits<uint16_t>::max();
+    return UintToDoubleInRange(matchingDistance, matchingDistanceMin, matchingDistanceMax);
   }
   inline int GetKernel(){// 0 - step, 1 - gaus, 2 - exp
-    return round(kernelMin + kernel*(kernelMax-kernelMin)/std::numeric_limits<uint8_t>::max());
+    double val = UintToDoubleInRange(kernel, kernelMin, kernelMax);
+    return round(val);
   }
   inline int GetMinClusters(){
-    return round(minClustersMin + minClusters*(minClustersMax-minClustersMin)/std::numeric_limits<uint8_t>::max());
+    double val = UintToDoubleInRange(minClusters, minClustersMin, minClustersMax);
+    return round(val);
   }
   
   inline uint64_t GetBitChromosome(int i){return bitChromosome[i];}
@@ -136,7 +154,7 @@ private:
   uint16_t criticalDistanceEE;
   uint16_t criticalDistanceFH;
   uint16_t criticalDistanceBH;
-  bool reachedEE;             // 2 bits
+  uint16_t reachedEE;
   
   // 3rd chromosome
   uint8_t kernel;
@@ -148,7 +166,7 @@ private:
   uint16_t kappa;
   uint16_t energyMin;
   uint16_t matchingDistance;
-  uint8_t  minClusters;
+  uint16_t  minClusters;
   
   std::vector<uint64_t> bitChromosome; // 64 bit
   
@@ -160,7 +178,6 @@ private:
   bool dependSensor;
   double mutationChance;
   double severityFactor;  // larger the value, more easily population members will die
-  
   ECrossover crossover;
   
   ClusteringOutput clusteringOutput;
@@ -174,10 +191,28 @@ private:
   template<class T>
   void SetValueFromChromosome(T &value, int &shift, int chromoIndex);
   
-  void Clusterize(std::string configPath);
+  template<class T>
+  T DoubleInRangeToUint(double val, double min, double max, T output);
+  
+  template<class T>
+  double UintToDoubleInRange(T input, double min, double max);
   
   std::vector<uint64_t> SinglePointCrossover(uint64_t a, uint64_t b);
   int BackToLimits();
 };
+
+template <class T,class K>
+class AlgoParam{
+public:
+  AlgoParam(){};
+  ~AlgoParam(){};
+  
+  T bitValue;
+  
+  K realValue;
+  K min;
+  K max;
+};
+
 
 #endif /* Chromosome_hpp */
