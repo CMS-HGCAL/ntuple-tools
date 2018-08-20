@@ -53,7 +53,7 @@ public:
     kappa = (uint16_t)(std::numeric_limits<uint16_t>::max()/(kappaMax-kappaMin)*(val-kappaMin));
   }
   inline void SetEnergyMin(double val){
-    energyMin = (uint16_t)(std::numeric_limits<uint16_t>::max()/(energyThresholdMax-energyThresholdMinNoSensor)*(val-energyThresholdMinNoSensor));
+    energyMin = (uint16_t)(std::numeric_limits<uint16_t>::max()/(energyThresholdMax-energyThresholdMin)*(val-energyThresholdMin));
   }
   inline void SetMatchingDistance(double val){
     matchingDistance = (uint16_t)(std::numeric_limits<uint16_t>::max()/(matchingDistanceMax-matchingDistanceMin)*(val-matchingDistanceMin));
@@ -73,6 +73,7 @@ public:
   inline void SetExecutionTime(double val){executionTime = val;}
   inline void SetMutationChance(double val){mutationChance = val;}
   inline void SetSeverityFactor(double val){severityFactor = val;}
+  inline void SetCrossover(ECrossover val){crossover = val;}
   
   // Getters
   inline double  GetCriticalDistanceEE(){
@@ -100,7 +101,7 @@ public:
     return kappaMin + kappa*(kappaMax-kappaMin)/std::numeric_limits<uint16_t>::max();
   }
   inline double  GetEnergyMin(){
-    return energyThresholdMinNoSensor + energyMin*(energyThresholdMax-energyThresholdMinNoSensor)/std::numeric_limits<uint16_t>::max();
+    return energyThresholdMin + energyMin*(energyThresholdMax-energyThresholdMin)/std::numeric_limits<uint16_t>::max();
   }
   inline double  GetMatchingDistance(){
     return matchingDistanceMin + matchingDistance*(matchingDistanceMax-matchingDistanceMin)/std::numeric_limits<uint16_t>::max();
@@ -135,7 +136,6 @@ private:
   uint16_t criticalDistanceEE;
   uint16_t criticalDistanceFH;
   uint16_t criticalDistanceBH;
-  bool dependSensor;          // 2 bits
   bool reachedEE;             // 2 bits
   
   // 3rd chromosome
@@ -157,6 +157,7 @@ private:
   uint64_t uniqueID;
   std::string configPath;
   std::string clusteringOutputPath;
+  bool dependSensor;
   double mutationChance;
   double severityFactor;  // larger the value, more easily population members will die
   

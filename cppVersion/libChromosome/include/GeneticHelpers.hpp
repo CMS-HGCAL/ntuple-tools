@@ -18,15 +18,15 @@
 
 #define criticalDistanceEEmin 0.00
 #define criticalDistanceEEmax 30.0
-#define criticalDistanceEEstart 15.0
+#define criticalDistanceEEstart 17.4
 
 #define criticalDistanceFHmin 0.00
 #define criticalDistanceFHmax 30.0
-#define criticalDistanceFHstart 0.9
+#define criticalDistanceFHstart 14.9
 
 #define criticalDistanceBHmin 0.01
 #define criticalDistanceBHmax 50.0
-#define criticalDistanceBHstart 42.6
+#define criticalDistanceBHstart 24.9
 
 #define kernelMin 0
 #define kernelMax 2
@@ -34,35 +34,31 @@
 
 #define deltacEEmin 0.01  // if this is too small, algorithm cannot find clusters
 #define deltacEEmax 30.0  // this is critical, above ~30 problems start to occur
-#define deltacEEstart 27.2
+#define deltacEEstart 14.5
 
 #define deltacFHmin 0.01
 #define deltacFHmax 40.0
-#define deltacFHstart 33.7
+#define deltacFHstart 19.9
 
 #define deltacBHmin 0.01
 #define deltacBHmax 40.0
-#define deltacBHstart 34.4
+#define deltacBHstart 24.9
 
 #define kappaMin 0.1  // below 1.0 algorithm doesn't work
 #define kappaMax 500.0
-#define kappaStart 108.1
+#define kappaStart 258.0
 
 #define energyThresholdMin 2.0
 #define energyThresholdMax 10.0
-#define energyThresholdStart 3.53
-
-#define energyThresholdMinNoSensor 0.0001
-#define energyThresholdMaxNoSensor 0.1
-#define energyThresholdStartNoSensor 0.005
+#define energyThresholdStart 3.40
 
 #define matchingDistanceMin 0.01
 #define matchingDistanceMax 30.0
-#define matchingDistanceStart 0.2
+#define matchingDistanceStart 14.5
 
 #define minClustersMin 0
 #define minClustersMax 20
-#define minClustersStart 3
+#define minClustersStart 9
 
 enum EDet {
   kEE,  ///< electromagneric endcap (silicon)
@@ -189,13 +185,16 @@ struct ClusteringOutput {
     separationMean = 99999;
     separationSigma = 99999;
     containmentMean = 99999;
-    containmentSigma = -99999;
+    containmentSigma = 99999;
+    deltaNclustersMean = 99999;
+    deltaNclustersSigma = 99999;
   }
   
   void Print(){
     std::cout<<"Resolution:"<<resolutionMean<<" +/- "<<resolutionSigma<<std::endl;
     std::cout<<"Separation:"<<separationMean<<" +/- "<<separationSigma<<std::endl;
     std::cout<<"Containment:"<<containmentMean<<" +/- "<<containmentSigma<<std::endl;
+    std::cout<<"Delta N clusters:"<<deltaNclustersMean<<" +/- "<<deltaNclustersSigma<<std::endl;
   }
   
   double resolutionMean;
@@ -204,6 +203,8 @@ struct ClusteringOutput {
   double separationSigma;
   double containmentMean;
   double containmentSigma;
+  double deltaNclustersMean;
+  double deltaNclustersSigma;
 };
 
 inline ClusteringOutput ReadOutput(std::string fileName){
@@ -217,6 +218,8 @@ inline ClusteringOutput ReadOutput(std::string fileName){
   output.separationSigma = 999999;
   output.containmentMean = 999999;
   output.containmentSigma = 999999;
+  output.deltaNclustersMean = 999999;
+  output.deltaNclustersSigma = 999999;
   
   while(getline(is_file, line)){
     std::istringstream is_line(line);
@@ -226,6 +229,8 @@ inline ClusteringOutput ReadOutput(std::string fileName){
     if(iter==3) is_line >> output.separationSigma;
     if(iter==4) is_line >> output.containmentMean;
     if(iter==5) is_line >> output.containmentSigma;
+    if(iter==6) is_line >> output.deltaNclustersMean;
+    if(iter==7) is_line >> output.deltaNclustersSigma;
     iter++;
   }
   return output;

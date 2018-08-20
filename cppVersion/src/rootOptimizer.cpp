@@ -81,6 +81,7 @@ int main()
   
   // set fitter params
   fitter->SetParameter(0, "depend_sensor",          true, 1.0, 0, 1); // 0 - no dependance, 1 - depend on sensor
+  fitter->FixParameter(0);
   fitter->SetParameter(1, "energy_density_function",kernelStart, 1.0, 0, 2); // 0 - step, 1 - gaus, 2 - exp
   fitter->SetParameter(2, "critial_distance_EE",    criticalDistanceEEstart,0.1,
                                                     criticalDistanceEEmin, criticalDistanceEEmax);
@@ -93,7 +94,7 @@ int main()
   fitter->SetParameter(7, "deltac_BH",	            deltacBHstart, 0.1, deltacBHmin, deltacBHmax);
   
   fitter->SetParameter(8, "kappa",                  kappaStart, 0.1, kappaMin, kappaMax);
-  fitter->SetParameter(9, "energy_min",             energyThresholdStart, 0.01, energyThresholdMinNoSensor, energyThresholdMax);
+  fitter->SetParameter(9, "energy_min",             energyThresholdStart, 0.01, energyThresholdMin, energyThresholdMax);
   fitter->SetParameter(10,"min_clusters",           minClustersStart, 1.0, minClustersMin, minClustersMax);
   fitter->SetParameter(11,"reachedEE_only",         true, 1, 0, 1);
   fitter->SetParameter(12,"matching_max_distance",  matchingDistanceStart, 0.1,

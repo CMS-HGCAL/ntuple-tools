@@ -77,6 +77,7 @@ int main(int argc, char* argv[])
   TH1D *deltaE = new TH1D("resolution","resolution",200,-10,10);
   TH1D *separation = new TH1D("separation","separation",200,-10,10);
   TH1D *containment = new TH1D("containment","containment",200,-10,10);
+  TH1D *deltaN = new TH1D("numberClusters","numberClusters",200,-10,10);
   
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
@@ -173,8 +174,8 @@ int main(int argc, char* argv[])
           deltaE->Fill((recEnergy-simEnergy)/simEnergy);
           containment->Fill(clusters->GetSharedFraction());
         }
-        NrecNsim->Fill(recHitsPerClusterArray.size(),matchedClusters.size());
-        
+        NrecNsim->Fill(simHitsPerClusterArray.size(),recHitsPerClusterArray.size());
+        deltaN->Fill((simHitsPerClusterArray.size()-recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
         
         for(uint i=0;i<matchedClusters.size();i++){
           for(uint j=(i+1);j<matchedClusters.size();j++){
@@ -259,6 +260,18 @@ int main(int argc, char* argv[])
       outputFile<<999999<<endl;
       cout<<"Average containment per event:"<<999999<<endl;
       cout<<"Containment sigma:"<<999999<<endl;
+    }
+    if(deltaN && deltaN->GetEntries()>0 && deltaN->GetStdDev() != 0){
+      outputFile<<deltaN->GetMean()<<endl;
+      outputFile<<deltaN->GetStdDev()<<endl;
+      cout<<"Average difference in N clusters (sim-rec) per event:"<<deltaN->GetMean()<<endl;
+      cout<<"N clusters (sim-rec) sigma:"<<deltaN->GetStdDev()<<endl;
+    }
+    else{
+      outputFile<<999999<<endl;
+      outputFile<<999999<<endl;
+      cout<<"Average difference in N clusters (sim-rec) per event:"<<999999<<endl;
+      cout<<"N clusters (sim-rec) sigma:"<<999999<<endl;
     }
     outputFile.close();
     
