@@ -26,20 +26,23 @@
 
 using namespace std;
 
-int populationSize = 50;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
+int populationSize = 100;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
 int maxBatchSize = 50;  ///< execute this number of jobs simultaneously
-int nGenerations = 100;     ///< Number of iterations
-int nEventsPerTest = 30;   ///< On how many events each population member will be tested
+int nGenerations = 50;     ///< Number of iterations
+int nEventsPerTest = 100;   ///< On how many events per ntuple each population member will be tested
 
 int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
-double mutationChance = 0.005;
+double mutationChance = 0.002;
 double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
+
+bool dependSensor = true;
+bool reachedEE = true;
 
 Chromosome::ECrossover crossoverStrategy = Chromosome::kSinglePoint;
 
 int minNtuple = 1;
-int maxNtuple = 1;
+int maxNtuple = 2;
 
 string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ ";
 
@@ -49,33 +52,32 @@ mt19937 randGenerator;
 
 TGraph *scoresMean;
 TFile *outfile;
-TH2D *criticalDistanceEE, *criticalDistanceFH, *criticalDistanceBH, *reachedEE, *kernel, *deltacEE, *deltacFH, *deltacBH, *kappa, *energyMin, *matchingDistance, *minClusters;
 
-TH2D *criticalDistanceEEwgt, *criticalDistanceFHwgt, *criticalDistanceBHwgt, *reachedEEwgt, *kernelwgt, *deltacEEwgt, *deltacFHwgt, *deltacBHwgt, *kappawgt, *energyMinwgt, *matchingDistancewgt, *minClusterswgt;
-
+TH2D *paramHists[kNparams];
+TH2D *paramHistsWgt[kNparams];
 
 atomic<bool> allKidsFinished;
 
 int scheduleClustering(Chromosome *chromo)
 {
+  int kernelIndex = round(chromo->GetParam(kKernel));
   string kernel;
-  if(chromo->GetKernel() == 0) kernel = "step";
-  if(chromo->GetKernel() == 1) kernel = "gaus";
-  if(chromo->GetKernel() == 2) kernel = "exp";
+  if(kernelIndex == 0) kernel = "step";
+  if(kernelIndex == 1) kernel = "gaus";
+  if(kernelIndex == 2) kernel = "exp";
   
   string command = "./createQualityPlots "
-  +to_string(chromo->GetDependSensor())+" "
+  +to_string(dependSensor)+" "
   +dataPath+" "
   +outputPath+" "
-  +to_string(chromo->GetDeltacEE())+" "
-  +to_string(chromo->GetDeltacFH())+" "
-  +to_string(chromo->GetDeltacBH())+" "
-  +to_string(chromo->GetEnergyMin())+" "
-  +to_string(chromo->GetMinClusters())+" "
-  +to_string(chromo->GetCriticalDistanceEE())+" "
-  +to_string(chromo->GetCriticalDistanceFH())+" "
-  +to_string(chromo->GetCriticalDistanceBH())+" "
-  +to_string(chromo->GetKappa())+" "
+  +to_string(chromo->GetParam(kDeltacEE))+" "
+  +to_string(chromo->GetParam(kDeltacFH))+" "
+  +to_string(chromo->GetParam(kDeltacBH))+" "
+  +to_string(chromo->GetParam(kEnergyThreshold))+" "
+  +to_string(chromo->GetParam(kCriticalDistanceEE))+" "
+  +to_string(chromo->GetParam(kCriticalDistanceFH))+" "
+  +to_string(chromo->GetParam(kCriticalDistanceBH))+" "
+  +to_string(chromo->GetParam(kKappa))+" "
   +"0 " // verbosity
   +to_string(minNtuple)+" " // min n tuple
   +to_string(maxNtuple)+" " // max n tuple
@@ -83,8 +85,8 @@ int scheduleClustering(Chromosome *chromo)
   +"52 " // max layer
   +to_string(nEventsPerTest)+" "
   +kernel+" "
-  +to_string(chromo->GetReachedEE())+" "
-  +to_string(chromo->GetMatchingDistance())+" "
+  +to_string(reachedEE)+" "
+  +to_string(chromo->GetParam(kMatchingDistance))+" "
   +chromo->GetClusteringOutputPath()+" "
   +" > /dev/null 2>&1";
   
@@ -200,31 +202,11 @@ void SaveHists()
   outfile->cd();
   
   scoresMean->Write("scores",TObject::kOverwrite);
-  criticalDistanceEE->Write("critDistEE",TObject::kOverwrite);
-  criticalDistanceFH->Write("critDistFH",TObject::kOverwrite);
-  criticalDistanceBH->Write("critDistBH",TObject::kOverwrite);
-  reachedEE->Write("reachedEE",TObject::kOverwrite);
-  kernel->Write("kernel",TObject::kOverwrite);
-  deltacEE->Write("deltaEE",TObject::kOverwrite);
-  deltacFH->Write("deltaFH",TObject::kOverwrite);
-  deltacBH->Write("deltaBH",TObject::kOverwrite);
-  kappa->Write("kappa",TObject::kOverwrite);
-  energyMin->Write("eMin",TObject::kOverwrite);
-  matchingDistance->Write("matchingDist",TObject::kOverwrite);
-  minClusters->Write("minCluster",TObject::kOverwrite);
-
-  criticalDistanceEEwgt->Write("critDistEEwgt",TObject::kOverwrite);
-  criticalDistanceFHwgt->Write("critDistFHwgt",TObject::kOverwrite);
-  criticalDistanceBHwgt->Write("critDistBHwgt",TObject::kOverwrite);
-  reachedEEwgt->Write("reachedEEwgt",TObject::kOverwrite);
-  kernelwgt->Write("kernelwgt",TObject::kOverwrite);
-  deltacEEwgt->Write("deltaEEwgt",TObject::kOverwrite);
-  deltacFHwgt->Write("deltaFHwgt",TObject::kOverwrite);
-  deltacBHwgt->Write("deltaBHwgt",TObject::kOverwrite);
-  kappawgt->Write("kappawgt",TObject::kOverwrite);
-  energyMinwgt->Write("eMinwgt",TObject::kOverwrite);
-  matchingDistancewgt->Write("matchingDistwgt",TObject::kOverwrite);
-  minClusterswgt->Write("minClusterwgt",TObject::kOverwrite);
+  
+  for(int i=0;i<kNparams;i++){
+    paramHists[i]->Write(paramTitle[i],TObject::kOverwrite);
+    paramHistsWgt[i]->Write(Form("%swgt",paramTitle[i]),TObject::kOverwrite);
+  }
   
   outfile->Close();
   delete outfile;
@@ -261,31 +243,11 @@ int main(int argc, char* argv[])
   
   TH1D *scoresDist[nGenerations];
   scoresMean = new TGraph();
-  criticalDistanceEE = new TH2D("critical distance EE","critical distance EE",nGenerations,0,nGenerations,100,criticalDistanceEEmin,criticalDistanceEEmax);
-  criticalDistanceFH = new TH2D("critical distance FH","critical distance FH",nGenerations,0,nGenerations,100,criticalDistanceFHmin,criticalDistanceFHmax);
-  criticalDistanceBH = new TH2D("critical distance BH","critical distance BH",nGenerations,0,nGenerations,100,criticalDistanceBHmin,criticalDistanceBHmax);
-  reachedEE = new TH2D("reached EE","reached EE",nGenerations,0,nGenerations,2, 0, 2);
-  kernel = new TH2D("kernel","kernel",nGenerations,0,nGenerations,3, 0, 3);
-  deltacEE = new TH2D("delta c EE","delta c EE",nGenerations,0,nGenerations,100, deltacEEmin,deltacEEmax);
-  deltacFH = new TH2D("delta c FH","delta c FH",nGenerations,0,nGenerations,100, deltacFHmin,deltacFHmax);
-  deltacBH = new TH2D("delta c BH","delta c BH",nGenerations,0,nGenerations,100, deltacBHmin,deltacBHmax);
-  kappa = new TH2D("kappa","kappa",nGenerations,0,nGenerations,10000, kappaMin,kappaMax);
-  energyMin = new TH2D("energy threshold","energy threshold",nGenerations,0,nGenerations,100,energyThresholdMin,energyThresholdMax);
-  matchingDistance = new TH2D("matching distance","matching distance",nGenerations,0,nGenerations,100, matchingDistanceMin,matchingDistanceMax);
-  minClusters = new TH2D("min clusters","min clusters",nGenerations,0,nGenerations,10, minClustersMin,minClustersMax);
   
-  criticalDistanceEEwgt = new TH2D("critical distance EE wgt","critical distance EE wgt",nGenerations,0,nGenerations,100,criticalDistanceEEmin,criticalDistanceEEmax);
-  criticalDistanceFHwgt = new TH2D("critical distance FH wgt","critical distance FH wgt",nGenerations,0,nGenerations,100,criticalDistanceFHmin,criticalDistanceFHmax);
-  criticalDistanceBHwgt = new TH2D("critical distance BH wgt","critical distance BH wgt",nGenerations,0,nGenerations,100,criticalDistanceBHmin,criticalDistanceBHmax);
-  reachedEEwgt = new TH2D("reached EE wgt","reached EE wgt",nGenerations,0,nGenerations,2, 0, 2);
-  kernelwgt = new TH2D("kernel wgt","kernel wgt",nGenerations,0,nGenerations,3, 0, 3);
-  deltacEEwgt = new TH2D("delta c EE wgt","delta c EE wgt",nGenerations,0,nGenerations,100, deltacEEmin,deltacEEmax);
-  deltacFHwgt = new TH2D("delta c FH wgt","delta c FH wgt",nGenerations,0,nGenerations,100, deltacFHmin,deltacFHmax);
-  deltacBHwgt = new TH2D("delta c BH wgt","delta c BH wgt",nGenerations,0,nGenerations,100, deltacBHmin,deltacBHmax);
-  kappawgt = new TH2D("kappa wgt","kappa wgt",nGenerations,0,nGenerations,10000, kappaMin,kappaMax);
-  energyMinwgt = new TH2D("energy threshold wgt","energy threshold wgt",nGenerations,0,nGenerations,100,energyThresholdMin,energyThresholdMax);
-  matchingDistancewgt = new TH2D("matching distance wgt","matching distance wgt",nGenerations,0,nGenerations,100, matchingDistanceMin,matchingDistanceMax);
-  minClusterswgt = new TH2D("min clusters wgt","min clusters wgt",nGenerations,0,nGenerations,10, minClustersMin,minClustersMax);
+  for(int i=0;i<kNparams;i++){
+    paramHists[i] = new TH2D(paramTitle[i],paramTitle[i],nGenerations,0,nGenerations,100,paramMin[i],paramMax[i]);
+    paramHistsWgt[i] = new TH2D(Form("%sWgt",paramTitle[i]),Form("%sWgt",paramTitle[i]),nGenerations,0,nGenerations,100,paramMin[i],paramMax[i]);
+  }
   
   // make sure to recreate output file
   outfile = new TFile("geneticHists.root","recreate");
@@ -340,31 +302,10 @@ int main(int argc, char* argv[])
     TestPopulation(population, scoresDist[iGeneration], scores);
     
     for(int i=0;i<populationSize;i++){
-      criticalDistanceEE->Fill(iGeneration,population[i]->GetCriticalDistanceEE());
-      criticalDistanceFH->Fill(iGeneration,population[i]->GetCriticalDistanceFH());
-      criticalDistanceBH->Fill(iGeneration,population[i]->GetCriticalDistanceBH());
-      reachedEE->Fill(iGeneration,population[i]->GetReachedEE());
-      kernel->Fill(iGeneration,population[i]->GetKernel());
-      deltacEE->Fill(iGeneration,population[i]->GetDeltacEE());
-      deltacFH->Fill(iGeneration,population[i]->GetDeltacFH());
-      deltacBH->Fill(iGeneration,population[i]->GetDeltacBH());
-      kappa->Fill(iGeneration,population[i]->GetKappa());
-      energyMin->Fill(iGeneration,population[i]->GetEnergyMin());
-      matchingDistance->Fill(iGeneration,population[i]->GetMatchingDistance());
-      minClusters->Fill(iGeneration,population[i]->GetMinClusters());
-      
-      criticalDistanceEEwgt->Fill(iGeneration,population[i]->GetCriticalDistanceEE(),population[i]->GetScore());
-      criticalDistanceFHwgt->Fill(iGeneration,population[i]->GetCriticalDistanceFH(),population[i]->GetScore());
-      criticalDistanceBHwgt->Fill(iGeneration,population[i]->GetCriticalDistanceBH(),population[i]->GetScore());
-      reachedEEwgt->Fill(iGeneration,population[i]->GetReachedEE(),population[i]->GetScore());
-      kernelwgt->Fill(iGeneration,population[i]->GetKernel(),population[i]->GetScore());
-      deltacEEwgt->Fill(iGeneration,population[i]->GetDeltacEE(),population[i]->GetScore());
-      deltacFHwgt->Fill(iGeneration,population[i]->GetDeltacFH(),population[i]->GetScore());
-      deltacBHwgt->Fill(iGeneration,population[i]->GetDeltacBH(),population[i]->GetScore());
-      kappawgt->Fill(iGeneration,population[i]->GetKappa(),population[i]->GetScore());
-      energyMinwgt->Fill(iGeneration,population[i]->GetEnergyMin(),population[i]->GetScore());
-      matchingDistancewgt->Fill(iGeneration,population[i]->GetMatchingDistance(),population[i]->GetScore());
-      minClusterswgt->Fill(iGeneration,population[i]->GetMinClusters(),population[i]->GetScore());
+      for(int iPar=0;iPar<kNparams;iPar++){
+        paramHists[iPar]->Fill(iGeneration,population[i]->GetParam((EParam)iPar));
+        paramHistsWgt[iPar]->Fill(iGeneration,population[i]->GetParam((EParam)iPar),population[i]->GetScore());
+      }
     }
     scoresMean->SetPoint(iGeneration, iGeneration, scoresDist[iGeneration]->GetMean());
     
@@ -378,44 +319,6 @@ int main(int argc, char* argv[])
 //      }
 //    }
   }
-  
-  cout<<"plotting"<<endl;
-  TCanvas *c1 = new TCanvas("c1","c1",2880,1800);
-  c1->Divide(4,4);
-  
-  c1->cd(1);
-  scoresMean->SetMarkerSize(1.0);
-  scoresMean->SetMarkerStyle(20);
-  scoresMean->SetMarkerColor(kGreen+2);
-  scoresMean->Draw("AP");
-
-  c1->cd(2);
-  criticalDistanceEE->Draw("colz");
-  c1->cd(3);
-  criticalDistanceFH->Draw("colz");
-  c1->cd(4);
-  criticalDistanceBH->Draw("colz");
-  c1->cd(6);
-  reachedEE->Draw("colz");
-  c1->cd(7);
-  kernel->Draw("colz");
-  c1->cd(8);
-  deltacEE->Draw("colz");
-  c1->cd(9);
-  deltacFH->Draw("colz");
-  c1->cd(10);
-  deltacBH->Draw("colz");
-  c1->cd(11);
-  kappa->Draw("colz");
-  c1->cd(12);
-  energyMin->Draw("colz");
-  c1->cd(13);
-  matchingDistance->Draw("colz");
-  c1->cd(14);
-  minClusters->Draw("colz");
-  c1->cd(15);
-  
-  c1->Update();
   
   theApp.Run();
   return 0;

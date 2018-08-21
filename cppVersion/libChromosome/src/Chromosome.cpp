@@ -24,42 +24,24 @@
 using namespace std;
 
 Chromosome::Chromosome() :
-criticalDistanceEE(0.0),
-criticalDistanceFH(0.0),
-criticalDistanceBH(0.0),
-dependSensor(true),
-reachedEE(false),
-kernel(0),
-deltacEE(0.0),
-deltacFH(0.0),
-deltacBH(0.0),
-kappa(0.0),
-energyMin(0.0),
-matchingDistance(0.0),
-minClusters(0)
+executionTime(99999),
+score(-99999),
+normalizedScore(-99999),
+mutationChance(0.002),
+severityFactor(1.0),
+crossover(kSinglePoint)
 {
   int nChromosomes = 6;
   for(int i=0;i<nChromosomes;i++){bitChromosome.push_back(0);}
- 
-  crossover = kSinglePoint;
   
-  clusteringOutput.resolutionMean = 999999;
-  clusteringOutput.resolutionSigma = 999999;
-  clusteringOutput.separationMean = 999999;
-  clusteringOutput.separationSigma = 999999;
-  clusteringOutput.containmentMean = 999999;
-  clusteringOutput.containmentSigma = 999999;
+  clusteringOutput = ClusteringOutput();
+
+  for(int i=0;i<kNparams;i++){params.push_back(0.0);}
   
   uniqueID = reinterpret_cast<uint64_t>(this);
   configPath = "tmp/config_"+to_string(uniqueID)+".md";
   clusteringOutputPath = "tmp/output_"+to_string(uniqueID)+".txt";
-  executionTime = 99999;
-  score = -99999;
-  normalizedScore = -999999;
-  
-  mutationChance = 0.002;
-  severityFactor = 1.0;
-} 
+}
 
 Chromosome::~Chromosome()
 {
@@ -70,20 +52,9 @@ Chromosome* Chromosome::GetRandom()
 {
   Chromosome *result = new Chromosome();
   
-  result->SetCriticalDistanceEE(RandFloat(criticalDistanceEEmin, criticalDistanceEEmax));
-  result->SetCriticalDistanceFH(RandFloat(criticalDistanceFHmin, criticalDistanceFHmax));
-  result->SetCriticalDistanceBH(RandFloat(criticalDistanceBHmin, criticalDistanceBHmax));
-  result->SetReachedEE(RandBool());
-  result->SetKernel(RandInt(kernelMin, kernelMax));
-  result->SetDeltacEE(RandFloat(deltacEEmin, deltacEEmax));
-  result->SetDeltacFH(RandFloat(deltacFHmin, deltacFHmax));
-  result->SetDeltacBH(RandFloat(deltacBHmin, deltacBHmax));
-  result->SetKappa(RandFloat(kappaMin, kappaMax));
-  result->SetEnergyMin(RandFloat(energyThresholdMin, energyThresholdMax));
-  result->SetMatchingDistance(RandFloat(matchingDistanceMin, matchingDistanceMax));
-  result->SetMinClusters(RandInt(minClustersMin, minClustersMax));
-  
-  result->SetDependSensor(true); // it has to depend on the sensor thickness
+  for(int i=0;i<kNparams;i++){
+    result->SetParam((EParam)i,RandFloat(paramMin[i],paramMax[i]));
+  }
   
   return result;
 }
@@ -94,50 +65,30 @@ void Chromosome::SaveToBitChromosome()
   
   // load values to 1st chromosome
   int currentShift = 0;
-  int chromoIndex = 0;
-  ShiftIntoChromosome(criticalDistanceEE,currentShift,chromoIndex);
-  ShiftIntoChromosome(criticalDistanceFH,currentShift,chromoIndex);
-  ShiftIntoChromosome(criticalDistanceBH,currentShift,chromoIndex);
-  ShiftIntoChromosome(reachedEE,currentShift,chromoIndex);
+  int chromoIndex = -1;
   
-  currentShift = 0;
-  chromoIndex++;
-  ShiftIntoChromosome(kernel,currentShift,chromoIndex);
-  ShiftIntoChromosome(deltacEE,currentShift,chromoIndex);
-  ShiftIntoChromosome(deltacFH,currentShift,chromoIndex);
-  ShiftIntoChromosome(deltacBH,currentShift,chromoIndex);
-  
-  currentShift = 0;
-  chromoIndex++;
-  ShiftIntoChromosome(kappa,currentShift,chromoIndex);
-  ShiftIntoChromosome(energyMin,currentShift,chromoIndex);
-  ShiftIntoChromosome(matchingDistance,currentShift,chromoIndex);
-  ShiftIntoChromosome(minClusters,currentShift,chromoIndex);
+  for(int iPar=0;iPar<kNparams;iPar++){
+    if(iPar%4 == 0){
+      currentShift = 0;
+      chromoIndex++;
+    }
+    ShiftIntoChromosome(params[iPar],currentShift,chromoIndex);
+  }
 }
 
 void Chromosome::ReadFromBitChromosome()
 {
   // read 1st chromosome
   int currentShift = 0;
-  int chromoIndex = 0;
-  SetValueFromChromosome(criticalDistanceEE, currentShift, chromoIndex);
-  SetValueFromChromosome(criticalDistanceFH, currentShift, chromoIndex);
-  SetValueFromChromosome(criticalDistanceBH, currentShift, chromoIndex);
-  SetValueFromChromosome(reachedEE, currentShift, chromoIndex);
-
-  currentShift = 0;
-  chromoIndex++;
-  SetValueFromChromosome(kernel, currentShift, chromoIndex);
-  SetValueFromChromosome(deltacEE, currentShift, chromoIndex);
-  SetValueFromChromosome(deltacFH, currentShift, chromoIndex);
-  SetValueFromChromosome(deltacBH, currentShift, chromoIndex);
+  int chromoIndex = -1;
   
-  currentShift = 0;
-  chromoIndex++;
-  SetValueFromChromosome(kappa, currentShift, chromoIndex);
-  SetValueFromChromosome(energyMin, currentShift, chromoIndex);
-  SetValueFromChromosome(matchingDistance, currentShift, chromoIndex);
-  SetValueFromChromosome(minClusters, currentShift, chromoIndex);
+  for(int iPar=0;iPar<kNparams;iPar++){
+    if(iPar%4 == 0){
+      currentShift = 0;
+      chromoIndex++;
+    }
+    SetValueFromChromosome(params[kCriticalDistanceEE], currentShift, chromoIndex);
+  }
 }
 
 void Chromosome::Print()
@@ -146,27 +97,23 @@ void Chromosome::Print()
   cout<<"Chromosome "<<GetUniqueID()<<endl;
   
   cout<<"Critical distance:";
-  cout<<"\tEE:"<<GetCriticalDistanceEE();
-  cout<<"\tFH:"<<GetCriticalDistanceFH();
-  cout<<"\tBH:"<<GetCriticalDistanceBH()<<endl;
-  
-  cout<<"Depend on sensor:"<<GetDependSensor()<<endl;
-  cout<<"Reached EE only:"<<GetReachedEE()<<endl;
+  cout<<"\tEE:"<<GetParam(kCriticalDistanceEE);
+  cout<<"\tFH:"<<GetParam(kCriticalDistanceFH);
+  cout<<"\tBH:"<<GetParam(kCriticalDistanceBH)<<endl;
   
   cout<<"Kernel: ";
-  if(GetKernel()==0)        cout<<"step"<<endl;
-  else if(GetKernel()==1)   cout<<"gaus"<<endl;
-  else                      cout<<"exp"<<endl;
+  if(round(GetParam(kKernel)) == 0)        cout<<"step"<<endl;
+  else if(round(GetParam(kKernel)) == 1)   cout<<"gaus"<<endl;
+  else                                     cout<<"exp"<<endl;
   
   cout<<"Critical #delta:";
-  cout<<"\tEE:"<<GetDeltacEE();
-  cout<<"\tFH:"<<GetDeltacFH();
-  cout<<"\tBH:"<<GetDeltacBH()<<endl;
+  cout<<"\tEE:"<<GetParam(kDeltacEE);
+  cout<<"\tFH:"<<GetParam(kDeltacFH);
+  cout<<"\tBH:"<<GetParam(kDeltacBH)<<endl;
   
-  cout<<"kappa:"<<GetKappa()<<endl;
-  cout<<"energy threshold:"<<GetEnergyMin()<<endl;
-  cout<<"max matching distance:"<<GetMatchingDistance()<<endl;
-  cout<<"min clusters:"<<GetMinClusters()<<endl;
+  cout<<"kappa:"<<GetParam(kKappa)<<endl;
+  cout<<"energy threshold:"<<GetParam(kEnergyThreshold)<<endl;
+  cout<<"max matching distance:"<<GetParam(kMatchingDistance)<<endl;
   
   clusteringOutput.Print();
   cout<<"execution time:"<<executionTime<<endl;
@@ -200,22 +147,21 @@ void Chromosome::StoreInConfig(string path)
   
   system(("cp baseConfig.md "+currentConfigPath).c_str());
   
-  UpdateParamValue(currentConfigPath, "depend_sensor",GetDependSensor());
-  if(GetKernel() == 0)      UpdateParamValue(currentConfigPath, "energy_density_function","step");
-  else if(GetKernel() == 1) UpdateParamValue(currentConfigPath, "energy_density_function","gaus");
+  int kernelIndex = round(GetParam(kKernel));
+  
+  if(kernelIndex == 0)      UpdateParamValue(currentConfigPath, "energy_density_function","step");
+  else if(kernelIndex == 1) UpdateParamValue(currentConfigPath, "energy_density_function","gaus");
   else                      UpdateParamValue(currentConfigPath, "energy_density_function","exp");
   
-  UpdateParamValue(currentConfigPath, "critial_distance_EE",GetCriticalDistanceEE());
-  UpdateParamValue(currentConfigPath, "critial_distance_FH",GetCriticalDistanceFH());
-  UpdateParamValue(currentConfigPath, "critial_distance_BH",GetCriticalDistanceBH());
-  UpdateParamValue(currentConfigPath, "deltac_EE",GetDeltacEE());
-  UpdateParamValue(currentConfigPath, "deltac_FH",GetDeltacFH());
-  UpdateParamValue(currentConfigPath, "deltac_BH",GetDeltacBH());
-  UpdateParamValue(currentConfigPath, "kappa",GetKappa());
-  UpdateParamValue(currentConfigPath, "energy_min",GetEnergyMin());
-  UpdateParamValue(currentConfigPath, "min_clusters",GetMinClusters());
-  UpdateParamValue(currentConfigPath, "reachedEE_only",GetReachedEE());
-  UpdateParamValue(currentConfigPath, "matching_max_distance",GetMatchingDistance());
+  UpdateParamValue(currentConfigPath, "critial_distance_EE",GetParam(kCriticalDistanceEE));
+  UpdateParamValue(currentConfigPath, "critial_distance_FH",GetParam(kCriticalDistanceFH));
+  UpdateParamValue(currentConfigPath, "critial_distance_BH",GetParam(kCriticalDistanceBH));
+  UpdateParamValue(currentConfigPath, "deltac_EE",GetParam(kDeltacEE));
+  UpdateParamValue(currentConfigPath, "deltac_FH",GetParam(kDeltacFH));
+  UpdateParamValue(currentConfigPath, "deltac_BH",GetParam(kDeltacBH));
+  UpdateParamValue(currentConfigPath, "kappa",GetParam(kKappa));
+  UpdateParamValue(currentConfigPath, "energy_min",GetParam(kEnergyThreshold));
+  UpdateParamValue(currentConfigPath, "matching_max_distance",GetParam(kMatchingDistance));
   UpdateParamValue(currentConfigPath, "score_output_path",clusteringOutputPath);
 }
 
@@ -231,9 +177,9 @@ void Chromosome::CalculateScore()
                       + fabs(clusteringOutput.resolutionMean)
                       +      clusteringOutput.resolutionSigma
                       +      clusteringOutput.separationMean
-  +      clusteringOutput.separationSigma;
-//                      + fabs(clusteringOutput.deltaNclustersMean)
-//                      +      clusteringOutput.deltaNclustersSigma;
+                      +      clusteringOutput.separationSigma
+                      + fabs(clusteringOutput.deltaNclustersMean)
+                      +      clusteringOutput.deltaNclustersSigma;
   
   score = severityFactor/distance;
   
@@ -329,13 +275,6 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
     // populate fields
     children[iChild]->ReadFromBitChromosome();
     
-    // make sure that after crossing and mutation all parameters are within limits
-    int wasOutside = children[iChild]->BackToLimits();
-    if(wasOutside > 0){
-      cout<<"ERROR -- produced child was outside of limits ("<<wasOutside<<" times)"<<endl;
-      cout<<"with the current implementation it should never happen!!"<<endl;
-    }
-    
     // update the bits after updating values!!
     children[iChild]->SaveToBitChromosome();
     
@@ -348,72 +287,4 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
   return children;
 }
 
-template<class T>
-T Chromosome::DoubleInRangeToUint(double val, double min, double max, T output)
-{
-  return static_cast<decltype(output)>(std::numeric_limits<decltype(output)>::max()/(max-min)*(val-min));
-}
 
-template<class T>
-double Chromosome::UintToDoubleInRange(T input, double min, double max)
-{
-  return min + (double)input*(max-min)/std::numeric_limits<decltype(input)>::max();
-}
-
-
-int Chromosome::BackToLimits()
-{
-  int wasOutside = 0;
-  
-  if(GetCriticalDistanceEE() < criticalDistanceEEmin || GetCriticalDistanceEE() > criticalDistanceEEmax){
-    SetCriticalDistanceEE(RandFloat(criticalDistanceEEmin, criticalDistanceEEmax));
-    wasOutside++;
-  }
-  
-  if(GetCriticalDistanceFH() < criticalDistanceFHmin || GetCriticalDistanceFH() > criticalDistanceFHmax){
-    SetCriticalDistanceFH(RandFloat(criticalDistanceFHmin, criticalDistanceFHmax));
-    wasOutside++;
-  }
-  if(GetCriticalDistanceBH() < criticalDistanceBHmin || GetCriticalDistanceBH() > criticalDistanceBHmax){
-    SetCriticalDistanceBH(RandFloat(criticalDistanceBHmin, criticalDistanceBHmax));
-    wasOutside++;
-  }
-  
-  if(GetKernel() < kernelMin || GetKernel() > kernelMax){
-    SetKernel(RandInt(kernelMin, kernelMax));
-    wasOutside++;
-  }
-    
-  if(GetDeltacEE() < deltacEEmin || GetDeltacEE() > deltacEEmax){
-    SetDeltacEE(RandFloat(deltacEEmin, deltacEEmax));
-    wasOutside++;
-  }
-  if(GetDeltacFH() < deltacFHmin || GetDeltacFH() > deltacFHmax){
-    SetDeltacFH(RandFloat(deltacFHmin, deltacFHmax));
-    wasOutside++;
-  }
-  if(GetDeltacBH() < deltacBHmin || GetDeltacBH() > deltacBHmax){
-    SetDeltacBH(RandFloat(deltacBHmin, deltacBHmax));
-    wasOutside++;
-  }
-    
-  if(GetKappa() < kappaMin || GetKappa() > kappaMax){
-    SetKappa(RandFloat(kappaMin, kappaMax));
-    wasOutside++;
-  }
-  
-  if(GetEnergyMin() < energyThresholdMin || GetEnergyMin() > energyThresholdMax){
-    SetEnergyMin(RandFloat(energyThresholdMin, energyThresholdMax));
-    wasOutside++;
-  }
-    
-  if(GetMatchingDistance() < matchingDistanceMin || GetMatchingDistance() > matchingDistanceMax){
-    SetMatchingDistance(RandFloat(matchingDistanceMin, matchingDistanceMax));
-    wasOutside++;
-  }
-  if(GetMinClusters() < minClustersMin || GetMinClusters() > minClustersMax){
-    SetMinClusters(RandInt(minClustersMin, minClustersMax));
-    wasOutside++;
-  }
-  return wasOutside;
-}

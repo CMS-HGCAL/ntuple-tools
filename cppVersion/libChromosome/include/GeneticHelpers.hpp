@@ -16,49 +16,71 @@
 
 #include <TMath.h>
 
-#define criticalDistanceEEmin 0.00
-#define criticalDistanceEEmax 30.0
-#define criticalDistanceEEstart 17.4
+enum EParam{
+  kCriticalDistanceEE,
+  kCriticalDistanceFH,
+  kCriticalDistanceBH,
+  kDeltacEE,
+  kDeltacFH,
+  kDeltacBH,
+  kKappa,
+  kEnergyThreshold,
+  kMatchingDistance,
+  kKernel,
+  kNparams
+};
 
-#define criticalDistanceFHmin 0.00
-#define criticalDistanceFHmax 30.0
-#define criticalDistanceFHstart 14.9
+const double paramMin[kNparams] = {
+  0.0,
+  0.0,
+  0.01,
+  0.01, // if this is too small, algorithm cannot find clusters
+  0.01,
+  0.01,
+  0.1, // below 1.0 algorithm doesn't work
+  2.0,
+  0.01,
+  0.0
+};
 
-#define criticalDistanceBHmin 0.01
-#define criticalDistanceBHmax 50.0
-#define criticalDistanceBHstart 24.9
+const double paramMax[kNparams] = {
+  30.0,
+  30.0,
+  50.0,
+  30.0, // this is critical, above ~30 problems start to occur
+  30.0,
+  40.0,
+  500.0,
+  10.0,
+  30.0,
+  2.0
+};
 
-#define kernelMin 0
-#define kernelMax 2
-#define kernelStart 0
-
-#define deltacEEmin 0.01  // if this is too small, algorithm cannot find clusters
-#define deltacEEmax 30.0  // this is critical, above ~30 problems start to occur
-#define deltacEEstart 14.5
-
-#define deltacFHmin 0.01
-#define deltacFHmax 40.0
-#define deltacFHstart 19.9
-
-#define deltacBHmin 0.01
-#define deltacBHmax 40.0
-#define deltacBHstart 24.9
-
-#define kappaMin 0.1  // below 1.0 algorithm doesn't work
-#define kappaMax 500.0
-#define kappaStart 258.0
-
-#define energyThresholdMin 2.0
-#define energyThresholdMax 10.0
-#define energyThresholdStart 3.40
-
-#define matchingDistanceMin 0.01
-#define matchingDistanceMax 30.0
-#define matchingDistanceStart 14.5
-
-#define minClustersMin 0
-#define minClustersMax 20
-#define minClustersStart 9
+const double paramStart[kNparams] = {
+  17.4,
+  14.9,
+  24.9,
+  14.5,
+  19.9,
+  24.9,
+  258.0,
+  3.40,
+  14.5,
+  0.0
+};
+  
+inline const char* paramTitle[kNparams] = {
+  "critDistEE",
+  "critDistFH",
+  "critDistBH",
+  "deltaEE",
+  "deltaFH",
+  "deltaBH",
+  "kappa",
+  "eMin",
+  "matchingDist",
+  "kernel"
+};
 
 enum EDet {
   kEE,  ///< electromagneric endcap (silicon)
@@ -158,25 +180,6 @@ void GetParamFomeConfig(std::string configPath, std::string keyToFind, T &return
   }
   return;
 }
-
-//inline double GetParamFomeConfig(std::string configPath, std::string keyToFind){
-//  std::ifstream is_file(configPath);
-//
-//  std::string line;
-//  while(getline(is_file, line)){
-//    std::istringstream is_line(line);
-//    std::string key;
-//    if( std::getline(is_line, key, ':')){
-//      std::string value;
-//      if(std::getline(is_line, value)){
-//        if(key==keyToFind){
-//          return stod(value);
-//        }
-//      }
-//    }
-//  }
-//  return -999999999;
-//}
 
 struct ClusteringOutput {
   ClusteringOutput(){

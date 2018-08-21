@@ -46,7 +46,7 @@ private:
   bool dependSensor;     ///< Should algo depend on the sensor type
   double kappa;          ///< ??
   double ecut;           ///< Minimum hit energy
-  int minClusters;       ///< Request at least minClusters+1 2D clusters
+//  int minClusters;       ///< Request at least minClusters+1 2D clusters
   int verbosityLevel;    ///< Current verbosity level
   double criticalDistanceEE;
   double criticalDistanceFH;

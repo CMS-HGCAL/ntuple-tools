@@ -34,7 +34,7 @@ ConfigurationManager* ConfigurationManager::Instance(bool _dependSensor,
                                                      double _deltac_FH,
                                                      double _deltac_BH,
                                                      double _minEnergy,
-                                                     int _minClusters,
+//                                                     int _minClusters,
                                                      double _criticalDistance_EE,
                                                      double _criticalDistance_FH,
                                                      double _criticalDistance_BH,
@@ -61,7 +61,7 @@ ConfigurationManager* ConfigurationManager::Instance(bool _dependSensor,
                                         _deltac_FH,
                                         _deltac_BH,
                                         _minEnergy,
-                                        _minClusters,
+//                                        _minClusters,
                                         _criticalDistance_EE,
                                         _criticalDistance_FH,
                                         _criticalDistance_BH,
@@ -114,7 +114,7 @@ configPath(_configPath)
   deltac_BH = settings->GetValue("deltac_BH",2.0);
   
   minEnergy = settings->GetValue("energy_min",3.0);
-  minClusters = settings->GetValue("min_clusters",3);
+//  minClusters = settings->GetValue("min_clusters",3);
   
   criticalDistance_EE = settings->GetValue("critical_distance_EE",2.0);
   criticalDistance_FH = settings->GetValue("critical_distance_FH",2.0);
@@ -145,7 +145,7 @@ ConfigurationManager::ConfigurationManager(bool _dependSensor,
                                                      double _deltac_FH,
                                                      double _deltac_BH,
                                                      double _minEnergy,
-                                                     int _minClusters,
+//                                                     int _minClusters,
                                                      double _criticalDistance_EE,
                                                      double _criticalDistance_FH,
                                                      double _criticalDistance_BH,
@@ -171,7 +171,7 @@ ConfigurationManager::ConfigurationManager(bool _dependSensor,
   deltac_FH = _deltac_FH;
   deltac_BH = _deltac_BH;
   minEnergy = _minEnergy;
-  minClusters = _minClusters;
+//  minClusters = _minClusters;
   criticalDistance_EE = _criticalDistance_EE;
   criticalDistance_FH = _criticalDistance_FH;
   criticalDistance_BH = _criticalDistance_BH;

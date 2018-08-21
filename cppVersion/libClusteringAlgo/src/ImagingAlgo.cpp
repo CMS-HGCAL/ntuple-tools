@@ -20,7 +20,7 @@ configPath("")
   dependSensor = config->GetDependSensor();
   kappa = config->GetKappa();
   ecut = config->GetEnergyMin();
-  minClusters = config->GetMinClusters();
+//  minClusters = config->GetMinClusters();
   verbosityLevel = config->GetVerbosityLevel();
   criticalDistanceEE = config->GetCriticalDistance(kEE);
   criticalDistanceFH = config->GetCriticalDistance(kFH);
@@ -58,7 +58,7 @@ configPath("")
     cout<<"   deltac_BH: "<<deltacBH<<endl;
     cout<<"   kappa: "<<kappa<<endl;
     cout<<"   ecut: "<<ecut<<endl;
-    cout<<"   minClusters: "<<minClusters<<endl;
+//    cout<<"   minClusters: "<<minClusters<<endl;
     cout<<"   verbosityLevel: "<<verbosityLevel<<endl;
   }
 }
@@ -72,7 +72,7 @@ config(nullptr)
   dependSensor =  GetIntFomeConfig(configPath, "depend_sensor");
   kappa = GetDoubleFomeConfig(configPath, "kappa");
   ecut = GetDoubleFomeConfig(configPath, "energy_min");
-  minClusters = GetIntFomeConfig(configPath, "min_clusters");
+//  minClusters = GetIntFomeConfig(configPath, "min_clusters");
   verbosityLevel = GetIntFomeConfig(configPath, "verbosity_level");
   criticalDistanceEE = GetDoubleFomeConfig(configPath, "critial_distance_EE");
   criticalDistanceFH = GetDoubleFomeConfig(configPath, "critial_distance_FH");
@@ -113,7 +113,7 @@ config(nullptr)
     cout<<"   deltac_BH: "<<deltacBH<<endl;
     cout<<"   kappa: "<<kappa<<endl;
     cout<<"   ecut: "<<ecut<<endl;
-    cout<<"   minClusters: "<<minClusters<<endl;
+//    cout<<"   minClusters: "<<minClusters<<endl;
     cout<<"   verbosityLevel: "<<verbosityLevel<<endl;
   }
 }

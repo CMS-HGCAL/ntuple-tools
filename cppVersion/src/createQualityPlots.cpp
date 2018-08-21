@@ -28,7 +28,7 @@ using namespace std;
 
 int main(int argc, char* argv[])
 {
-  if((argc != 2) && (argc != 23)){
+  if((argc != 2) && (argc != 22)){
     cout<<"Usage: createQualityPlots path_to_config"<<endl;
     exit(0);
   }
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     string configPath(argv[1]);
     config = ConfigurationManager::Instance(configPath);
   }
-  if(argc == 23){
+  if(argc == 22){
     config = ConfigurationManager::Instance(atoi(argv[1]), // depend sensor
                                             argv[2], // input path
                                             argv[3], // output path
@@ -47,21 +47,20 @@ int main(int argc, char* argv[])
                                             atof(argv[5]), // deltac FH
                                             atof(argv[6]), // deltac BH
                                             atof(argv[7]), // energy threshold
-                                            atoi(argv[8]), // min clusters
-                                            atof(argv[9]), // crit dist EE
-                                            atof(argv[10]),// crit dist FH
-                                            atof(argv[11]),// crit dist BH
-                                            atof(argv[12]),// kappa
-                                            atoi(argv[13]),// verbosity
-                                            atoi(argv[14]),// min n tuple
-                                            atoi(argv[15]),// max n tuple
-                                            atoi(argv[16]),// min layer
-                                            atoi(argv[17]),// max layer
-                                            atoi(argv[18]),// events per tuple
-                                            argv[19],// energy density function
-                                            atoi(argv[20]),// reached EE only
-                                            atof(argv[21]),// matching distance
-                                            argv[22] // score output path
+                                            atof(argv[8]), // crit dist EE
+                                            atof(argv[9]),// crit dist FH
+                                            atof(argv[10]),// crit dist BH
+                                            atof(argv[11]),// kappa
+                                            atoi(argv[12]),// verbosity
+                                            atoi(argv[13]),// min n tuple
+                                            atoi(argv[14]),// max n tuple
+                                            atoi(argv[15]),// min layer
+                                            atoi(argv[16]),// max layer
+                                            atoi(argv[17]),// events per tuple
+                                            argv[18],// energy density function
+                                            atoi(argv[19]),// reached EE only
+                                            atof(argv[20]),// matching distance
+                                            argv[21] // score output path
                                             );
   }
   

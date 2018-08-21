@@ -24,7 +24,7 @@ public:
                                        double _deltac_FH,
                                        double _deltac_BH,
                                        double _minEnergy,
-                                       int _minClusters,
+//                                       int _minClusters,
                                        double _criticalDistance_EE,
                                        double _criticalDistance_FH,
                                        double _criticalDistance_BH,
@@ -53,7 +53,7 @@ public:
   double GetDeltac(EDet det);
   
   /// Returns requested min number of 2D clusters + 1
-  inline int GetMinClusters(){return minClusters;}
+//  inline int GetMinClusters(){return minClusters;}
   
   /// Returns cut on energy (minimum)
   inline double GetEnergyMin(){return minEnergy;}
@@ -105,7 +105,7 @@ private:
                        double _deltac_FH,
                        double _deltac_BH,
                        double _minEnergy,
-                       int _minClusters,
+//                       int _minClusters,
                        double _criticalDistance_EE,
                        double _criticalDistance_FH,
                        double _criticalDistance_BH,
@@ -135,7 +135,7 @@ private:
   double deltac_FH;
   double deltac_BH;
   double minEnergy;
-  int minClusters;
+//  int minClusters;
   double criticalDistance_EE;
   double criticalDistance_FH;
   double criticalDistance_BH;
