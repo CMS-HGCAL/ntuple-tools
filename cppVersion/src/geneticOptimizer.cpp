@@ -27,11 +27,11 @@
 using namespace std;
 
 int populationSize = 100;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
-int maxBatchSize = 50;  ///< execute this number of jobs simultaneously
+int maxBatchSize = 25;  ///< execute this number of jobs simultaneously
 int nGenerations = 50;     ///< Number of iterations
 int nEventsPerTest = 100;   ///< On how many events per ntuple each population member will be tested
 
-int processTimeout = 300; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
+int processTimeout = 60; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
 double mutationChance = 0.002;
 double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
@@ -42,7 +42,7 @@ bool reachedEE = true;
 Chromosome::ECrossover crossoverStrategy = Chromosome::kSinglePoint;
 
 int minNtuple = 1;
-int maxNtuple = 2;
+int maxNtuple = 1;
 
 string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ ";
 
@@ -55,6 +55,9 @@ TFile *outfile;
 
 TH2D *paramHists[kNparams];
 TH2D *paramHistsWgt[kNparams];
+
+TH1D *paramHistsFailed[kNparams];
+TH1D *paramHistsPassed[kNparams];
 
 atomic<bool> allKidsFinished;
 
@@ -206,6 +209,8 @@ void SaveHists()
   for(int i=0;i<kNparams;i++){
     paramHists[i]->Write(paramTitle[i],TObject::kOverwrite);
     paramHistsWgt[i]->Write(Form("%swgt",paramTitle[i]),TObject::kOverwrite);
+    paramHistsFailed[i]->Write(Form("%s_failed",paramTitle[i]),TObject::kOverwrite);
+    paramHistsPassed[i]->Write(Form("%s_passed",paramTitle[i]),TObject::kOverwrite);
   }
   
   outfile->Close();
@@ -214,6 +219,20 @@ void SaveHists()
 
 int main(int argc, char* argv[])
 {
+  srand((unsigned int)time(0));
+  randGenerator.seed((unsigned int)time(0));
+  
+  Chromosome *chromo = Chromosome::GetRandom();
+  chromo->Print();
+  
+  chromo->SaveToBitChromosome();
+  chromo->ReadFromBitChromosome();
+  
+  chromo->Print();
+  
+  return 0;
+  
+  
   if(argc > 1 && argc!=9){
     cout<<"Usage:"<<endl;
     cout<<"./geneticOptimizer"<<endl;
@@ -238,8 +257,7 @@ int main(int argc, char* argv[])
   // Set number of events for each member to be tested on
   UpdateParamValue("baseConfig.md", "analyze_events_per_tuple",nEventsPerTest);
   
-  srand((unsigned int)time(0));
-  randGenerator.seed((unsigned int)time(0));
+
   
   TH1D *scoresDist[nGenerations];
   scoresMean = new TGraph();
@@ -247,6 +265,13 @@ int main(int argc, char* argv[])
   for(int i=0;i<kNparams;i++){
     paramHists[i] = new TH2D(paramTitle[i],paramTitle[i],nGenerations,0,nGenerations,100,paramMin[i],paramMax[i]);
     paramHistsWgt[i] = new TH2D(Form("%sWgt",paramTitle[i]),Form("%sWgt",paramTitle[i]),nGenerations,0,nGenerations,100,paramMin[i],paramMax[i]);
+    
+    paramHistsFailed[i] = new TH1D(Form("%s_failed",paramTitle[i]),
+                                   Form("%s_failed",paramTitle[i]),100,paramMin[i],paramMax[i]);
+    
+    paramHistsPassed[i] = new TH1D(Form("%s_passed",paramTitle[i]),
+                                   Form("%s_passed",paramTitle[i]),100,paramMin[i],paramMax[i]);
+    
   }
   
   // make sure to recreate output file
@@ -270,6 +295,7 @@ int main(int argc, char* argv[])
         chromo->SetSeverityFactor(severityFactor);
         chromo->SetCrossover(crossoverStrategy);
         population.push_back(chromo);
+        population[i]->Print();
       }
     }
     else{
@@ -303,8 +329,16 @@ int main(int argc, char* argv[])
     
     for(int i=0;i<populationSize;i++){
       for(int iPar=0;iPar<kNparams;iPar++){
-        paramHists[iPar]->Fill(iGeneration,population[i]->GetParam((EParam)iPar));
-        paramHistsWgt[iPar]->Fill(iGeneration,population[i]->GetParam((EParam)iPar),population[i]->GetScore());
+        double val = population[i]->GetParam((EParam)iPar);
+        double score = population[i]->GetScore();
+        
+        if(iPar == kKernel) val = round(val);
+        
+        paramHists[iPar]->Fill(iGeneration,val);
+        paramHistsWgt[iPar]->Fill(iGeneration,val,score);
+        
+        if(score > 1E-5)  paramHistsPassed[iPar]->Fill(val);
+        else              paramHistsFailed[iPar]->Fill(val);
       }
     }
     scoresMean->SetPoint(iGeneration, iGeneration, scoresDist[iGeneration]->GetMean());

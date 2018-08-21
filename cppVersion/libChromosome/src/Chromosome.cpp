@@ -63,7 +63,6 @@ void Chromosome::SaveToBitChromosome()
 {
   for(int i=0;i<bitChromosome.size();i++){bitChromosome[i] = 0;}
   
-  // load values to 1st chromosome
   int currentShift = 0;
   int chromoIndex = -1;
   
@@ -78,7 +77,6 @@ void Chromosome::SaveToBitChromosome()
 
 void Chromosome::ReadFromBitChromosome()
 {
-  // read 1st chromosome
   int currentShift = 0;
   int chromoIndex = -1;
   
@@ -87,7 +85,7 @@ void Chromosome::ReadFromBitChromosome()
       currentShift = 0;
       chromoIndex++;
     }
-    SetValueFromChromosome(params[kCriticalDistanceEE], currentShift, chromoIndex);
+    SetValueFromChromosome(params[iPar], currentShift, chromoIndex);
   }
 }
 
