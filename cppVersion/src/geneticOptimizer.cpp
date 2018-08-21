@@ -219,20 +219,6 @@ void SaveHists()
 
 int main(int argc, char* argv[])
 {
-  srand((unsigned int)time(0));
-  randGenerator.seed((unsigned int)time(0));
-  
-  Chromosome *chromo = Chromosome::GetRandom();
-  chromo->Print();
-  
-  chromo->SaveToBitChromosome();
-  chromo->ReadFromBitChromosome();
-  
-  chromo->Print();
-  
-  return 0;
-  
-  
   if(argc > 1 && argc!=9){
     cout<<"Usage:"<<endl;
     cout<<"./geneticOptimizer"<<endl;
