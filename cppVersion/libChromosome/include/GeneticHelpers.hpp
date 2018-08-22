@@ -32,8 +32,8 @@ enum EParam{
 
 const double paramMin[kNparams] = {
   0.0,  ///< min critical distance EE
-  0.0,  ///< min critical distance FH
-  0.0,  ///< min critical distance BH
+  2.0,  ///< min critical distance FH (all dies below 2.0)
+  5.0,  ///< min critical distance BH (all dies below 5.0)
   0.01, ///< min critical delta EE (too small - algorithm cannot find clusters)
   0.01, ///< min critical delta FH
   0.01, ///< min critical delta BH
@@ -44,13 +44,13 @@ const double paramMin[kNparams] = {
 };
 
 const double paramMax[kNparams] = {
-  30.0, ///< max critical distance EE
+  20.0, ///< max critical distance EE (almost all dies above 20)
   30.0, ///< max critical distance FH
   50.0, ///< max critical distance BH
   30.0, ///< max critical delta EE (above ~30 problems start to occur)
   30.0, ///< max critical delta FH
   40.0, ///< max critical delta BH
-  500.0,///< max kappa
+  150.0,///< max kappa (above 150 almost all creatures fail completely)
   10.0, ///< max energy threshold
   30.0, ///< max matching distance
   2.49  ///< max kernel index

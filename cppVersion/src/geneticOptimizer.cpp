@@ -24,17 +24,25 @@
 #include <unistd.h>
 #include <signal.h>
 
+#include <stdio.h>
+#include <dirent.h>
+
 using namespace std;
+
+string baseResultsPath;
+
+string baseResultsSearchPath = "geneticResults/";
+string baseResultsDirName = "results_";
 
 int populationSize = 100;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
 int maxBatchSize = 25;  ///< execute this number of jobs simultaneously
-int nGenerations = 50;     ///< Number of iterations
+int nGenerations = 1000;     ///< Number of iterations
 int nEventsPerTest = 100;   ///< On how many events per ntuple each population member will be tested
 
-int processTimeout = 60; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
+int processTimeout = 500; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
-double mutationChance = 0.002;
-double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
+double mutationChance = 0.005;
+double severityFactor = 50.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
 
 bool dependSensor = true;
 bool reachedEE = true;
@@ -44,7 +52,7 @@ Chromosome::ECrossover crossoverStrategy = Chromosome::kSinglePoint;
 int minNtuple = 1;
 int maxNtuple = 1;
 
-string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_ ";
+string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_";
 
 string outputPath = "../clusteringResultsCXX/geneticOptimizer/";
 
@@ -194,14 +202,14 @@ void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distrib
   cout<<"\n\n================================================="<<endl;
   cout<<"The best guy in this generation was..."<<endl;
   population[bestGuyIndex]->Print();
-  population[bestGuyIndex]->StoreInConfig("bestGenetic.md");
+  population[bestGuyIndex]->StoreInConfig(baseResultsPath+"bestGenetic.md");
   
   dist = discrete_distribution<double>(scoresNormalized.begin(), scoresNormalized.end());
 }
 
 void SaveHists()
 {
-  outfile = new TFile("geneticHists.root","update");
+  outfile = new TFile((baseResultsPath+"geneticHists.root").c_str(),"update");
   outfile->cd();
   
   scoresMean->Write("scores",TObject::kOverwrite);
@@ -215,6 +223,53 @@ void SaveHists()
   
   outfile->Close();
   delete outfile;
+}
+
+void SaveConfigurationToFile(){
+  ofstream outputFile;
+  outputFile.open(baseResultsPath+"geneticConfig.txt");
+  
+  outputFile<<"Configuration of the genetic optimizer:"<<endl;
+  outputFile<<"Number of creatures in each population:\t"<<populationSize<<endl;
+  outputFile<<"Number of generations:\t"<<nGenerations<<endl;
+  outputFile<<"Test N events per tuples:\t"<<nEventsPerTest<<endl;
+  outputFile<<"N tuple min:\t"<<minNtuple<<endl;
+  outputFile<<"N tuple max:\t"<<maxNtuple<<endl;
+  outputFile<<"Mutation probability:\t"<<mutationChance<<endl;
+  outputFile<<"Severity factor:\t"<<severityFactor<<endl;
+  outputFile<<"Timeout for each generation:\t"<<processTimeout<<" (s)"<<endl;
+  outputFile<<"Sensor dependance:\t"<<dependSensor<<endl;
+  outputFile<<"Reached EE only:\t"<<reachedEE<<endl;
+  outputFile<<"\nInput data path:\n"<<dataPath<<"\n"<<endl;
+  
+  outputFile.close();
+}
+
+void SetBaseResultsPath()
+{
+  DIR *dir = opendir(baseResultsSearchPath.c_str());
+  
+  if(!dir){
+    cout<<"could not open directory:"<<baseResultsSearchPath<<endl;
+    return;
+  }
+  
+  struct dirent *ent;
+  int maxIndex = -1;
+  
+  while( (ent = readdir(dir)) ){
+    string fileName = ent->d_name;
+    
+    size_t pos = fileName.find(baseResultsDirName);
+    if(pos != std::string::npos){
+      string indexString = fileName.substr(fileName.find(baseResultsDirName) + 8);
+      int index = stoi(indexString);
+      if(index > maxIndex) maxIndex=index;
+    }
+  }
+  closedir(dir);
+  
+  baseResultsPath = baseResultsSearchPath+baseResultsDirName+to_string(maxIndex+1)+"/";
 }
 
 int main(int argc, char* argv[])
@@ -239,11 +294,10 @@ int main(int argc, char* argv[])
   
   gROOT->ProcessLine(".L loader.C+");
   TApplication theApp("App", &argc, argv);
-  
-  // Set number of events for each member to be tested on
-  UpdateParamValue("baseConfig.md", "analyze_events_per_tuple",nEventsPerTest);
-  
 
+  SetBaseResultsPath();
+  system(("mkdir -p "+baseResultsPath).c_str());
+  SaveConfigurationToFile();
   
   TH1D *scoresDist[nGenerations];
   scoresMean = new TGraph();
@@ -261,7 +315,7 @@ int main(int argc, char* argv[])
   }
   
   // make sure to recreate output file
-  outfile = new TFile("geneticHists.root","recreate");
+  outfile = new TFile((baseResultsPath+"geneticHists.root").c_str(),"recreate");
   outfile->Close();
   delete outfile;
   
@@ -281,7 +335,6 @@ int main(int argc, char* argv[])
         chromo->SetSeverityFactor(severityFactor);
         chromo->SetCrossover(crossoverStrategy);
         population.push_back(chromo);
-        population[i]->Print();
       }
     }
     else{
@@ -317,14 +370,15 @@ int main(int argc, char* argv[])
       for(int iPar=0;iPar<kNparams;iPar++){
         double val = population[i]->GetParam((EParam)iPar);
         double score = population[i]->GetScore();
+        double scoreNormalized = population[i]->GetNormalizedScore();
         
         if(iPar == kKernel) val = round(val);
         
         paramHists[iPar]->Fill(iGeneration,val);
         paramHistsWgt[iPar]->Fill(iGeneration,val,score);
         
-        if(score > 1E-5)  paramHistsPassed[iPar]->Fill(val);
-        else              paramHistsFailed[iPar]->Fill(val);
+        if(scoreNormalized > 0.1) paramHistsPassed[iPar]->Fill(val);
+        else                      paramHistsFailed[iPar]->Fill(val);
       }
     }
     scoresMean->SetPoint(iGeneration, iGeneration, scoresDist[iGeneration]->GetMean());
