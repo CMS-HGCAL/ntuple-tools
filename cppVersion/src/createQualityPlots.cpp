@@ -80,6 +80,11 @@ int main(int argc, char* argv[])
   TH1D *separation = new TH1D("separation","separation",500,0,5);
   TH1D *containment = new TH1D("containment","containment",200,-1,1);
   TH1D *deltaN = new TH1D("numberClusters","numberClusters",2000,-10,10);
+  
+  TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
+  TH2D *sigmaEvsEtaEsim = new TH2D("sigma(E)Esim vs. eta","sigma(E)Esim vs. eta",100,1.5,3.2,100,-1.5,1.0);
+  TH2D *NrecNsim = new TH2D("NrecNsim","NrecNsim",20,1,20,20,1,20);
+  
   int emptyMatchedClusters = 0;
   int zeroSizeClusters = 0;
   int noMatchedClusters = 0;
@@ -105,16 +110,16 @@ int main(int argc, char* argv[])
       
       hgCalEvent->GoToEvent(iEvent);
       
-      cout<<"\nCurrent event:"<<iEvent<<"\n\n"<<endl;
+      cout<<"Current event:"<<iEvent<<endl;
       
       auto genParticles = hgCalEvent->GetGenParticles();
       
-      for(int iGen=0;iGen<genParticles->N();iGen++){
-        if(config->GetVerbosityLevel() > 0){
+      if(config->GetVerbosityLevel() > 0){
+        for(int iGen=0;iGen<genParticles->N();iGen++){
           genParticles->Print(iGen);
         }
+        cout<<endl;
       }
-      cout<<endl;
       
       // check if particles reached EE
       if(config->GetReachedEEonly()){
@@ -136,11 +141,6 @@ int main(int argc, char* argv[])
         }
         
       }
-      
-      string eventDir = config->GetOutputPath()+"/ntup"+to_string(nTupleIter)+"/event"+to_string(iEvent);
-      std::system(("mkdir -p "+eventDir).c_str());
-      
-      
       
       shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
       shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
@@ -174,15 +174,6 @@ int main(int argc, char* argv[])
           hits->Print();
         }
       }
-      
-      
-      // perform final analysis, fill in histograms and save to files
-      TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
-      TH2D *sigmaEvsEta = new TH2D("sigma(E) vs. eta","sigma(E) vs. eta",100,1.5,3.2,100,-10,10);
-      TH2D *sigmaEvsEtaEsim = new TH2D("sigma(E)Esim vs. eta","sigma(E)Esim vs. eta",100,1.5,3.2,100,-1.5,1.0);
-      TH1D *twoSeparation = new TH1D("two clusters separation","two clusters separation",1000,0,10);
-      TH1D *twoSeparationJer = new TH1D("two clusters separation","two clusters separation",1000,0,10);
-      TH2D *NrecNsim = new TH2D("NrecNsim","NrecNsim",20,1,20,20,1,20);
       
       double totalSimEnergy = 0;
       double totalRecEnergy = 0;
@@ -231,7 +222,6 @@ int main(int argc, char* argv[])
           totalSimEnergy += simEnergy;
 
           ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
-          sigmaEvsEta->Fill(fabs(recEta),(recEnergy-simEnergy)/recEnergy);
           sigmaEvsEtaEsim->Fill(fabs(recEta),(recEnergy-simEnergy)/simEnergy);
           deltaE->Fill((recEnergy-simEnergy)/simEnergy);
           containment->Fill(clusters->GetSharedFraction());
@@ -252,19 +242,10 @@ int main(int argc, char* argv[])
               continue;
             }
             
-            twoSeparation->Fill(distance/sqrt(sigma1*sigma1+sigma2*sigma2));
-            twoSeparationJer->Fill(distance/(sigma1+sigma2));
             separation->Fill(distance/(sigma1+sigma2));
           }
         }
       }
-      
-      ErecEsimVsEta->SaveAs(Form("%s/ErecEsimVsEta.root",eventDir.c_str()));
-      sigmaEvsEta->SaveAs(Form("%s/simgaEVsEta.root",eventDir.c_str()));
-      sigmaEvsEtaEsim->SaveAs(Form("%s/simgaEVsEtaEsim.root",eventDir.c_str()));
-      twoSeparation->SaveAs(Form("%s/twoSeparation.root",eventDir.c_str()));
-      twoSeparationJer->SaveAs(Form("%s/twoSeparationJer.root",eventDir.c_str()));
-      NrecNsim->SaveAs(Form("%s/NrecNsim.root",eventDir.c_str()));
       
       recHitsPerClusterArray.clear();
       simHitsPerClusterArray.clear();
@@ -274,10 +255,16 @@ int main(int argc, char* argv[])
   }
   cout<<endl<<endl;
   
-  deltaE->SaveAs(Form("%s/resolution.root",config->GetOutputPath().c_str()));
-  separation->SaveAs(Form("%s/separation.root",config->GetOutputPath().c_str()));
-  containment->SaveAs(Form("%s/containment.root",config->GetOutputPath().c_str()));
-  deltaN->SaveAs(Form("%s/deltaN.root",config->GetOutputPath().c_str()));
+  string outpath = config->GetOutputPath();
+  
+  deltaE->SaveAs((outpath+"/resolution.root").c_str());
+  separation->SaveAs((outpath+"/separation.root").c_str());
+  containment->SaveAs((outpath+"/containment.root").c_str());
+  deltaN->SaveAs((outpath+"/deltaN.root").c_str());
+  
+  ErecEsimVsEta->SaveAs((outpath+"/ErecEsimVsEta.root").c_str());
+  sigmaEvsEtaEsim->SaveAs((outpath+"/simgaEVsEtaEsim.root").c_str());
+  NrecNsim->SaveAs((outpath+"/NrecNsim.root").c_str());
   
   ofstream outputFile;
   cout<<"writing output to:"<<config->GetScoreOutputPath()<<endl;

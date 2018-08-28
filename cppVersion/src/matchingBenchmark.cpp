@@ -36,6 +36,9 @@ int main(int argc, char* argv[])
   ImagingAlgo *algo = new ImagingAlgo();
   ClusterMatcher *matcher = new ClusterMatcher();
   
+  TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",500,0,100,500,0,100);
+  TH2D *energyComparisonClosestHist = new TH2D("closest rec cluster","closest rec cluster",500,0,100,500,0,100);
+  
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
 
@@ -63,10 +66,7 @@ int main(int argc, char* argv[])
         }
         if(skipEvent) continue;
       }
-      string eventDir = config->GetOutputPath()+"/ntup"+to_string(nTupleIter)+"/event"+to_string(iEvent);
-      std::system(("mkdir -p "+eventDir).c_str());
-
-      cout<<"\nCurrent event:"<<iEvent<<endl;
+        cout<<"Current event:"<<iEvent<<endl;
 
       shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
       shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
@@ -85,9 +85,6 @@ int main(int argc, char* argv[])
       recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
       
       // perform final analysis, fill in histograms and save to files
-      TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",500,0,100,500,0,100);
-      TH2D *energyComparisonClosestHist = new TH2D("closest rec cluster","closest rec cluster",500,0,100,500,0,100);
-
       
       int nZeroSim = 0;
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
@@ -114,11 +111,6 @@ int main(int argc, char* argv[])
         }
       }
       
-      cout<<"\nN zero sim:"<<nZeroSim<<"\n\n"<<endl;
-      
-      energyComparisonNoMatchingHist->SaveAs(Form("%s/energyComparisonNoMatchingHist.root",eventDir.c_str()));
-      energyComparisonClosestHist->SaveAs(Form("%s/energyComparisonClosestHist.root",eventDir.c_str()));
-      
       recHitsPerClusterArray.clear();
       simHitsPerClusterArray.clear();
 
@@ -127,6 +119,12 @@ int main(int argc, char* argv[])
     inFile->Close();
     delete inFile;
   }
+  
+  string outpath = config->GetOutputPath();
+  
+  energyComparisonNoMatchingHist->SaveAs((outpath+"/energyComparisonNoMatchingHist.root").c_str());
+  energyComparisonClosestHist->SaveAs((outpath+"/energyComparisonClosestHist.root").c_str());
+  
   delete algo;
   delete matcher;
   return 0;

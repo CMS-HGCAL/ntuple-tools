@@ -30,9 +30,9 @@ energy_density_function:  step
 
 ### Critical distance for energy density ρ calculation (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than d_c from given hit will not be included in the energy density calculation for this hit.
-critial_distance_EE:  2.0
-critial_distance_FH:  2.0
-critial_distance_BH:  2.0
+critical_distance_EE:  2.0
+critical_distance_FH:  2.0
+critical_distance_BH:  2.0
 
 ### Critical distance to higher ρ hit (in cartesian coordiantes in cm, separately for each detector)
 ### Hits that are further than δ_c from any hit with higher ρ will be considered as potential cluster seeds.

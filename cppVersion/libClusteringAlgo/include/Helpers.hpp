@@ -126,10 +126,9 @@ inline std::chrono::time_point<std::chrono::system_clock> now()
 }
 
 
-inline std::string GetParamFromConfig(std::string configPath, std::string keyToFind){
+inline std::string GetParamFromConfig(std::string configPath, std::string keyToFind)
+{
   std::ifstream is_file(configPath);
-  
-  int intType;
   
   std::string line;
   while(getline(is_file, line)){
