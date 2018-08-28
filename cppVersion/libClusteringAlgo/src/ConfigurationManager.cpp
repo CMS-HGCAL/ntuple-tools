@@ -34,7 +34,6 @@ ConfigurationManager* ConfigurationManager::Instance(bool _dependSensor,
                                                      double _deltac_FH,
                                                      double _deltac_BH,
                                                      double _minEnergy,
-//                                                     int _minClusters,
                                                      double _criticalDistance_EE,
                                                      double _criticalDistance_FH,
                                                      double _criticalDistance_BH,
@@ -61,7 +60,6 @@ ConfigurationManager* ConfigurationManager::Instance(bool _dependSensor,
                                         _deltac_FH,
                                         _deltac_BH,
                                         _minEnergy,
-//                                        _minClusters,
                                         _criticalDistance_EE,
                                         _criticalDistance_FH,
                                         _criticalDistance_BH,
@@ -133,7 +131,7 @@ configPath(_configPath)
   energyDensityFunction = settings->GetValue("energy_density_function","step");
   reachedEEonly = settings->GetValue("reachedEE_only",1);
   
-  matchingMaxDistance = settings->GetValue("matching_max_distance",-1);
+  matchingMaxDistance = settings->GetValue("matching_max_distance",-1.0);
   
   scoreOutputPath = settings->GetValue("score_output_path","./output.txt");
 }
@@ -200,4 +198,18 @@ double ConfigurationManager::GetCriticalDistance(EDet det)
   if(det == kEE) return criticalDistance_EE;
   if(det == kFH) return criticalDistance_FH;
   return criticalDistance_BH;
+}
+
+void ConfigurationManager::Print()
+{
+  cout<<"Current configuration:"<<endl;
+  cout<<"Depend sensor:"<<dependSensor<<endl;
+  cout<<"Reached EE only:"<<reachedEEonly<<endl;
+  cout<<"Critical distance: "<<criticalDistance_EE<<"\t"<<criticalDistance_FH<<"\t"<<criticalDistance_BH<<endl;
+  cout<<"Critical delta: "<<deltac_EE<<"\t"<<deltac_FH<<"\t"<<deltac_BH<<endl;
+  cout<<"Kappa:"<<kappa<<endl;
+  cout<<"Energy threshold:"<<minEnergy<<endl;
+  cout<<"Kernel:"<<energyDensityFunction<<endl;
+  cout<<"Matching distance:"<<matchingMaxDistance<<endl;
+  cout<<"Data path:"<<inputPath<<endl;
 }

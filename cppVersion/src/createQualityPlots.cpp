@@ -10,6 +10,7 @@
 #include "Helpers.hpp"
 #include "ConfigurationManager.hpp"
 #include "ClusterMatcher.hpp"
+#include "MatchedClusters.hpp"
 
 #include <TROOT.h>
 #include <TFile.h>
@@ -62,8 +63,10 @@ int main(int argc, char* argv[])
                                             atof(argv[20]),// matching distance
                                             argv[21] // score output path
                                             );
+    
   }
   
+  cout<<endl;config->Print();
   
   
   gROOT->ProcessLine(".L loader.C+");
@@ -73,10 +76,15 @@ int main(int argc, char* argv[])
   ImagingAlgo *algo = new ImagingAlgo();
   ClusterMatcher *matcher = new ClusterMatcher();
   
-  TH1D *deltaE = new TH1D("resolution","resolution",200,-10,10);
-  TH1D *separation = new TH1D("separation","separation",200,-10,10);
-  TH1D *containment = new TH1D("containment","containment",200,-10,10);
-  TH1D *deltaN = new TH1D("numberClusters","numberClusters",200,-10,10);
+  TH1D *deltaE = new TH1D("resolution","resolution",1000,-5,5);
+  TH1D *separation = new TH1D("separation","separation",500,0,5);
+  TH1D *containment = new TH1D("containment","containment",200,-1,1);
+  TH1D *deltaN = new TH1D("numberClusters","numberClusters",2000,-10,10);
+  int emptyMatchedClusters = 0;
+  int zeroSizeClusters = 0;
+  int noMatchedClusters = 0;
+  int nTotalMatchedClusters = 0;
+  int nTotalLayerEvents = 0;
   
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
@@ -97,21 +105,42 @@ int main(int argc, char* argv[])
       
       hgCalEvent->GoToEvent(iEvent);
       
+      cout<<"\nCurrent event:"<<iEvent<<"\n\n"<<endl;
+      
+      auto genParticles = hgCalEvent->GetGenParticles();
+      
+      for(int iGen=0;iGen<genParticles->N();iGen++){
+        if(config->GetVerbosityLevel() > 0){
+          genParticles->Print(iGen);
+        }
+      }
+      cout<<endl;
+      
       // check if particles reached EE
       if(config->GetReachedEEonly()){
         bool skipEvent = false;
-        for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
+        for(auto reachedEE : *(genParticles->GetReachedEE())){
           if(reachedEE==0){
             skipEvent = true;
             break;
           }
         }
-        if(skipEvent) continue;
+        if(skipEvent){
+          if(config->GetVerbosityLevel()>0){
+            cout<<"\n\nSkipping event because there were particles that converted before reaching EE\n\n"<<endl;
+          }
+          continue;
+        }
+        if(config->GetVerbosityLevel()>0){
+          cout<<"\n\nEvent OK - all particles reached EE\n\n"<<endl;
+        }
+        
       }
+      
       string eventDir = config->GetOutputPath()+"/ntup"+to_string(nTupleIter)+"/event"+to_string(iEvent);
       std::system(("mkdir -p "+eventDir).c_str());
       
-      cout<<"\nCurrent event:"<<iEvent<<endl;
+      
       
       shared_ptr<RecHits> recHitsRaw = hgCalEvent->GetRecHits();
       shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
@@ -119,6 +148,13 @@ int main(int argc, char* argv[])
       // get simulated hits associated with a cluster
       vector<RecHits*> simHitsPerClusterArray;
       recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
+      
+      if(config->GetVerbosityLevel() > 0){
+        cout<<"Simulated hits grouped by clusters:"<<endl;
+        for(RecHits *hits : simHitsPerClusterArray){
+          hits->Print();
+        }
+      }
       
       // re-run clustering with HGCalAlgo
       std::vector<shared_ptr<Hexel>> recClusters;
@@ -132,6 +168,13 @@ int main(int argc, char* argv[])
       vector<RecHits*> recHitsPerClusterArray;
       recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
     
+      if(config->GetVerbosityLevel() > 0){
+        cout<<"\nReconstructed hits grouped by clusters:"<<endl;
+        for(RecHits *hits : recHitsPerClusterArray){
+          hits->Print();
+        }
+      }
+      
       
       // perform final analysis, fill in histograms and save to files
       TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
@@ -153,16 +196,36 @@ int main(int argc, char* argv[])
       
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
+        if(simClusters->GetNsimClustersInLayer(layer) == 0){
+          // this means that there were no 2d clusters simulated in this layer, so there's nothing to look for there (in the future one should check number of fake clusters reconstructed even in layers where there was nothing simulated)
+          continue;
+        }
+        
         vector<MatchedClusters*> matchedClusters;
         matcher->MatchClustersByDetID(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
-        if(matchedClusters.size()==0) continue;
-
+        
+        nTotalMatchedClusters+=matchedClusters.size();
+        nTotalLayerEvents++;
+        
+        if(matchedClusters.size()==0){
+          noMatchedClusters++;
+          continue;
+        }
+        
         for(MatchedClusters *clusters : matchedClusters){
-          if(clusters->simClusters->size() == 0) continue;
+          if(clusters->GetRecRadius() == 0){
+            zeroSizeClusters++;
+            // maybe skip those?
+          }
           
-          double recEnergy = clusters->GetTotalRecEnergy();
-          double recEta    = clusters->GetMergedRecCluster()->GetEta();
-          double simEnergy = clusters->GetTotalSimEnergy();
+          if(!clusters->HasSimClusters() ||
+             !clusters->HasRecClusters()){
+            emptyMatchedClusters++;
+            continue;
+          }
+          double recEnergy = clusters->GetRecEnergy();
+          double recEta    = clusters->GetRecEta();
+          double simEnergy = clusters->GetSimEnergy();
           
           totalRecEnergy += recEnergy;
           totalSimEnergy += simEnergy;
@@ -174,21 +237,20 @@ int main(int argc, char* argv[])
           containment->Fill(clusters->GetSharedFraction());
         }
         NrecNsim->Fill(simHitsPerClusterArray.size(),recHitsPerClusterArray.size());
-        deltaN->Fill((simHitsPerClusterArray.size()-recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
+        deltaN->Fill(((int)simHitsPerClusterArray.size()-(int)recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
         
         for(uint i=0;i<matchedClusters.size();i++){
           for(uint j=(i+1);j<matchedClusters.size();j++){
             
-            BasicCluster *recCluster1 = matchedClusters[i]->GetMergedRecCluster();
-            BasicCluster *recCluster2 = matchedClusters[j]->GetMergedRecCluster();
+            double distance = sqrt(pow(matchedClusters[i]->GetRecX()-matchedClusters[j]->GetRecX(),2)+
+                                   pow(matchedClusters[i]->GetRecY()-matchedClusters[j]->GetRecY(),2));
             
-            double distance = sqrt(pow(recCluster1->GetX()-recCluster2->GetX(),2)+
-                                   pow(recCluster1->GetY()-recCluster2->GetY(),2));
+            double sigma1 = matchedClusters[i]->GetRecRadius();
+            double sigma2 = matchedClusters[j]->GetRecRadius();
             
-            double sigma1 = recCluster1->GetRadius();
-            double sigma2 = recCluster2->GetRadius();
-            
-            if(sigma1+sigma2 == 0) continue;
+            if(sigma1+sigma2 == 0){
+              continue;
+            }
             
             twoSeparation->Fill(distance/sqrt(sigma1*sigma1+sigma2*sigma2));
             twoSeparationJer->Fill(distance/(sigma1+sigma2));
@@ -197,9 +259,6 @@ int main(int argc, char* argv[])
         }
       }
       
-      
-  
-
       ErecEsimVsEta->SaveAs(Form("%s/ErecEsimVsEta.root",eventDir.c_str()));
       sigmaEvsEta->SaveAs(Form("%s/simgaEVsEta.root",eventDir.c_str()));
       sigmaEvsEtaEsim->SaveAs(Form("%s/simgaEVsEtaEsim.root",eventDir.c_str()));
@@ -209,77 +268,79 @@ int main(int argc, char* argv[])
       
       recHitsPerClusterArray.clear();
       simHitsPerClusterArray.clear();
-      
     }
-    cout<<endl<<endl;
-    
-    deltaE->SaveAs(Form("%s/resolution.root",config->GetOutputPath().c_str()));
-    separation->SaveAs(Form("%s/separation.root",config->GetOutputPath().c_str()));
-    containment->SaveAs(Form("%s/containment.root",config->GetOutputPath().c_str()));
-    
-    ofstream outputFile;
-    cout<<"writing output to:"<<config->GetScoreOutputPath()<<endl;
-    outputFile.open(config->GetScoreOutputPath());
-    
-    if(deltaE && deltaE->GetEntries()>0 && deltaE->GetStdDev() != 0){
-      outputFile<<deltaE->GetMean()<<endl;
-      outputFile<<deltaE->GetStdDev()<<endl;
-      cout<<"Average resolution per event:"<<deltaE->GetMean()<<endl;
-      cout<<"Resolution sigma:"<<deltaE->GetStdDev()<<endl;
-    }
-    else{
-      outputFile<<999999<<endl;
-      outputFile<<999999<<endl;
-      cout<<"Average resolution per event:"<<999999<<endl;
-      cout<<"Resolution sigma:"<<999999<<endl;
-    }
-    if(separation && separation->GetEntries()>0 && separation->GetStdDev() != 0){
-      outputFile<<separation->GetMean()<<endl;
-      outputFile<<separation->GetStdDev()<<endl;
-      cout<<"Average separation per event:"<<separation->GetMean()<<endl;
-      cout<<"Separation sigma:"<<separation->GetStdDev()<<endl;
-    }
-    else{
-      cout<<separation<<endl;
-      cout<<separation->GetEntries()<<endl;
-      cout<<separation->GetStdDev()<<endl;
-      outputFile<<999999<<endl;
-      outputFile<<999999<<endl;
-      cout<<"Average separation per event:"<<999999<<endl;
-      cout<<"Separation sigma:"<<999999<<endl;
-    }
-    if(containment && containment->GetEntries()>0 && containment->GetStdDev() != 0){
-      outputFile<<containment->GetMean()<<endl;
-      outputFile<<containment->GetStdDev()<<endl;
-      cout<<"Average containment per event:"<<containment->GetMean()<<endl;
-      cout<<"Containment sigma:"<<containment->GetStdDev()<<endl;
-    }
-    else{
-      outputFile<<999999<<endl;
-      outputFile<<999999<<endl;
-      cout<<"Average containment per event:"<<999999<<endl;
-      cout<<"Containment sigma:"<<999999<<endl;
-    }
-    if(deltaN && deltaN->GetEntries()>0 && deltaN->GetStdDev() != 0){
-      outputFile<<deltaN->GetMean()<<endl;
-      outputFile<<deltaN->GetStdDev()<<endl;
-      cout<<"Average difference in N clusters (sim-rec) per event:"<<deltaN->GetMean()<<endl;
-      cout<<"N clusters (sim-rec) sigma:"<<deltaN->GetStdDev()<<endl;
-    }
-    else{
-      outputFile<<999999<<endl;
-      outputFile<<999999<<endl;
-      cout<<"Average difference in N clusters (sim-rec) per event:"<<999999<<endl;
-      cout<<"N clusters (sim-rec) sigma:"<<999999<<endl;
-    }
-    outputFile.close();
-    
-    
-//    delete tree;
     inFile->Close();
     delete inFile;
-    
   }
+  cout<<endl<<endl;
+  
+  deltaE->SaveAs(Form("%s/resolution.root",config->GetOutputPath().c_str()));
+  separation->SaveAs(Form("%s/separation.root",config->GetOutputPath().c_str()));
+  containment->SaveAs(Form("%s/containment.root",config->GetOutputPath().c_str()));
+  deltaN->SaveAs(Form("%s/deltaN.root",config->GetOutputPath().c_str()));
+  
+  ofstream outputFile;
+  cout<<"writing output to:"<<config->GetScoreOutputPath()<<endl;
+  outputFile.open(config->GetScoreOutputPath());
+  
+  if(deltaE && deltaE->GetEntries()>0 && deltaE->GetStdDev() != 0){
+    outputFile<<deltaE->GetMean()<<endl;
+    outputFile<<deltaE->GetStdDev()<<endl;
+    cout<<"Average resolution per event:"<<deltaE->GetMean()<<endl;
+    cout<<"Resolution sigma:"<<deltaE->GetStdDev()<<endl;
+  }
+  else{
+    outputFile<<999999<<endl;
+    outputFile<<999999<<endl;
+    cout<<"Average resolution per event:"<<999999<<endl;
+    cout<<"Resolution sigma:"<<999999<<endl;
+  }
+  if(separation && separation->GetEntries()>0 && separation->GetStdDev() != 0){
+    outputFile<<separation->GetMean()<<endl;
+    outputFile<<separation->GetStdDev()<<endl;
+    cout<<"Average separation per event:"<<separation->GetMean()<<endl;
+    cout<<"Separation sigma:"<<separation->GetStdDev()<<endl;
+  }
+  else{
+    outputFile<<999999<<endl;
+    outputFile<<999999<<endl;
+    cout<<"Average separation per event:"<<999999<<endl;
+    cout<<"Separation sigma:"<<999999<<endl;
+  }
+  if(containment && containment->GetEntries()>0 && containment->GetStdDev() != 0){
+    outputFile<<containment->GetMean()<<endl;
+    outputFile<<containment->GetStdDev()<<endl;
+    cout<<"Average containment per event:"<<containment->GetMean()<<endl;
+    cout<<"Containment sigma:"<<containment->GetStdDev()<<endl;
+  }
+  else{
+    outputFile<<999999<<endl;
+    outputFile<<999999<<endl;
+    cout<<"Average containment per event:"<<999999<<endl;
+    cout<<"Containment sigma:"<<999999<<endl;
+  }
+  if(deltaN && deltaN->GetEntries()>0 && deltaN->GetStdDev() != 0){
+    outputFile<<deltaN->GetMean()<<endl;
+    outputFile<<deltaN->GetStdDev()<<endl;
+    cout<<"Average difference in N clusters (sim-rec) per event:"<<deltaN->GetMean()<<endl;
+    cout<<"N clusters (sim-rec) sigma:"<<deltaN->GetStdDev()<<endl;
+  }
+  else{
+    outputFile<<999999<<endl;
+    outputFile<<999999<<endl;
+    cout<<"Average difference in N clusters (sim-rec) per event:"<<999999<<endl;
+    cout<<"N clusters (sim-rec) sigma:"<<999999<<endl;
+  }
+  outputFile<<emptyMatchedClusters/(double)(nTotalMatchedClusters)<<endl;
+  cout<<"\% of event-layers with empty (sim or rec) clusters in matched clusters:"<<emptyMatchedClusters/(double)(nTotalMatchedClusters)<<endl;
+  outputFile<<zeroSizeClusters/(double)(nTotalMatchedClusters)<<endl;
+  cout<<"\% of event-layers with zero size matched clusters:"<<zeroSizeClusters/(double)(nTotalMatchedClusters)<<endl;
+  outputFile<<noMatchedClusters/(double)(nTotalMatchedClusters)<<endl;
+  cout<<"N events with no matched clusters:"<<noMatchedClusters/(double)(nTotalLayerEvents)<<endl;
+  
+  outputFile.close();
+  
+  
   delete algo;
   delete matcher;
   return 0;

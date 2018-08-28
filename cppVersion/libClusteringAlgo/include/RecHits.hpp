@@ -26,6 +26,8 @@ public:
   RecHits(TTree *_tree);
   ~RecHits();
   
+  void Print();
+  
   void Clean();
   
   /// Returns number of stored RecHit objects
@@ -89,7 +91,13 @@ public:
   
   /// Returns detID of i-th hit
   /// \param i Index of the hit
-  inline int GetDetIDofHit(int i){return detid->at(i);}
+  inline unsigned int GetDetIDofHit(int i){return detid->at(i);}
+  
+  /// Returns sorted detIDs of all hits in this collection
+  inline std::vector<unsigned int>* GetDetIDs(){
+    sort(detid->begin(),detid->end());
+    return detid;
+  }
   
   /// Returns energy of i-th hit
   /// \param i Index of the hit

@@ -4,6 +4,7 @@
 #include "Helpers.hpp"
 #include "ConfigurationManager.hpp"
 #include "ClusterMatcher.hpp"
+#include "MatchedClusters.hpp"
 
 #include <TROOT.h>
 #include <TFile.h>
@@ -84,8 +85,8 @@ int main(int argc, char* argv[])
       recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
       
       // perform final analysis, fill in histograms and save to files
-      TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",100,0,100,100,0,100);
-      TH2D *energyComparisonClosestHist = new TH2D("closest rec cluster","closest rec cluster",100,0,100,100,0,100);
+      TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",500,0,100,500,0,100);
+      TH2D *energyComparisonClosestHist = new TH2D("closest rec cluster","closest rec cluster",500,0,100,500,0,100);
 
       
       int nZeroSim = 0;
@@ -98,16 +99,16 @@ int main(int argc, char* argv[])
         matcher->MatchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
         
         for(MatchedClusters *clusters : unmatchedClusters){
-            energyComparisonNoMatchingHist->Fill(clusters->GetTotalRecEnergy(),
-                                                 clusters->GetTotalSimEnergy());
+            energyComparisonNoMatchingHist->Fill(clusters->GetRecEnergy(),
+                                                 clusters->GetSimEnergy());
         }
         
         for(MatchedClusters *clusters : matchedClusters){
-           if(clusters->simClusters->size() == 0) continue;
-            energyComparisonClosestHist->Fill(clusters->GetTotalRecEnergy(),
-                                              clusters->GetTotalSimEnergy());
+           if(!clusters->HasSimClusters()) continue;
+            energyComparisonClosestHist->Fill(clusters->GetRecEnergy(),
+                                              clusters->GetSimEnergy());
           
-          if(clusters->GetTotalSimEnergy() < 0.0001) nZeroSim++;
+          if(clusters->GetSimEnergy() < 0.0001) nZeroSim++;
           
 //          cout<<"E sim:"<<clusters->GetTotalSimEnergy()<<"\tErec:"<<clusters->recCluster->GetEnergy()<<endl;
         }

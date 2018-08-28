@@ -17,6 +17,10 @@ public:
   SimClusters(TTree *_tree);
   ~SimClusters();
   
+  /// Prints basic information about gen particle at given index
+  void Print(int index);
+  
+  /// Deletes all objects and leaves collection with size zero
   void Clean();
   
   /// Returns number of clusters
@@ -37,12 +41,17 @@ public:
   /// Returns detIDs of hits grouped by cluster
   inline std::vector<std::vector<unsigned int>>* GetHits(){return hits;}
   
+  /// Returns layer indices of hits in given cluster
+  inline std::vector<unsigned int> GetLayersInCluster(int i){return layers->at(i);}
+  
+  int GetNsimClustersInLayer(unsigned int iLayer);
 private:
   std::vector<float> *eta;    ///< Pseudorapidity values for each of the clusters
   std::vector<float> *phi;    ///< Polar anlges values for each of the clusters
   std::vector<float> *energy; ///< Energy values for each of the clusters (GeV)
   std::vector<float> *pt;     ///< Transverse momentum values for each of the clusters (GeV)
   std::vector<std::vector<unsigned int>> *hits; /// Vector of detIDs of hits belonging to each of the clusters
+  std::vector<std::vector<unsigned int>> *layers; /// Vector of detIDs of hits belonging to each of the clusters
   
 };
 

@@ -69,19 +69,18 @@ config(nullptr)
 {
   recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
   
-  dependSensor =  GetIntFomeConfig(configPath, "depend_sensor");
-  kappa = GetDoubleFomeConfig(configPath, "kappa");
-  ecut = GetDoubleFomeConfig(configPath, "energy_min");
-//  minClusters = GetIntFomeConfig(configPath, "min_clusters");
-  verbosityLevel = GetIntFomeConfig(configPath, "verbosity_level");
-  criticalDistanceEE = GetDoubleFomeConfig(configPath, "critial_distance_EE");
-  criticalDistanceFH = GetDoubleFomeConfig(configPath, "critial_distance_FH");
-  criticalDistanceBH = GetDoubleFomeConfig(configPath, "critial_distance_BH");
-  deltacEE = GetDoubleFomeConfig(configPath, "deltac_EE");
-  deltacFH = GetDoubleFomeConfig(configPath, "deltac_FH");
-  deltacBH = GetDoubleFomeConfig(configPath, "deltac_BH");
+  dependSensor =  GetIntFromConfig(configPath, "depend_sensor");
+  kappa = GetDoubleFromConfig(configPath, "kappa");
+  ecut = GetDoubleFromConfig(configPath, "energy_min");
+  verbosityLevel = GetIntFromConfig(configPath, "verbosity_level");
+  criticalDistanceEE = GetDoubleFromConfig(configPath, "critical_distance_EE");
+  criticalDistanceFH = GetDoubleFromConfig(configPath, "critical_distance_FH");
+  criticalDistanceBH = GetDoubleFromConfig(configPath, "critical_distance_BH");
+  deltacEE = GetDoubleFromConfig(configPath, "deltac_EE");
+  deltacFH = GetDoubleFromConfig(configPath, "deltac_FH");
+  deltacBH = GetDoubleFromConfig(configPath, "deltac_BH");
 
-  string energyFunction = GetStringFomeConfig(configPath, "energy_density_function");
+  string energyFunction = GetStringFromConfig(configPath, "energy_density_function");
   
   if(energyFunction == "step"){
     // param [0] says what's the limit to include or reject hit (critical distance)

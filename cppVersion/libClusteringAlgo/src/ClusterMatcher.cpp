@@ -20,10 +20,7 @@ ClusterMatcher::~ClusterMatcher()
 
 int ContainsSimCluster(vector<MatchedClusters*> &matched, int simClusterIndex){
   for(int i=0;i<matched.size();i++){
-    if(find(matched[i]->simIndices.begin(),
-            matched[i]->simIndices.begin(),simClusterIndex) != matched[i]->simIndices.end()){
-      return i;
-    }
+    if(matched[i]->ContainsSimCluster(simClusterIndex)) return i;
   }
   return -1;
 }
@@ -33,137 +30,143 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
                                           vector<RecHits*> &simHitsPerCluster,
                                           int layer)
 {
-  vector<RecHits*> hitsMatchedToRecClusters;
-  vector<vector<unsigned int>> recDetIDs;
-  vector<vector<unsigned int>> simDetIDs;
-  vector<double> Xs,Ys,Rs,Es;
-  vector<double> Xsim,Ysim,Rsim,Esim;
-  
-  vector<unsigned long> assignedRecClusters;
-  vector<int> simClustersParents;
   double maxDistance = ConfigurationManager::Instance()->GetMachingMaxDistance();
-  vector<int> forRemoval;
+  int verbosityLevel = ConfigurationManager::Instance()->GetVerbosityLevel();
+ 
+  if(verbosityLevel > 0){
+    cout<<"\nMatching clusters in layer "<<layer<<endl<<endl;
+  }
   
-  // loop over all rec clusters and add then to matched clusters vector
+  // loop over all rec clusters and add them to matched clusters vector
   for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
     
+    // Get rec cluster in correct layer
     RecHits *recCluster = recHitsPerCluster[recClusterIndex];
     unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
-    
     if(recHitsInLayerInCluster->N()==0) continue;
     
-    BasicCluster *basicCluster = GetBasicClusterFromRecHits(recHitsInLayerInCluster);
-    
-    vector<unsigned int> detIDsInRecCluster;
-    vector<double> energiesInRecCluster;
-    
-    for(int iHit=0;iHit<recHitsInLayerInCluster->N();iHit++){
-      detIDsInRecCluster.push_back(recHitsInLayerInCluster->GetDetIDofHit(iHit));
-      double e = recHitsInLayerInCluster->GetEnergyOfHit(iHit);
-      energiesInRecCluster.push_back(e);
+    if(verbosityLevel > 0){
+      cout<<"Rec hits in cluster:"<<endl;
+      recHitsInLayerInCluster->Print();
     }
-    sort(detIDsInRecCluster.begin(),detIDsInRecCluster.end());
-    recDetIDs.push_back(detIDsInRecCluster);
     
-    Xs.push_back(basicCluster->GetX());
-    Ys.push_back(basicCluster->GetY());
-    Rs.push_back(basicCluster->GetRadius());
-    Es.push_back(basicCluster->GetEnergy());
-    
+    // Create new matched cluster for each rec cluster
     MatchedClusters *matchedCluster = new MatchedClusters();
-    
-    matchedCluster->recClusters->push_back(basicCluster);
-    matchedCluster->recIndices.push_back(recClusterIndex);
-    matchedCluster->AddRecDetIDs(detIDsInRecCluster);
-    matchedCluster->AddRecEnergies(energiesInRecCluster);
-    matchedCluster->recHits->AddHits(recHitsInLayerInCluster);
+    matchedCluster->AddRecCluster(recClusterIndex,recHitsInLayerInCluster);
     matched.push_back(matchedCluster);
   }
   
-  // for each sim cluster, find a rec cluster that shares the most hits. If distance between them is smaller than maxDistance, add this sim cluster to matching rec cluster
+  if(verbosityLevel > 0){
+    cout<<"\n\nMatched clusters after step 1\n\n"<<endl;
+    for(auto cluster : matched){
+      cluster->Print();
+      cout<<endl;
+    }
+  }
+  
+  // for each sim cluster, find a rec cluster that shares the most hits.
+  // If distance between them is smaller than maxDistance, add this sim cluster to matching rec cluster
   for(uint simClusterIndex=0;simClusterIndex<simHitsPerCluster.size();simClusterIndex++){
     
+    // Get sim cluster in correct layer
     RecHits *simCluster = simHitsPerCluster[simClusterIndex];
     unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
-    
     if(simHitsInLayerInCluster->N()==0) continue;
     
-    BasicCluster *basicCluster = GetBasicClusterFromRecHits(simHitsInLayerInCluster);
-    
-    vector<unsigned int> detIDsInSimCluster;
-    vector<double> energiesInSimCluster;
-    
-    for(int iHit=0;iHit<simHitsInLayerInCluster->N();iHit++){
-      detIDsInSimCluster.push_back(simHitsInLayerInCluster->GetDetIDofHit(iHit));
-      energiesInSimCluster.push_back(simHitsInLayerInCluster->GetEnergyOfHit(iHit));
+    if(verbosityLevel > 0){
+      cout<<"Sim hits in cluster:"<<endl;
+      simHitsInLayerInCluster->Print();
     }
-    sort(detIDsInSimCluster.begin(),detIDsInSimCluster.end());
-    simDetIDs.push_back(detIDsInSimCluster);
     
-    Xsim.push_back(basicCluster->GetX());
-    Ysim.push_back(basicCluster->GetY());
-    Rsim.push_back(basicCluster->GetRadius());
-    Esim.push_back(basicCluster->GetEnergy());
+    vector<unsigned int> detIDsInSimCluster = *(simHitsInLayerInCluster->GetDetIDs());
     
-    int parentRecCluster = findMostDetIDsharingCluster(recDetIDs, detIDsInSimCluster);
+    // Find matched cluster that shares the most hits with this sim cluster
+    double maxShared = 0;
+    MatchedClusters *maxSharingMatchedCluster = nullptr;
+    for(auto matchedCluster : matched){
+      double shared = matchedCluster->GetSharedFractionWithRecHits(detIDsInSimCluster);
+      if(shared > maxShared){
+        maxShared = shared;
+        maxSharingMatchedCluster = matchedCluster;
+      }
+    }
     
-    if(parentRecCluster < 0){
-      if(ConfigurationManager::Instance()->GetVerbosityLevel() >= 1){
+    MatchedClusters *matchedTmp = new MatchedClusters();
+    matchedTmp->AddSimCluster(simClusterIndex, simHitsInLayerInCluster);
+    if(!maxSharingMatchedCluster){
+      if(ConfigurationManager::Instance()->GetVerbosityLevel() > 0){
+        cout<<"\n========================================================"<<endl;
         cout<<"No rec cluster found for a sim cluster!!"<<endl;
+        cout<<"Sim cluster:"<<endl;
+        matchedTmp->Print();
+        cout<<endl;
       }
       continue;
     }
+   
     
-    double distance = sqrt(pow(Xs[parentRecCluster]-basicCluster->GetX(),2)+pow(Ys[parentRecCluster]-basicCluster->GetY(),2));
+    double distance = sqrt( pow(maxSharingMatchedCluster->GetRecX() - matchedTmp->GetSimX(),2)
+                           +pow(maxSharingMatchedCluster->GetRecY() - matchedTmp->GetSimY(),2));
     
     if((distance > maxDistance) && maxDistance>=0) continue;
     
-    matched[parentRecCluster]->simClusters->push_back(basicCluster);
-    matched[parentRecCluster]->simIndices.push_back(simClusterIndex);
-    matched[parentRecCluster]->AddSimDetIDs(detIDsInSimCluster);
-    matched[parentRecCluster]->AddSimEnergies(energiesInSimCluster);
-    matched[parentRecCluster]->simHits->AddHits(simHitsInLayerInCluster);
-    assignedRecClusters.push_back(parentRecCluster);
+    maxSharingMatchedCluster->AddSimCluster(simClusterIndex,simHitsInLayerInCluster);
   }
   
-  // find rec clusters that were not matched with any sim clusters (they can be smaller clusters, which were not the "stronges" candidates, but still can be re-assigned to sim clusters in second interation)
-  for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
-    if(find(assignedRecClusters.begin(),assignedRecClusters.end(),recClusterIndex)==assignedRecClusters.end()){
+  if(verbosityLevel > 0){
+    cout<<"\n\nMatched clusters after step 2\n\n"<<endl;
+    for(auto cluster : matched){
+      cluster->Print();
+      cout<<endl;
+    }
+  }
+ 
+  // Iterate over rec clusters that didn't get any sim clusters assigned and try to match them to existing sets of sim-rec clusters
+  for(MatchedClusters* cluster : matched){
+    if(!cluster->HasSimClusters()){
+      vector<unsigned int> recDetIDs = cluster->GetRecDetIDs();
+      double maxShared = 0;
+      MatchedClusters *maxSharingMatchedCluster = nullptr;
       
+      for(MatchedClusters* otherCluster : matched){
+        if(cluster == otherCluster) continue;
       
-      RecHits *recCluster = recHitsPerCluster[recClusterIndex];
-      unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
-      
-      if(recHitsInLayerInCluster->N()==0) continue;
-      
-      BasicCluster *basicCluster = GetBasicClusterFromRecHits(recHitsInLayerInCluster);
-      
-      vector<unsigned int> detIDsInRecCluster;
-      for(int iHit=0;iHit<recHitsInLayerInCluster->N();iHit++){
-        detIDsInRecCluster.push_back(recHitsInLayerInCluster->GetDetIDofHit(iHit));
+        double shared = otherCluster->GetSharedFractionWithRecHits(recDetIDs);
+        if(shared > maxShared){
+          maxShared = shared;
+          maxSharingMatchedCluster = otherCluster;
+        }
       }
-      sort(detIDsInRecCluster.begin(),detIDsInRecCluster.end());
       
-      int parentSimCluster = findMostDetIDsharingCluster(simDetIDs, detIDsInRecCluster);
+      MatchedClusters *matchedTmp = new MatchedClusters();
+      unique_ptr<RecHits> recHitsInThisCluster = unique_ptr<RecHits>(new RecHits());
+      cluster->GetRecHits(recHitsInThisCluster);
+      matchedTmp->AddSimCluster(cluster->GetFirstRecIndex(), recHitsInThisCluster);
       
-      if(parentSimCluster < 0){
-        if(ConfigurationManager::Instance()->GetVerbosityLevel() >= 1){
+      if(!maxSharingMatchedCluster){
+        if(ConfigurationManager::Instance()->GetVerbosityLevel() > 0){
+          cout<<"\n========================================================"<<endl;
           cout<<"No sim cluster found for a rec cluster!!"<<endl;
+          cout<<"Rec cluster:"<<endl;
+          matchedTmp->Print();
+          cout<<endl;
         }
         continue;
       }
       
-      double distance = sqrt(pow(Xsim[parentSimCluster]-basicCluster->GetX(),2)+pow(Ysim[parentSimCluster]-basicCluster->GetY(),2));
+      double distance = sqrt( pow(maxSharingMatchedCluster->GetRecX() - matchedTmp->GetSimX(),2)
+                             +pow(maxSharingMatchedCluster->GetRecY() - matchedTmp->GetSimY(),2));
       
       if((distance > maxDistance) && maxDistance>=0) continue;
-        
-        
-      int simAlreadyIn = ContainsSimCluster(matched, parentSimCluster);
-        
-      if(simAlreadyIn >= 0){
-        matched[simAlreadyIn]->recClusters->push_back(basicCluster);
-        matched[simAlreadyIn]->recIndices.push_back(recClusterIndex);
-      }
+      maxSharingMatchedCluster->Merge(cluster);
+    }
+  }
+  
+  if(verbosityLevel > 0){
+    cout<<"\n\nMatched clusters after step 3\n\n"<<endl;
+    for(auto cluster : matched){
+      cluster->Print();
+      cout<<endl;
     }
   }
   
@@ -181,51 +184,60 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
                                           vector<RecHits*> &recHitsPerCluster, vector<RecHits*> &simHitsPerCluster,
                                           int layer)
 {
-  vector<RecHits*> hitsMatchedToRecClusters;
   vector<double> Xs,Ys,Rs, Es;
-
+  double maxDistance = ConfigurationManager::Instance()->GetMachingMaxDistance();
+  
+  
   for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
     
+    // Get rec cluster in correct layer
     RecHits *recCluster = recHitsPerCluster[recClusterIndex];
     unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
-    
     if(recHitsInLayerInCluster->N()==0) continue;
     
-    BasicCluster *basicCluster = GetBasicClusterFromRecHits(recHitsInLayerInCluster);
+    // Build new mached cluster for each rec cluster
+    MatchedClusters *matchedCluster = new MatchedClusters();
+    matchedCluster->AddRecCluster(recClusterIndex, recHitsInLayerInCluster);
+    matched.push_back(matchedCluster);
     
+    // Save coordinates of this rec cluster
+    BasicCluster *basicCluster = matchedCluster->GetRecClusterByIndex(recClusterIndex);
     Xs.push_back(basicCluster->GetX());
     Ys.push_back(basicCluster->GetY());
     Rs.push_back(basicCluster->GetRadius());
     Es.push_back(basicCluster->GetEnergy());
-    
-    MatchedClusters *matchedCluster = new MatchedClusters();
-    
-    matchedCluster->recClusters->push_back(basicCluster);
-    matched.push_back(matchedCluster);
   }
   
-  double maxDistance = ConfigurationManager::Instance()->GetMachingMaxDistance();
   
   for(uint simClusterIndex=0;simClusterIndex<simHitsPerCluster.size();simClusterIndex++){
     
+    // Get sim cluster in correct layer
     RecHits *simCluster = simHitsPerCluster[simClusterIndex];
     unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
-    
     if(simHitsInLayerInCluster->N()==0) continue;
     
-    BasicCluster *basicCluster = GetBasicClusterFromRecHits(simHitsInLayerInCluster);
+    // Get coordinates of this sim cluster
+    unique_ptr<MatchedClusters> matchedTmp = unique_ptr<MatchedClusters>(new MatchedClusters());
+    matchedTmp->AddSimCluster(simClusterIndex, simHitsInLayerInCluster);
+    BasicCluster *basicCluster = matchedTmp->GetSimClusterByIndex(simClusterIndex);
+    
+    // Check which of the rec clusters is the closest to this sim cluster
     int parentRecCluster = findClosestCircle(Xs, Ys, Rs, basicCluster->GetX(), basicCluster->GetY());
     
     if(parentRecCluster < 0){
       if(ConfigurationManager::Instance()->GetVerbosityLevel() >= 1){
-        cout<<"No rec cluster found for a sim cluster!!"<<endl;
+        cout<<"Matching clusters by distance -- No rec cluster found for a sim cluster!!"<<endl;
       }
       continue;
     }
-    double distance = sqrt(pow(Xs[parentRecCluster]-basicCluster->GetX(),2)+pow(Ys[parentRecCluster]-basicCluster->GetY(),2));
     
+    // Calculate the distance to the closest rec cluster
+    double distance = sqrt( pow(Xs[parentRecCluster]-basicCluster->GetX(),2)
+                           +pow(Ys[parentRecCluster]-basicCluster->GetY(),2));
+    
+    // If distance to the closest rec cluster is below the limit, add this sim cluster to the matched clusters
     if((distance <= maxDistance) || maxDistance < 0){
-      matched[parentRecCluster]->simClusters->push_back(basicCluster);
+      matched[parentRecCluster]->AddSimCluster(simClusterIndex, simHitsInLayerInCluster);
     }
   }
 }
@@ -249,29 +261,11 @@ void ClusterMatcher::MatchClustersAllToAll(vector<MatchedClusters*> &matched,
       if(simHitsInLayerInCluster->N()==0) continue;
       
       MatchedClusters *matchedCluster = new MatchedClusters();
-      matchedCluster->recClusters->push_back(GetBasicClusterFromRecHits(recHitsInLayerInCluster));
-      
-      BasicCluster *basicCluster = GetBasicClusterFromRecHits(simHitsInLayerInCluster);
-      matchedCluster->simClusters->push_back(basicCluster);
+      matchedCluster->AddRecCluster(recClusterIndex, recHitsInLayerInCluster);
+      matchedCluster->AddSimCluster(simClusterIndex, simHitsInLayerInCluster);
       
       matched.push_back(matchedCluster);
     }
   }
 }
 
-BasicCluster* ClusterMatcher::GetBasicClusterFromRecHits(unique_ptr<RecHits> &hits)
-{
-  double recEnergy = hits->GetTotalEnergy();
-  double xMax   = hits->GetXmax();
-  double xMin   = hits->GetXmin();
-  double yMax   = hits->GetYmax();
-  double yMin   = hits->GetYmin();
-  
-  double clusterX = (xMax+xMin)/2.;
-  double clusterY = (yMax+yMin)/2.;
-  double clusterEta = hits->GetCenterEta();
-  double clusterR = max((xMax-xMin)/2.,(yMax-yMin)/2.);
-  
-  BasicCluster *basicCluster = new BasicCluster(recEnergy,clusterX,clusterY,0,clusterEta,clusterR);
-  return basicCluster;
-}

@@ -75,6 +75,16 @@ RecHits::~RecHits()
   if(cluster2d){ cluster2d->clear(); delete cluster2d;}
 }
 
+
+void RecHits::Print()
+{
+  cout<<"Rec hits collection:";
+  cout<<"\tcenter eta:"<<GetCenterEta();
+  cout<<"\tavg x:"<<(GetXmax()+GetXmin())/2.;
+  cout<<"\tavg y:"<<(GetYmax()+GetYmin())/2.;
+  cout<<endl;
+}
+
 void RecHits::Clean()
 {
   if(eta){ eta->clear(); delete eta; eta = new vector<float>;}
@@ -191,8 +201,8 @@ void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<S
   
   for(int iCluster=0;iCluster<clusters->N();iCluster++){
     
-    if(ConfigurationManager::Instance()->GetVerbosityLevel() >= 1){
-    cout<<"Sim-cluster index: "<<iCluster<<", pT: "<<clusters->GetPt(iCluster)<<", E: "<<clusters->GetEnergy(iCluster)<<", phi: "<<clusters->GetPhi(iCluster)<<", eta: "<<clusters->GetEta(iCluster)<<endl;
+    if(ConfigurationManager::Instance()->GetVerbosityLevel() > 0){
+      clusters->Print(iCluster);
     }
     vector<unsigned int> hitsInClusterDetIDs = clusters->GetHits()->at(iCluster);
     vector<unsigned int> clusterToHitID;
@@ -214,8 +224,8 @@ void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<S
     hitsPerCluster.push_back(hitsInThisCluster);
     nAssociatedHits += hitsInThisCluster->N();
   }
-  if(ConfigurationManager::Instance()->GetVerbosityLevel() >= 1){
-    cout<<"num of rechits associated with sim-clusters:"<<nAssociatedHits<<endl;
+  if(ConfigurationManager::Instance()->GetVerbosityLevel() > 0){
+    cout<<"\nnum of rechits associated with sim-clusters:"<<nAssociatedHits<<"\n"<<endl;
   }
 }
 

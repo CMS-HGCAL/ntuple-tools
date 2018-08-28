@@ -24,7 +24,6 @@ public:
                                        double _deltac_FH,
                                        double _deltac_BH,
                                        double _minEnergy,
-//                                       int _minClusters,
                                        double _criticalDistance_EE,
                                        double _criticalDistance_FH,
                                        double _criticalDistance_BH,
@@ -38,7 +37,7 @@ public:
                                        std::string _energyDensityFunction,
                                        bool _reachedEEonly,
                                        double _matchingMaxDistance,
-                                        std::string _scoreOutputPath);
+                                       std::string _scoreOutputPath);
 
   /// Returns the path to the input files with ntuples
   inline std::string GetInputPath(){return inputPath;}
@@ -95,6 +94,8 @@ public:
   /// Where to store resulting algo characteristics (resolution, separation, containment)
   inline std::string GetScoreOutputPath(){return scoreOutputPath;}
   
+  void Print();
+  
 private:
   ConfigurationManager(std::string _configPath);
   
@@ -105,7 +106,6 @@ private:
                        double _deltac_FH,
                        double _deltac_BH,
                        double _minEnergy,
-//                       int _minClusters,
                        double _criticalDistance_EE,
                        double _criticalDistance_FH,
                        double _criticalDistance_BH,
@@ -135,7 +135,6 @@ private:
   double deltac_FH;
   double deltac_BH;
   double minEnergy;
-//  int minClusters;
   double criticalDistance_EE;
   double criticalDistance_FH;
   double criticalDistance_BH;

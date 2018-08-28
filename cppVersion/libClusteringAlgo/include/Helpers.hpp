@@ -147,17 +147,17 @@ inline std::string GetParamFromConfig(std::string configPath, std::string keyToF
   return "";
 }
 
-inline std::string GetStringFomeConfig(std::string configPath, std::string keyToFind){
+inline std::string GetStringFromConfig(std::string configPath, std::string keyToFind){
   std::string str = GetParamFromConfig(configPath,keyToFind);
   str.erase(remove_if(str.begin(), str.end(), isspace), str.end());
   return str;
 }
 
-inline int GetIntFomeConfig(std::string configPath, std::string keyToFind){
+inline int GetIntFromConfig(std::string configPath, std::string keyToFind){
   return stoi(GetParamFromConfig(configPath,keyToFind));
 }
 
-inline double GetDoubleFomeConfig(std::string configPath, std::string keyToFind){
+inline double GetDoubleFromConfig(std::string configPath, std::string keyToFind){
   return stod(GetParamFromConfig(configPath,keyToFind));
 }
 
