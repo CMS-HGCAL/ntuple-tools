@@ -31,7 +31,7 @@ mutationChance(0.002),
 severityFactor(1.0),
 crossover(kSinglePoint)
 {
-  int nChromosomes = 6;
+  int nChromosomes = 3;
   for(int i=0;i<nChromosomes;i++){bitChromosome.push_back(0);}
   
   clusteringOutput = ClusteringOutput();
@@ -53,7 +53,7 @@ Chromosome* Chromosome::GetRandom()
   Chromosome *result = new Chromosome();
   
   for(int i=0;i<kNparams;i++){
-    result->SetParam((EParam)i,RandFloat(paramMin[i],paramMax[i]));
+    result->SetParam((EParam)i,RandDouble(paramMin[i],paramMax[i]));
   }
   
   return result;
@@ -151,9 +151,9 @@ void Chromosome::StoreInConfig(string path)
   else if(kernelIndex == 1) UpdateParamValue(currentConfigPath, "energy_density_function","gaus");
   else                      UpdateParamValue(currentConfigPath, "energy_density_function","exp");
   
-  UpdateParamValue(currentConfigPath, "critial_distance_EE",GetParam(kCriticalDistanceEE));
-  UpdateParamValue(currentConfigPath, "critial_distance_FH",GetParam(kCriticalDistanceFH));
-  UpdateParamValue(currentConfigPath, "critial_distance_BH",GetParam(kCriticalDistanceBH));
+  UpdateParamValue(currentConfigPath, "critical_distance_EE",GetParam(kCriticalDistanceEE));
+  UpdateParamValue(currentConfigPath, "critical_distance_FH",GetParam(kCriticalDistanceFH));
+  UpdateParamValue(currentConfigPath, "critical_distance_BH",GetParam(kCriticalDistanceBH));
   UpdateParamValue(currentConfigPath, "deltac_EE",GetParam(kDeltacEE));
   UpdateParamValue(currentConfigPath, "deltac_FH",GetParam(kDeltacFH));
   UpdateParamValue(currentConfigPath, "deltac_BH",GetParam(kDeltacBH));
@@ -177,7 +177,12 @@ void Chromosome::CalculateScore()
                       +      clusteringOutput.separationMean
                       +      clusteringOutput.separationSigma
                       + fabs(clusteringOutput.deltaNclustersMean)
-                      +      clusteringOutput.deltaNclustersSigma;
+                      +      clusteringOutput.deltaNclustersSigma
+                      +      clusteringOutput.nEmptyMatched
+                      +      clusteringOutput.nNoMached
+                      +      clusteringOutput.nZeroSize;
+  
+  
   
   score = severityFactor/distance;
   
@@ -185,6 +190,9 @@ void Chromosome::CalculateScore()
      || clusteringOutput.separationMean     > 1000
      || clusteringOutput.containmentMean    > 1000
      || clusteringOutput.deltaNclustersMean > 1000
+     || clusteringOutput.nEmptyMatched      > 1000
+     || clusteringOutput.nZeroSize          > 1000
+     || clusteringOutput.nNoMached          > 1000
     )
   { // this means that clustering failed completely
     score = 0;
@@ -199,16 +207,23 @@ void Chromosome::CalculateScore()
   }
 }
 
-vector<uint64_t> Chromosome::SinglePointCrossover(uint64_t a, uint64_t b)
+vector<uint64_t> Chromosome::SinglePointCrossover(uint64_t a, uint64_t b, bool fixed)
 {
-  int crossingPoint = RandInt(0, 63);
+  int crossingPoint;
+  if(fixed){
+    int crossingParam = RandInt(0, 3); // this is the index of parameter to cross after
+    crossingPoint = crossingParam * 16; // crossing point will be 0, 16, 32 or 48, preserving parameter content
+  }
+  else{
+    crossingPoint = RandInt(0, 63);
+  }
+  
   vector<uint64_t> newBitChromosomes = {0,0};
   
   uint64_t maskA = 0;
-  for(int j=0;j<BitSize(maskA)-crossingPoint;j++){maskA |= 1ull << (j+crossingPoint);}
+  for(int j=crossingPoint;j<BitSize(maskA);j++){maskA |= (1ull << j);}
   
-  uint64_t maskB = 0;
-  for(int j=(int)BitSize(maskB)-crossingPoint;j<BitSize(maskB);j++){maskB |= 1ull << j;}
+  uint64_t maskB = ~maskA;
   
   newBitChromosomes[0] = a & maskA;
   newBitChromosomes[0] |= b & maskB;
@@ -232,7 +247,7 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
       children[1]->SetBitChromosome(i, newBitChromosomes[1]);
     }
   }
-  else if(crossover == kSinglePoint){ // true single-point crossover
+  else if(crossover == kSinglePoint || crossover == kFixedSinglePoint){ // true single-point crossover (can be fixed)
     int crossingChromo = RandInt(0, (int)bitChromosome.size()-1);
     
     for(int i=0;i<bitChromosome.size();i++){
@@ -243,7 +258,8 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
       }
       else if(i == crossingChromo){
         vector<uint64_t> newBitChromosomes = SinglePointCrossover(this->GetBitChromosome(i),
-                                                                  partner->GetBitChromosome(i));
+                                                                  partner->GetBitChromosome(i),
+                                                                  (crossover==kFixedSinglePoint));
         children[0]->SetBitChromosome(i, newBitChromosomes[0]);
         children[1]->SetBitChromosome(i, newBitChromosomes[1]);
       }
@@ -254,7 +270,20 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
     }
   }
   else if(crossover == kUniform){
-    
+    for(int i=0;i<bitChromosome.size();i++){
+      uint64_t dadBits = this->GetBitChromosome(i);
+      uint64_t momBits = partner->GetBitChromosome(i);
+      
+      for(int j=0;j<64;j++){
+        bool cross = RandBool();
+        if(cross){
+          ReverseBit(dadBits, j);
+          ReverseBit(momBits, j);
+        }
+      }
+      children[0]->SetBitChromosome(i, dadBits);
+      children[1]->SetBitChromosome(i, momBits);
+    }
   }
   
   // perform child genes mutation
@@ -273,6 +302,8 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
     // populate fields
     children[iChild]->ReadFromBitChromosome();
     
+    int wasOutside = children[iChild]->BackToLimits();
+    if(wasOutside) cout<<"Was outside:"<<wasOutside<<endl;
     // update the bits after updating values!!
     children[iChild]->SaveToBitChromosome();
     
@@ -286,3 +317,15 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
 }
 
 
+int Chromosome::BackToLimits()
+{
+  int wasOutside = 0;
+  
+  for(int i=0;i<kNparams;i++){
+    if(GetParam((EParam)i) <= paramMin[i] || GetParam((EParam)i) >= paramMax[i]){
+      SetParam((EParam)i, RandDouble(paramMin[i], paramMax[i]));
+      wasOutside++;
+    }
+  }
+  return wasOutside;
+}

@@ -97,7 +97,7 @@ vector<TObject*> getHistsWithName(const char* histFileName, const char* histName
 void analyzeClustering()
 {
   TCanvas *canvas = new TCanvas("canvas","canvas",2880,1800);
-  canvas->Divide(3,3);
+  canvas->Divide(3,4);
   TF1 *fun = new TF1("fun","x",0,100);
   
   
@@ -165,12 +165,13 @@ void analyzeClustering()
     
     mergedErecEsimVsEtaHists->GetXaxis()->SetTitle("|#eta|");
     mergedErecEsimVsEtaHists->GetYaxis()->SetTitle("E_{rec}/E_{sim}");
-    
-    canvas->cd(4);
-    TH1D *sigmaEvsEsim = mergedErecEsimVsEtaHists->ProjectionY();
-    sigmaEvsEsim->Draw();
-    sigmaEvsEsim->GetXaxis()->SetRangeUser(0,2);
   }
+  canvas->cd(4);
+  TFile *file2 = TFile::Open((baseDir+"/containment.root").c_str());
+  TH1D *containment = (TH1D*)file2->Get("containment");
+  containment->Draw();
+  containment->GetXaxis()->SetRangeUser(0,1);
+  
   
   vector<TObject*> inputsigmaEsimVsEta = getHistsWithName("simgaEvsEta","sigma(E) vs. eta");
   if(inputsigmaEsimVsEta.size() > 0){
@@ -203,26 +204,19 @@ void analyzeClustering()
     mergedSigmaEsimVsEtaEsimHists->GetYaxis()->SetTitle("(E_{rec}-E_{sim})/E_{sim}");
 //    mergedSigmaEsimVsEtaEsimHists->GetYaxis()->SetRangeUser(-1.0,0.2);
     
-    canvas->cd(7);
-    TH1D *sigmaEvsEsim = mergedSigmaEsimVsEtaEsimHists->ProjectionY();
-    sigmaEvsEsim->Rebin(2);
-    sigmaEvsEsim->Draw();
-    sigmaEvsEsim->GetXaxis()->SetRangeUser(-1,1);
   }
+  canvas->cd(7);
+  TFile *file1 = TFile::Open((baseDir+"/resolution.root").c_str());
+  TH1D *sigmaEvsEsim = (TH1D*)file1->Get("resolution");
+  sigmaEvsEsim->Draw();
+  sigmaEvsEsim->GetXaxis()->SetRangeUser(-1,1);
   
-  vector<TObject*> inputSeparation = getHistsWithName("twoSeparation","two clusters separation");
-  if(inputSeparation.size() > 0){
-    
-    TH1D *mergedSeparationHists = new TH1D(*(TH1D*)inputSeparation[0]);
-    
-    for(int iter=1;iter<inputSeparation.size();iter++){
-      mergedSeparationHists->Add((TH1D*)inputSeparation[iter]);
-    }
-    
-    canvas->cd(8);
-    mergedSeparationHists->Draw();
-    mergedSeparationHists->GetXaxis()->SetTitle("sep");
-  }
+  canvas->cd(8);
+  TFile *file3 = TFile::Open((baseDir+"/separation.root").c_str());
+  TH1D *separation = (TH1D*)file3->Get("separation");
+  separation->Rebin(4);
+  separation->Draw();
+  separation->GetXaxis()->SetRangeUser(0,3);
   
   vector<TObject*> inputNrecNsim = getHistsWithName("NrecNsim","NrecNsim");
   if(inputNrecNsim.size() > 0){
@@ -241,7 +235,12 @@ void analyzeClustering()
     
   }
   
-  canvas->SaveAs("/Users/Jeremi/Desktop/erecesim.png");
+  canvas->cd(10);
+  TFile *file4 = TFile::Open((baseDir+"/deltaN.root").c_str());
+  TH1D *deltaN = (TH1D*)file4->Get("numberClusters");
+//  deltaN->Rebin(4);
+  deltaN->Draw();
+  deltaN->GetXaxis()->SetRangeUser(-3,3);
   
 }
 

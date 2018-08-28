@@ -15,7 +15,16 @@ public:
   enum ECrossover{
     kUniform,       ///< each bit has a chance to be exchaned between parents
     kSinglePoint,   ///< one chromosome gets crossed, the rest stays the same or is exchaned intact
-    kMultiPoint     ///< each chromosome is crossed at a random point
+    kFixedSinglePoint,///< one chromosome gets crossed at point that doesn't modify any of the parameters, the rest stays the same or is exchaned intact
+    kMultiPoint,     ///< each chromosome is crossed at a random point
+    kNcrossover
+  };
+  
+  inline static std::string crossoverName[kNcrossover] = {
+    "Uniform",
+    "Single point",
+    "Fixed single point",
+    "Multi point"
   };
   
   /// Default constructor
@@ -84,7 +93,9 @@ private:
   template<class T>
   void SetValueFromChromosome(T &value, int &shift, int chromoIndex);
   
-  std::vector<uint64_t> SinglePointCrossover(uint64_t a, uint64_t b);
+  std::vector<uint64_t> SinglePointCrossover(uint64_t a, uint64_t b, bool fixed = false);
+  
+  int BackToLimits();
 };
 
 #endif /* Chromosome_hpp */

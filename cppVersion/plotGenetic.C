@@ -1,5 +1,7 @@
 #include <dirent.h>
 
+string basePath = "geneticResults/score_fun_v1/";
+
 void PlotInCanvas(TCanvas *canvas, TCanvas *canvasWgt, TCanvas *canvas1D, int pad, TFile *file, string name)
 {
   canvas->cd(pad);
@@ -13,7 +15,9 @@ void PlotInCanvas(TCanvas *canvas, TCanvas *canvasWgt, TCanvas *canvas1D, int pa
   histWgt->Draw("colz");
   
   canvas1D->cd(pad);
-  gPad->SetLogy();
+  
+//  gPad->SetLogy();
+  
   TH1D *histFailed = (TH1D*)file->Get((name+"_failed").c_str());
   TH1D *histPassed = (TH1D*)file->Get((name+"_passed").c_str());
   if(!histFailed || !histPassed) return;
@@ -21,20 +25,20 @@ void PlotInCanvas(TCanvas *canvas, TCanvas *canvasWgt, TCanvas *canvas1D, int pa
 //  histFailed->Rebin(4);
 //  histPassed->Rebin(4);
   
-  histFailed->Draw();
-  histPassed->Draw("same");
+//  histFailed->Draw();
+//  histPassed->Draw("same");
   
-//  histFailed->DrawNormalized();
-//  histPassed->DrawNormalized("same");
+  histFailed->DrawNormalized();
+  histPassed->DrawNormalized("same");
   
 }
 
 int GetCurrentMaxResultsIndex()
 {
-  DIR *dir = opendir("geneticResults/");
+  DIR *dir = opendir(basePath.c_str());
   
   if(!dir){
-    cout<<"could not open directory:"<<"geneticResults"<<endl;
+    cout<<"could not open directory:"<<basePath<<endl;
     return -1;
   }
   
@@ -62,7 +66,7 @@ void plotGenetic(string path = "")
 {
   if(path==""){
     int index = GetCurrentMaxResultsIndex();
-    path = "geneticResults/results_"+to_string(index)+"/geneticHists.root";
+    path = basePath+"results_"+to_string(index)+"/geneticHists.root";
     cout<<"Automatically set path to:"<<path<<endl;
   }
   

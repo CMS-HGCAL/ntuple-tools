@@ -39,7 +39,7 @@ const double paramMin[kNparams] = {
   0.01, ///< min critical delta BH
   1.0,  ///< min kappa  // below 1.0 algorithm doesn't work
   2.0,  ///< min energy threshold
-  0.01, ///< min matching distance
+  0.0,  ///< min matching distance
  -0.49  ///< min kernel index
 };
 
@@ -57,16 +57,16 @@ const double paramMax[kNparams] = {
 };
 
 const double paramStart[kNparams] = {
-  17.4,
-  14.9,
-  24.9,
-  14.5,
-  19.9,
-  24.9,
-  258.0,
-  3.40,
-  14.5,
-  0.0
+  2.00, ///< initial critical distance EE
+  2.00, ///< initial critical distance FH
+  2.00, ///< initial critical distance BH
+  2.00, ///< initial critical delta EE
+  2.00, ///< initial critical delta FH
+  5.00, ///< initial critical delta BH
+  9.00, ///< initial kappa
+  3.00, ///< initial energy threshold
+  5.00, ///< initial matching distance
+  0.0   ///< initial kernel index (0 - step, 1 - gaus, 2 - exp)
 };
   
 inline const char* paramTitle[kNparams] = {
@@ -117,7 +117,7 @@ inline void ReverseBit(uint64_t &bits, int pos)
 
 inline void PrintBits(uint64_t bits)
 {
-  std::bitset<80> x(bits);
+  std::bitset<64> x(bits);
   std::cout<<x<<std::endl;
 }
 
@@ -160,7 +160,7 @@ inline void UpdateParamValue(std::string configPath, std::string keyToReplace, T
 }
 
 template<class T>
-void GetParamFomeConfig(std::string configPath, std::string keyToFind, T &returnValue){
+void GetParamFromConfig(std::string configPath, std::string keyToFind, T &returnValue){
   std::ifstream is_file(configPath);
   
   std::string line;
@@ -191,6 +191,9 @@ struct ClusteringOutput {
     containmentSigma = 99999;
     deltaNclustersMean = 99999;
     deltaNclustersSigma = 99999;
+    nEmptyMatched = 99999;
+    nZeroSize = 99999;
+    nNoMached = 99999;
   }
   
   void Print(){
@@ -198,6 +201,9 @@ struct ClusteringOutput {
     std::cout<<"Separation:"<<separationMean<<" +/- "<<separationSigma<<std::endl;
     std::cout<<"Containment:"<<containmentMean<<" +/- "<<containmentSigma<<std::endl;
     std::cout<<"Delta N clusters:"<<deltaNclustersMean<<" +/- "<<deltaNclustersSigma<<std::endl;
+    std::cout<<"\% of event-layers with empty (sim or rec) clusters in matched clusters::"<<nEmptyMatched<<std::endl;
+    std::cout<<"\% of event-layers with zero size matched clusters:"<<nZeroSize<<std::endl;
+    std::cout<<"N events with no matched clusters:"<<nNoMached<<std::endl;
   }
   
   double resolutionMean;
@@ -208,21 +214,17 @@ struct ClusteringOutput {
   double containmentSigma;
   double deltaNclustersMean;
   double deltaNclustersSigma;
+  double nEmptyMatched;
+  double nZeroSize;
+  double nNoMached;
+  
 };
 
 inline ClusteringOutput ReadOutput(std::string fileName){
   std::ifstream is_file(fileName);
   std::string line;
   int iter=0;
-  ClusteringOutput output;
-  output.resolutionMean = 999999;
-  output.resolutionSigma = 999999;
-  output.separationMean = 999999;
-  output.separationSigma = 999999;
-  output.containmentMean = 999999;
-  output.containmentSigma = 999999;
-  output.deltaNclustersMean = 999999;
-  output.deltaNclustersSigma = 999999;
+  ClusteringOutput output = ClusteringOutput();
   
   while(getline(is_file, line)){
     std::istringstream is_line(line);
@@ -234,6 +236,9 @@ inline ClusteringOutput ReadOutput(std::string fileName){
     if(iter==5) is_line >> output.containmentSigma;
     if(iter==6) is_line >> output.deltaNclustersMean;
     if(iter==7) is_line >> output.deltaNclustersSigma;
+    if(iter==8) is_line >> output.nEmptyMatched;
+    if(iter==9) is_line >> output.nZeroSize;
+    if(iter==10)is_line >> output.nNoMached;
     iter++;
   }
   return output;

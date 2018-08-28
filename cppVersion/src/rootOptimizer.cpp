@@ -8,7 +8,7 @@ using namespace std;
 const string configPath = "bestGenetic.md";
 const string outputPath = "autoGenOutput.txt";
 
-int nEventsPerTest = 30;   ///< On how many events each population member will be tested
+int nEventsPerTest = 100;   ///< On how many events each population member will be tested
 
 double severityFactor = 10.0;
 
@@ -55,20 +55,25 @@ void myfuncf(Int_t&, Double_t*, Double_t &f, Double_t *par, Int_t)
   +outputPath+" "
   +" > /dev/null 2>&1";
   
-  cout<<"Running clusterization"<<endl;
+  cout<<"Running clusterization:"<<endl;
+  cout<<command<<endl;
   system(command.c_str());
   cout<<"Clusterization output:"<<endl;
   
   ClusteringOutput output = ReadOutput(outputPath);
   output.Print();
   
-  chi2 =   fabs(output.containmentMean-1)
+  chi2 =    fabs(output.containmentMean-1)
           +      output.containmentSigma
           + fabs(output.resolutionMean)
           +      output.resolutionSigma
           +      output.separationMean
-          +      output.separationSigma;
-  
+          +      output.separationSigma
+          + fabs(output.deltaNclustersMean)
+          +      output.deltaNclustersSigma
+          +      output.nEmptyMatched
+          +      output.nNoMached
+          +      output.nZeroSize;
   
   cout<<"\n\nchi2:"<<chi2<<"\n\n"<<endl;
   cout<<"Score (GA equivalent):"<<severityFactor/chi2<<endl;
@@ -86,6 +91,8 @@ int main()
   fitter->SetFCN(myfuncf);
   
   for(int iPar=0;iPar<kNparams;iPar++){
+    cout<<"Setting parameter:"<<endl;
+    cout<<iPar<<"\t"<<paramTitle[iPar]<<"\t"<<paramStart[iPar]<<"\t"<<0.1<<"\t"<<paramMin[iPar]<<"\t"<<paramMax[iPar]<<endl;
     fitter->SetParameter(iPar, paramTitle[iPar], paramStart[iPar], 0.1, paramMin[iPar], paramMax[iPar]);
   }
   

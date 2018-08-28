@@ -31,23 +31,23 @@ using namespace std;
 
 string baseResultsPath;
 
-string baseResultsSearchPath = "geneticResults/";
+string baseResultsSearchPath = "geneticResults/score_fun_v2/";
 string baseResultsDirName = "results_";
 
 int populationSize = 100;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
 int maxBatchSize = 25;  ///< execute this number of jobs simultaneously
-int nGenerations = 1000;     ///< Number of iterations
+int nGenerations = 200;     ///< Number of iterations
 int nEventsPerTest = 100;   ///< On how many events per ntuple each population member will be tested
 
 int processTimeout = 500; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
-double mutationChance = 0.005;
-double severityFactor = 50.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
+double mutationChance = 0.002;
+double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
 
 bool dependSensor = true;
 bool reachedEE = true;
 
-Chromosome::ECrossover crossoverStrategy = Chromosome::kSinglePoint;
+Chromosome::ECrossover crossoverStrategy = Chromosome::kFixedSinglePoint;
 
 int minNtuple = 1;
 int maxNtuple = 1;
@@ -236,7 +236,8 @@ void SaveConfigurationToFile(){
   outputFile<<"N tuple min:\t"<<minNtuple<<endl;
   outputFile<<"N tuple max:\t"<<maxNtuple<<endl;
   outputFile<<"Mutation probability:\t"<<mutationChance<<endl;
-  outputFile<<"Severity factor:\t"<<severityFactor<<endl;
+  outputFile<<"Severity_factor:\t"<<severityFactor<<endl;
+  outputFile<<"Crossover_strategy:\t"<<Chromosome::crossoverName[crossoverStrategy]<<endl;
   outputFile<<"Timeout for each generation:\t"<<processTimeout<<" (s)"<<endl;
   outputFile<<"Sensor dependance:\t"<<dependSensor<<endl;
   outputFile<<"Reached EE only:\t"<<reachedEE<<endl;
