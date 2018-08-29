@@ -78,14 +78,12 @@ int main(int argc, char* argv[])
       // re-run clustering with HGCalAlgo, save to file
       std::vector<shared_ptr<Hexel>> recClusters;
       algo->getRecClusters(recClusters, recHitsRaw);
-//      cout<<"num of rechits clustered with imaging algo:"<<recClusters.size()<<endl;
       
       // recClusters -> array of hexel objects
       vector<RecHits*> recHitsPerClusterArray;
       recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
       
       // perform final analysis, fill in histograms and save to files
-      
       int nZeroSim = 0;
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         

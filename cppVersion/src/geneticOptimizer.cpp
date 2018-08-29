@@ -31,15 +31,15 @@ using namespace std;
 
 string baseResultsPath;
 
-string baseResultsSearchPath = "geneticResults/score_fun_v2/";
+string baseResultsSearchPath = "geneticResults/score_fun_v2_pions/";
 string baseResultsDirName = "results_";
 
-int populationSize = 100;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
-int maxBatchSize = 25;  ///< execute this number of jobs simultaneously
+int populationSize = 20;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
+int maxBatchSize = 20;  ///< execute this number of jobs simultaneously
 int nGenerations = 200;     ///< Number of iterations
 int nEventsPerTest = 100;   ///< On how many events per ntuple each population member will be tested
 
-int processTimeout = 500; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
+int processTimeout = 200; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
 double mutationChance = 0.002;
 double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
@@ -52,7 +52,9 @@ Chromosome::ECrossover crossoverStrategy = Chromosome::kFixedSinglePoint;
 int minNtuple = 1;
 int maxNtuple = 1;
 
-string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_";
+//string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_";
+
+string dataPath = "../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p4_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_";
 
 string outputPath = "../clusteringResultsCXX/geneticOptimizer/";
 
@@ -127,7 +129,7 @@ void killChildrenAfterTimeout(vector<int> childPid, int timeout)
   while(timeElapsed < timeout && !allKidsFinished){
     sleep(1);
     timeElapsed++;
-    cout<<"Time elapsed:"<<timeElapsed<<" (killing after "<<processTimeout<<" s.)"<<'\r';
+    cout<<"Time elapsed:"<<timeElapsed<<" (killing after "<<processTimeout<<" s.)"<<endl;
   }
   if(!allKidsFinished){
     cout<<"\nKilling all children\n\n"<<endl;
@@ -145,7 +147,7 @@ int GetWeightedRandom(discrete_distribution<double> dist)
   return dist(randGenerator);
 }
 
-void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distribution<double> &dist)
+void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distribution<double> &dist, int generation)
 {
   std::vector<int> childPid;
   
@@ -202,7 +204,7 @@ void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distrib
   cout<<"\n\n================================================="<<endl;
   cout<<"The best guy in this generation was..."<<endl;
   population[bestGuyIndex]->Print();
-  population[bestGuyIndex]->StoreInConfig(baseResultsPath+"bestGenetic.md");
+  population[bestGuyIndex]->StoreInConfig(baseResultsPath+"bestGenetic"+to_string(generation)+".md");
   
   dist = discrete_distribution<double>(scoresNormalized.begin(), scoresNormalized.end());
 }
@@ -365,7 +367,7 @@ int main(int argc, char* argv[])
                                        Form("score dist gen[%i]",iGeneration),
                                        200,-20,20);
     
-    TestPopulation(population, scoresDist[iGeneration], scores);
+    TestPopulation(population, scoresDist[iGeneration], scores, iGeneration);
     
     for(int i=0;i<populationSize;i++){
       for(int iPar=0;iPar<kNparams;iPar++){

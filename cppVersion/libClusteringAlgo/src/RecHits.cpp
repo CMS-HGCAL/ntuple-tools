@@ -154,23 +154,29 @@ double RecHits::GetTotalEnergy()
 
 double RecHits::GetXmin()
 {
+  if(!x || x->size()==0) return 99999;
   return *min_element(x->begin(), x->end());
 }
 double RecHits::GetXmax()
 {
+  if(!x || x->size()==0) return 99999;
   return *max_element(x->begin(), x->end());
 }
 double RecHits::GetYmin()
 {
+  if(!y || y->size()==0) return 99999;
   return *min_element(y->begin(), y->end());
 }
 double RecHits::GetYmax()
 {
+  if(!y || y->size()==0) return 99999;
   return *max_element(y->begin(), y->end());
 }
 
 double RecHits::GetCenterEta()
 {
+  if(!eta || eta->size()==0) return 99999;
+  
   double minEta = *min_element(eta->begin(), eta->end());
   double maxEta = *max_element(eta->begin(), eta->end());
   

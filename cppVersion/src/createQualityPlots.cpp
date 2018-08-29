@@ -77,19 +77,18 @@ int main(int argc, char* argv[])
   ClusterMatcher *matcher = new ClusterMatcher();
   
   TH1D *deltaE = new TH1D("resolution","resolution",1000,-5,5);
-  TH1D *separation = new TH1D("separation","separation",500,0,5);
+  TH1D *separation = new TH1D("separation","separation",1000,0,10);
   TH1D *containment = new TH1D("containment","containment",200,-1,1);
   TH1D *deltaN = new TH1D("numberClusters","numberClusters",2000,-10,10);
+  TH1D *clusterRadius = new TH1D("clusterRadius","clusterRadius",3000,-1,300);
   
   TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
   TH2D *sigmaEvsEtaEsim = new TH2D("sigma(E)Esim vs. eta","sigma(E)Esim vs. eta",100,1.5,3.2,100,-1.5,1.0);
   TH2D *NrecNsim = new TH2D("NrecNsim","NrecNsim",20,1,20,20,1,20);
   
-  int emptyMatchedClusters = 0;
-  int zeroSizeClusters = 0;
-  int noMatchedClusters = 0;
-  int nTotalMatchedClusters = 0;
+  int failure1=0, failure2=0, failure3=0;
   int nTotalLayerEvents = 0;
+  int nTotalMatchedClusters = 0;
   
   for(int nTupleIter=config->GetMinNtuple();nTupleIter<=config->GetMaxNtuple();nTupleIter++){
     cout<<"\nCurrent ntup: "<<nTupleIter<<endl;
@@ -160,13 +159,10 @@ int main(int argc, char* argv[])
       std::vector<shared_ptr<Hexel>> recClusters;
       algo->getRecClusters(recClusters, recHitsRaw);
       
-      if(recClusters.size() == 0){
-        cout<<"ERROR - algorithm couldn't find any rec clusters!!!"<<endl;
-        continue;
-      }
-      
       vector<RecHits*> recHitsPerClusterArray;
-      recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
+      if(recClusters.size()>0){
+        recHitsRaw->GetRecHitsPerHexel(recHitsPerClusterArray, recClusters);
+      }
     
       if(config->GetVerbosityLevel() > 0){
         cout<<"\nReconstructed hits grouped by clusters:"<<endl;
@@ -187,33 +183,83 @@ int main(int argc, char* argv[])
       
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
-        if(simClusters->GetNsimClustersInLayer(layer) == 0){
-          // this means that there were no 2d clusters simulated in this layer, so there's nothing to look for there (in the future one should check number of fake clusters reconstructed even in layers where there was nothing simulated)
+        // Take sim clusters in this layer, check if there are any
+        vector<unique_ptr<RecHits>> simHitsInClusterInLayer;
+        for(RecHits *cluster : simHitsPerClusterArray){
+          unique_ptr<RecHits> clusterInLayer = cluster->GetHitsInLayer(layer);
+          if(clusterInLayer->N() == 0) continue;
+          simHitsInClusterInLayer.push_back(move(clusterInLayer));
+        }
+        if(simHitsInClusterInLayer.size() == 0){
+          // this is OK, somethimes there may be nothing simulated in given layer, for instance when particles stop before the end of the calorimeter
+          if(config->GetVerbosityLevel() > 1){
+            cout<<"No sim clusters in layer:"<<layer<<endl;
+          }
           continue;
         }
         
-        vector<MatchedClusters*> matchedClusters;
-        matcher->MatchClustersByDetID(matchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
-        
-        nTotalMatchedClusters+=matchedClusters.size();
+        // If this event-layer makes sense at all (there are some sim clusters in it), count it for the denominator of failures fraction
         nTotalLayerEvents++;
         
-        if(matchedClusters.size()==0){
-          noMatchedClusters++;
+        // Take rec clusters in this layer, check if there are any
+        vector<unique_ptr<RecHits>> recHitsInClusterInLayer;
+        for(RecHits *cluster : recHitsPerClusterArray){
+          unique_ptr<RecHits> clusterInLayer = cluster->GetHitsInLayer(layer);
+          if(clusterInLayer->N() == 0) continue;
+          recHitsInClusterInLayer.push_back(move(clusterInLayer));
+        }
+        if(recHitsInClusterInLayer.size() == 0){
+          // This is not good, one should minimize possibility for that to happen. This means that there were no rec clusters found despite there were some sim clusters in this layer
+          if(config->GetVerbosityLevel() > 1){
+            cout<<"No rec clusters in layer:"<<layer<<" despite there are "<<simHitsInClusterInLayer.size()<<" sim clusters in this layer!!"<<endl;
+          }
+          failure1++;
+          continue;
+        }
+        
+        NrecNsim->Fill(simHitsPerClusterArray.size(),recHitsPerClusterArray.size());
+        deltaN->Fill(((int)simHitsPerClusterArray.size()-(int)recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
+        
+        // Match rec clusters with sim clusters by det ID, check if there is at least one such pair
+        vector<MatchedClusters*> matchedClusters;
+        matcher->MatchClustersByDetID(matchedClusters,recHitsInClusterInLayer,simHitsInClusterInLayer);
+        if(matchedClusters.size() == 0){
+          // This is bad, because there are some sim and some rec clusters in this layer, but not even a single pair sim-rec was found
+          if(config->GetVerbosityLevel() > 1){
+            cout<<"Zero matched clusters created in layer:"<<layer<<endl;
+            cout<<"Sim clusters:"<<endl;
+            for(auto &cluster : simHitsInClusterInLayer){cluster->Print();}
+            cout<<"Rec clusters:"<<endl;
+            for(auto &cluster : recHitsInClusterInLayer){cluster->Print();}
+          }
+          failure2++;
           continue;
         }
         
         for(MatchedClusters *clusters : matchedClusters){
-          if(clusters->GetRecRadius() == 0){
-            zeroSizeClusters++;
-            // maybe skip those?
-          }
+          nTotalMatchedClusters++;
           
-          if(!clusters->HasSimClusters() ||
-             !clusters->HasRecClusters()){
-            emptyMatchedClusters++;
+          if(!clusters->HasSimClusters()){
+            // This may happen when fake rec cluster was found and there are no simulated clusters around. One should minimize probability of that to happen
+            if(config->GetVerbosityLevel() > 1){
+              cout<<"\n\nNo sim clusters in matched clusters in layer:"<<layer<<endl;
+            }
+            failure3++;
             continue;
           }
+          if(!clusters->HasRecClusters()){
+            // Should never happen, as we check earlier if there are rec clusters in this layer and matched clusters are created from rec clusters
+            cout<<"ERROR -- No rec clusters in matched clusters in layer:"<<layer<<endl;
+            continue;
+          }
+          clusterRadius->Fill(clusters->GetRecRadius());
+          
+          if(clusters->GetRecRadius() == 0){
+            // Should never happen, as we set radius of 0.5 cm for single-hit clusters
+            cout<<"ERROR -- Rec cluster with size zero"<<endl;
+            continue;
+          }
+          
           double recEnergy = clusters->GetRecEnergy();
           double recEta    = clusters->GetRecEta();
           double simEnergy = clusters->GetSimEnergy();
@@ -226,11 +272,12 @@ int main(int argc, char* argv[])
           deltaE->Fill((recEnergy-simEnergy)/simEnergy);
           containment->Fill(clusters->GetSharedFraction());
         }
-        NrecNsim->Fill(simHitsPerClusterArray.size(),recHitsPerClusterArray.size());
-        deltaN->Fill(((int)simHitsPerClusterArray.size()-(int)recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
+       
         
         for(uint i=0;i<matchedClusters.size();i++){
+          if(!matchedClusters[i]->HasRecClusters()) continue;
           for(uint j=(i+1);j<matchedClusters.size();j++){
+            if(!matchedClusters[j]->HasRecClusters()) continue;
             
             double distance = sqrt(pow(matchedClusters[i]->GetRecX()-matchedClusters[j]->GetRecX(),2)+
                                    pow(matchedClusters[i]->GetRecY()-matchedClusters[j]->GetRecY(),2));
@@ -239,10 +286,13 @@ int main(int argc, char* argv[])
             double sigma2 = matchedClusters[j]->GetRecRadius();
             
             if(sigma1+sigma2 == 0){
+              // This should basically never happen, for single-hit clusters we set radius of 0.5 cm
+              cout<<"sum zero size"<<endl;
               continue;
             }
             
-            separation->Fill(distance/(sigma1+sigma2));
+            if(distance/(sigma1+sigma2) > 10) separation->Fill(9.9);
+            else                              separation->Fill(distance/(sigma1+sigma2));
           }
         }
       }
@@ -261,6 +311,7 @@ int main(int argc, char* argv[])
   separation->SaveAs((outpath+"/separation.root").c_str());
   containment->SaveAs((outpath+"/containment.root").c_str());
   deltaN->SaveAs((outpath+"/deltaN.root").c_str());
+  clusterRadius->SaveAs((outpath+"/clusterRadius.root").c_str());
   
   ErecEsimVsEta->SaveAs((outpath+"/ErecEsimVsEta.root").c_str());
   sigmaEvsEtaEsim->SaveAs((outpath+"/simgaEVsEtaEsim.root").c_str());
@@ -318,15 +369,20 @@ int main(int argc, char* argv[])
     cout<<"Average difference in N clusters (sim-rec) per event:"<<999999<<endl;
     cout<<"N clusters (sim-rec) sigma:"<<999999<<endl;
   }
-  outputFile<<emptyMatchedClusters/(double)(nTotalMatchedClusters)<<endl;
-  cout<<"\% of event-layers with empty (sim or rec) clusters in matched clusters:"<<emptyMatchedClusters/(double)(nTotalMatchedClusters)<<endl;
-  outputFile<<zeroSizeClusters/(double)(nTotalMatchedClusters)<<endl;
-  cout<<"\% of event-layers with zero size matched clusters:"<<zeroSizeClusters/(double)(nTotalMatchedClusters)<<endl;
-  outputFile<<noMatchedClusters/(double)(nTotalMatchedClusters)<<endl;
-  cout<<"N events with no matched clusters:"<<noMatchedClusters/(double)(nTotalLayerEvents)<<endl;
+  outputFile<<failure1/(double)(nTotalLayerEvents)<<endl;
+  cout<<"\% of event-layers where algo failed to find sim clusters:"<<failure1/(double)(nTotalLayerEvents)<<endl;
+  
+  outputFile<<failure2/(double)(nTotalLayerEvents)<<endl;
+  cout<<"\% of event-layers were rec and sim clusters couldn't be matched:"<<failure2/(double)(nTotalLayerEvents)<<endl;
+  
+  outputFile<<failure3/(double)(nTotalMatchedClusters)<<endl;
+  cout<<"\% of fake rec clusters (those that don't match any sim cluster):"<<failure3/(double)(nTotalMatchedClusters)<<endl;
+  
   
   outputFile.close();
   
+  // copy file with results also to the location where histograms are stored
+  system(("cp "+config->GetScoreOutputPath()+" "+outpath+"/output.txt").c_str());
   
   delete algo;
   delete matcher;

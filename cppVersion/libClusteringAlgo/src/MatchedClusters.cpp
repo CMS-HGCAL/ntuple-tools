@@ -98,6 +98,8 @@ BasicCluster* MatchedClusters::GetBasicClusterFromRecHits(std::unique_ptr<RecHit
   double clusterEta = hits->GetCenterEta();
   double clusterR = std::max((xMax-xMin)/2.,(yMax-yMin)/2.);
   
+  if(clusterR==0) clusterR = 0.5; // this means that cluster has just one hit
+  
   BasicCluster *basicCluster = new BasicCluster(recEnergy,clusterX,clusterY,0,clusterEta,clusterR);
   return basicCluster;
 }

@@ -51,9 +51,6 @@ public:
   /// Returns radius of circle in which to look for hexels (cartesian coordiantes in cm, per detector: EE, FH, BH)
   double GetDeltac(EDet det);
   
-  /// Returns requested min number of 2D clusters + 1
-//  inline int GetMinClusters(){return minClusters;}
-  
   /// Returns cut on energy (minimum)
   inline double GetEnergyMin(){return minEnergy;}
   

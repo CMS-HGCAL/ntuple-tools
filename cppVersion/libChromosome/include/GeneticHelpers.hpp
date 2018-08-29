@@ -191,9 +191,9 @@ struct ClusteringOutput {
     containmentSigma = 99999;
     deltaNclustersMean = 99999;
     deltaNclustersSigma = 99999;
-    nEmptyMatched = 99999;
-    nZeroSize = 99999;
-    nNoMached = 99999;
+    nRecoFailed = 99999;
+    nCantMatchRecSim = 99999;
+    nFakeRec = 99999;
   }
   
   void Print(){
@@ -201,9 +201,9 @@ struct ClusteringOutput {
     std::cout<<"Separation:"<<separationMean<<" +/- "<<separationSigma<<std::endl;
     std::cout<<"Containment:"<<containmentMean<<" +/- "<<containmentSigma<<std::endl;
     std::cout<<"Delta N clusters:"<<deltaNclustersMean<<" +/- "<<deltaNclustersSigma<<std::endl;
-    std::cout<<"\% of event-layers with empty (sim or rec) clusters in matched clusters::"<<nEmptyMatched<<std::endl;
-    std::cout<<"\% of event-layers with zero size matched clusters:"<<nZeroSize<<std::endl;
-    std::cout<<"N events with no matched clusters:"<<nNoMached<<std::endl;
+    std::cout<<"\% of event-layers where algo failed to find sim clusters:"<<nRecoFailed<<std::endl;
+    std::cout<<"\% of event-layers were rec and sim clusters couldn't be matched:"<<nCantMatchRecSim<<std::endl;
+    std::cout<<"\% of fake rec clusters (those that don't match any sim cluster):"<<nFakeRec<<std::endl;
   }
   
   double resolutionMean;
@@ -214,9 +214,9 @@ struct ClusteringOutput {
   double containmentSigma;
   double deltaNclustersMean;
   double deltaNclustersSigma;
-  double nEmptyMatched;
-  double nZeroSize;
-  double nNoMached;
+  double nRecoFailed;
+  double nCantMatchRecSim;
+  double nFakeRec;
   
 };
 
@@ -236,9 +236,9 @@ inline ClusteringOutput ReadOutput(std::string fileName){
     if(iter==5) is_line >> output.containmentSigma;
     if(iter==6) is_line >> output.deltaNclustersMean;
     if(iter==7) is_line >> output.deltaNclustersSigma;
-    if(iter==8) is_line >> output.nEmptyMatched;
-    if(iter==9) is_line >> output.nZeroSize;
-    if(iter==10)is_line >> output.nNoMached;
+    if(iter==8) is_line >> output.nRecoFailed;
+    if(iter==9) is_line >> output.nCantMatchRecSim;
+    if(iter==10)is_line >> output.nFakeRec;
     iter++;
   }
   return output;

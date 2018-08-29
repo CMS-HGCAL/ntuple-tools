@@ -178,9 +178,9 @@ void Chromosome::CalculateScore()
                       +      clusteringOutput.separationSigma
                       + fabs(clusteringOutput.deltaNclustersMean)
                       +      clusteringOutput.deltaNclustersSigma
-                      +      clusteringOutput.nEmptyMatched
-                      +      clusteringOutput.nNoMached
-                      +      clusteringOutput.nZeroSize;
+                      +      clusteringOutput.nRecoFailed
+                      +      clusteringOutput.nCantMatchRecSim
+                      +      clusteringOutput.nFakeRec;
   
   
   
@@ -190,9 +190,9 @@ void Chromosome::CalculateScore()
      || clusteringOutput.separationMean     > 1000
      || clusteringOutput.containmentMean    > 1000
      || clusteringOutput.deltaNclustersMean > 1000
-     || clusteringOutput.nEmptyMatched      > 1000
-     || clusteringOutput.nZeroSize          > 1000
-     || clusteringOutput.nNoMached          > 1000
+     || clusteringOutput.nRecoFailed        > 1000
+     || clusteringOutput.nCantMatchRecSim   > 1000
+     || clusteringOutput.nFakeRec           > 1000
     )
   { // this means that clustering failed completely
     score = 0;

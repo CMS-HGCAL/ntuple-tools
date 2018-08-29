@@ -102,3 +102,19 @@ ENV/
 
 *.xcodeproj
 clusteringResults/
+clusteringResultsCXX/
+cppVersion/autoGenOutput.txt
+cppVersion/baseConfig.md
+cppVersion/bestGenetic.md
+cppVersion/configs/autoGenConfig.md
+cppVersion/configs/geneticConfig.md
+cppVersion/configs/pedja_photon_Pt6_dR0p10.md
+cppVersion/configs/jniedzieTwoPionDeltaR0p4.md
+cppVersion/configs/singleGamma.md
+cppVersion/configs/pedja_photon_Pt10_dR0p02.md
+cppVersion/configs/twoPionDeltaR0p4.md
+
+
+
+
+

@@ -20,7 +20,6 @@ configPath("")
   dependSensor = config->GetDependSensor();
   kappa = config->GetKappa();
   ecut = config->GetEnergyMin();
-//  minClusters = config->GetMinClusters();
   verbosityLevel = config->GetVerbosityLevel();
   criticalDistanceEE = config->GetCriticalDistance(kEE);
   criticalDistanceFH = config->GetCriticalDistance(kFH);
@@ -58,7 +57,6 @@ configPath("")
     cout<<"   deltac_BH: "<<deltacBH<<endl;
     cout<<"   kappa: "<<kappa<<endl;
     cout<<"   ecut: "<<ecut<<endl;
-//    cout<<"   minClusters: "<<minClusters<<endl;
     cout<<"   verbosityLevel: "<<verbosityLevel<<endl;
   }
 }
@@ -112,7 +110,6 @@ config(nullptr)
     cout<<"   deltac_BH: "<<deltacBH<<endl;
     cout<<"   kappa: "<<kappa<<endl;
     cout<<"   ecut: "<<ecut<<endl;
-//    cout<<"   minClusters: "<<minClusters<<endl;
     cout<<"   verbosityLevel: "<<verbosityLevel<<endl;
   }
 }
@@ -300,7 +297,7 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
     }
     if(ci != -1){
       clusters[ci].push_back(move(iNode));
-      if(verbosityLevel >= 2){
+      if(verbosityLevel > 2){
         cout<<"Pushing hit "<<&iNode<<" into cluster with index "<<ci<<endl;
         cout<<"   rho_b[ci]: "<<rho_b[ci]<<", iNode.rho: "<<iNode->rho<<" iNode.isHalo: "<<iNode->isHalo<<endl;
       }

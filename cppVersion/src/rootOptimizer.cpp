@@ -71,9 +71,9 @@ void myfuncf(Int_t&, Double_t*, Double_t &f, Double_t *par, Int_t)
           +      output.separationSigma
           + fabs(output.deltaNclustersMean)
           +      output.deltaNclustersSigma
-          +      output.nEmptyMatched
-          +      output.nNoMached
-          +      output.nZeroSize;
+          +      output.nRecoFailed
+          +      output.nCantMatchRecSim
+          +      output.nFakeRec;
   
   cout<<"\n\nchi2:"<<chi2<<"\n\n"<<endl;
   cout<<"Score (GA equivalent):"<<severityFactor/chi2<<endl;
