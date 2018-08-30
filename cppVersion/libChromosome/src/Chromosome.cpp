@@ -29,7 +29,8 @@ score(-99999),
 normalizedScore(-99999),
 mutationChance(0.002),
 severityFactor(1.0),
-crossover(kSinglePoint)
+crossover(kSinglePoint),
+inputDataPath("")
 {
   int nChromosomes = 3;
   for(int i=0;i<nChromosomes;i++){bitChromosome.push_back(0);}
@@ -144,6 +145,8 @@ void Chromosome::StoreInConfig(string path)
   string currentConfigPath = path=="" ? configPath : path;
   
   system(("cp baseConfig.md "+currentConfigPath).c_str());
+  
+  UpdateParamValue(currentConfigPath, "input_path",inputDataPath);
   
   int kernelIndex = round(GetParam(kKernel));
   
@@ -311,6 +314,7 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
     children[iChild]->SetMutationChance(mutationChance);
     children[iChild]->SetSeverityFactor(severityFactor);
     children[iChild]->SetCrossover(crossover);
+    children[iChild]->SetInputDataPath(inputDataPath);
   }
   
   return children;

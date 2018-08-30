@@ -10,10 +10,12 @@
 //string baseDir = "clusteringResultsCXX/twoPions_Pt80_Eta2_DeltaR0p4/";
 //string baseDir = "clusteringResultsCXX/twoPions_jniedzie";
 //string baseDir = "clusteringResultsCXX/geneticOptimizer";
-string baseDir = "clusteringResultsCXX/geneticOptimizerBest";
+//string baseDir = "clusteringResultsCXX/geneticOptimizerBest";
 //string baseDir = "clusteringResultsCXX/singleGamma";
 //string baseDir = "clusteringResultsCXX/pedja_photon_Pt6_dR0p10";
 //string baseDir = "clusteringResultsCXX/pedja_photon_Pt10_dR0p02";
+
+string baseDir = "clusteringResultsCXX/geneticOptimizerTwoPionDeltaR0p4/";
 
 vector<vector<string>> fileNames = {
   {"energyComparisonNoMatchingHist.root","no matching"},
@@ -38,6 +40,10 @@ void analyzeClustering(string inputPath="")
   int iter=1;
   for(auto names : fileNames){
     TFile *file = TFile::Open((inputPath+"/"+names[0]).c_str());
+    if(!file){
+      iter++;
+      continue;
+    }
     TH1D *hist = (TH1D*)file->Get(names[1].c_str());
     
     canvas->cd(iter);

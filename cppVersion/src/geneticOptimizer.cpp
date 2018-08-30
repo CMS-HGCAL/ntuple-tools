@@ -34,8 +34,8 @@ string baseResultsPath;
 string baseResultsSearchPath = "geneticResults/score_fun_v2_pions/";
 string baseResultsDirName = "results_";
 
-int populationSize = 20;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
-int maxBatchSize = 20;  ///< execute this number of jobs simultaneously
+int populationSize = 100;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
+int maxBatchSize = 25;  ///< execute this number of jobs simultaneously
 int nGenerations = 200;     ///< Number of iterations
 int nEventsPerTest = 100;   ///< On how many events per ntuple each population member will be tested
 
@@ -337,6 +337,7 @@ int main(int argc, char* argv[])
         chromo->SetMutationChance(mutationChance);
         chromo->SetSeverityFactor(severityFactor);
         chromo->SetCrossover(crossoverStrategy);
+        chromo->SetInputDataPath(dataPath);
         population.push_back(chromo);
       }
     }

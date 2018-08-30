@@ -85,6 +85,8 @@ int main(int argc, char* argv[])
   TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
   TH2D *sigmaEvsEtaEsim = new TH2D("sigma(E)Esim vs. eta","sigma(E)Esim vs. eta",100,1.5,3.2,100,-1.5,1.0);
   TH2D *NrecNsim = new TH2D("NrecNsim","NrecNsim",20,1,20,20,1,20);
+  TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",500,0,100,500,0,100);
+  TH2D *energyComparisonClosestHist = new TH2D("closest rec cluster","closest rec cluster",500,0,100,500,0,100);
   
   int failure1=0, failure2=0, failure3=0;
   int nTotalLayerEvents = 0;
@@ -171,16 +173,6 @@ int main(int argc, char* argv[])
         }
       }
       
-      double totalSimEnergy = 0;
-      double totalRecEnergy = 0;
-      
-      
-      double total3DsimEnergy = 0;
-      
-      for(int i=0;i<simClusters->N();i++){
-        total3DsimEnergy += simClusters->GetEnergy(i);
-      }
-      
       for(int layer=config->GetMinLayer();layer<config->GetMaxLayer();layer++){
         
         // Take sim clusters in this layer, check if there are any
@@ -222,7 +214,11 @@ int main(int argc, char* argv[])
         
         // Match rec clusters with sim clusters by det ID, check if there is at least one such pair
         vector<MatchedClusters*> matchedClusters;
+        vector<MatchedClusters*> unmatchedClusters;
+        
         matcher->MatchClustersByDetID(matchedClusters,recHitsInClusterInLayer,simHitsInClusterInLayer);
+        matcher->MatchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        
         if(matchedClusters.size() == 0){
           // This is bad, because there are some sim and some rec clusters in this layer, but not even a single pair sim-rec was found
           if(config->GetVerbosityLevel() > 1){
@@ -263,16 +259,17 @@ int main(int argc, char* argv[])
           double recEnergy = clusters->GetRecEnergy();
           double recEta    = clusters->GetRecEta();
           double simEnergy = clusters->GetSimEnergy();
-          
-          totalRecEnergy += recEnergy;
-          totalSimEnergy += simEnergy;
-
+        
           ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
           sigmaEvsEtaEsim->Fill(fabs(recEta),(recEnergy-simEnergy)/simEnergy);
           deltaE->Fill((recEnergy-simEnergy)/simEnergy);
           containment->Fill(clusters->GetSharedFraction());
+          energyComparisonClosestHist->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
         }
-       
+        
+        for(MatchedClusters *clusters : unmatchedClusters){
+          energyComparisonNoMatchingHist->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
+        }
         
         for(uint i=0;i<matchedClusters.size();i++){
           if(!matchedClusters[i]->HasRecClusters()) continue;
@@ -316,6 +313,8 @@ int main(int argc, char* argv[])
   ErecEsimVsEta->SaveAs((outpath+"/ErecEsimVsEta.root").c_str());
   sigmaEvsEtaEsim->SaveAs((outpath+"/simgaEVsEtaEsim.root").c_str());
   NrecNsim->SaveAs((outpath+"/NrecNsim.root").c_str());
+  energyComparisonNoMatchingHist->SaveAs((outpath+"/energyComparisonNoMatchingHist.root").c_str());
+  energyComparisonClosestHist->SaveAs((outpath+"/energyComparisonClosestHist.root").c_str());
   
   ofstream outputFile;
   cout<<"writing output to:"<<config->GetScoreOutputPath()<<endl;

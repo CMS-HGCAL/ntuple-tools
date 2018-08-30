@@ -47,6 +47,8 @@ public:
   inline void SetMutationChance(double val){mutationChance = val;}
   inline void SetSeverityFactor(double val){severityFactor = val;}
   inline void SetCrossover(ECrossover val){crossover = val;}
+  inline void SetInputDataPath(std::string val){inputDataPath = val;}
+  
   
   // Getters
   inline double GetParam(EParam par){
@@ -78,6 +80,7 @@ private:
   uint64_t uniqueID;
   std::string configPath;
   std::string clusteringOutputPath;
+  std::string inputDataPath;
   double mutationChance;
   double severityFactor;  // larger the value, more easily population members will die
   ECrossover crossover;
