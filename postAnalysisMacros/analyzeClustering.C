@@ -12,21 +12,20 @@
 //string baseDir = "clusteringResultsCXX/geneticOptimizer";
 //string baseDir = "clusteringResultsCXX/geneticOptimizerBest";
 //string baseDir = "clusteringResultsCXX/singleGamma";
-//string baseDir = "clusteringResultsCXX/pedja_photon_Pt6_dR0p10";
+string baseDir = "clusteringResultsCXX/pedja_photon_Pt6_dR0p10";
 //string baseDir = "clusteringResultsCXX/pedja_photon_Pt10_dR0p02";
 
-string baseDir = "clusteringResultsCXX/geneticOptimizerTwoPionDeltaR0p4/";
+//string baseDir = "clusteringResultsCXX/geneticOptimizerTwoPionDeltaR0p4/";
 
-vector<vector<string>> fileNames = {
-  {"energyComparisonNoMatchingHist.root","no matching"},
-  {"energyComparisonClosestHist.root","closest rec cluster"},
-  {"ErecEsimVsEta.root","ErecEsim vs. eta"},
-  {"NrecNsim.root","NrecNsim"},
-  {"simgaEvsEtaEsim.root","sigma(E)Esim vs. eta"},
-  {"containment.root","containment"},
-  {"deltaN.root","numberClusters"},
-  {"resolution.root","resolution"},
-  {"separation.root","separation"}
+vector<string> fileNames = {
+  "ErecVsEsimUnmatched",
+  "ErecVsEsimDetIdMatching",
+  "resolutionVsEta",
+  "NrecVsNsim",
+  "resolution",
+  "separation",
+  "containment",
+  "deltaNclusters",
 };
 
 void analyzeClustering(string inputPath="")
@@ -39,12 +38,12 @@ void analyzeClustering(string inputPath="")
   
   int iter=1;
   for(auto names : fileNames){
-    TFile *file = TFile::Open((inputPath+"/"+names[0]).c_str());
+    TFile *file = TFile::Open((inputPath+"/"+names+".root").c_str());
     if(!file){
       iter++;
       continue;
     }
-    TH1D *hist = (TH1D*)file->Get(names[1].c_str());
+    TH1D *hist = (TH1D*)file->Get(names.c_str());
     
     canvas->cd(iter);
     hist->Draw("colz");

@@ -82,11 +82,12 @@ void RecHits::Print()
   cout<<"\tcenter eta:"<<GetCenterEta();
   cout<<"\tavg x:"<<(GetXmax()+GetXmin())/2.;
   cout<<"\tavg y:"<<(GetYmax()+GetYmin())/2.;
+  cout<<"\tavg E:"<<GetTotalEnergy();
   cout<<endl;
   
   if(ConfigurationManager::Instance()->GetVerbosityLevel() > 1){
     for(int i=0;i<x->size();i++){
-      cout<<x->at(i)<<"\t"<<y->at(i)<<endl;
+      cout<<"x:"<<x->at(i)<<"\ty:"<<y->at(i)<<"\tE:"<<energy->at(i)<<endl;
     }
   }
 }
@@ -204,7 +205,8 @@ unique_ptr<RecHits> RecHits::GetHitsAboveNoise()
   return hitsAboveNoise;
 }
 
-void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<SimClusters> clusters)
+void RecHits::GetHitsPerSimCluster(vector<unique_ptr<RecHits>> &hitsPerCluster,
+                                   shared_ptr<SimClusters> clusters)
 {
   unique_ptr<RecHits> hitsAboveNoise = GetHitsAboveNoise();
   vector<unsigned int> *hitsDetIDs = hitsAboveNoise->detid;
@@ -226,15 +228,15 @@ void RecHits::GetHitsPerSimCluster(vector<RecHits*> &hitsPerCluster,shared_ptr<S
                      hitsInClusterDetIDs.begin(), hitsInClusterDetIDs.end(),
                      std::back_inserter(clusterToHitID));
 
-    RecHits *hitsInThisCluster = new RecHits();
+    unique_ptr<RecHits> hitsInThisCluster = unique_ptr<RecHits>(new RecHits());
 
     for(unsigned int i : clusterToHitID){
       ptrdiff_t pos = distance(detid->begin(), find(detid->begin(), detid->end(), i));
       unique_ptr<RecHit> hit = GetHit((int)pos);
       hitsInThisCluster->AddHit(hit);
     }
-    hitsPerCluster.push_back(hitsInThisCluster);
     nAssociatedHits += hitsInThisCluster->N();
+    hitsPerCluster.push_back(move(hitsInThisCluster));
   }
   if(ConfigurationManager::Instance()->GetVerbosityLevel() > 0){
     cout<<"\nnum of rechits associated with sim-clusters:"<<nAssociatedHits<<"\n"<<endl;
@@ -315,6 +317,45 @@ tuple<bool,double> RecHits::RecHitAboveThreshold(double iHit)
   bool aboveThreshold = energy->at(iHit) >= config->GetEnergyMin() * sigmaNoise;  // this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
   return make_tuple(aboveThreshold,sigmaNoise);
 }
+
+void RecHits::ShareCommonHits(unique_ptr<RecHits> &hits)
+{
+  // store DetIDs that are common for this RecHits and the provided ones
+  std::vector<unsigned int> common;
+  std::set_intersection(this->GetDetIDs()->begin(), this->GetDetIDs()->end(),
+                        hits->GetDetIDs()->begin(), hits->GetDetIDs()->end(),
+                        std::back_inserter(common));
+  
+  // Calculate energy of the core (without shared hits)
+  double coreEnergyThis = this->GetTotalEnergy();
+  double coreEnergyHits = hits->GetTotalEnergy();
+  
+  for(int i=0;i<common.size();i++){
+    auto posThis = distance(this->GetDetIDs()->begin(),
+                            find(this->GetDetIDs()->begin(),this->GetDetIDs()->end(), common[i]));
+    
+    auto posHits = distance(hits->GetDetIDs()->begin(),
+                            find(hits->GetDetIDs()->begin(),hits->GetDetIDs()->end(), common[i]));
+    
+    coreEnergyThis += this->GetEnergyOfHit((int)posThis);
+    coreEnergyHits += hits->GetEnergyOfHit((int)posHits);
+  }
+  
+  double fractionThis = coreEnergyThis/(coreEnergyThis+coreEnergyHits);
+  double fractionHits = 1-fractionThis;
+  
+  for(int i=0;i<common.size();i++){
+    int posThis = (int)distance(this->GetDetIDs()->begin(),
+                                find(this->GetDetIDs()->begin(),this->GetDetIDs()->end(), common[i]));
+    
+    int posHits = (int)distance(hits->GetDetIDs()->begin(),
+                                find(hits->GetDetIDs()->begin(),hits->GetDetIDs()->end(), common[i]));
+    
+    this->SetEnergyOfHit(posThis, fractionThis * this->GetEnergyOfHit(posThis));
+    hits->SetEnergyOfHit(posHits, fractionHits * hits->GetEnergyOfHit(posHits));
+  }
+}
+
 
 //------------------------------------------------------------------------------------------------
 // Single RecHit

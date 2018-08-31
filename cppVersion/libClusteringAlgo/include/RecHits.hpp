@@ -71,7 +71,7 @@ public:
   /// Groups hits in clusters
   /// \param hitsPerCluster A vector that will be filled with RecHits collections, one for each cluster
   /// \param clusters Collection of simulated clusters to which hits will be assigned
-  void GetHitsPerSimCluster(std::vector<RecHits*> &hitsPerCluster,
+  void GetHitsPerSimCluster(std::vector<std::unique_ptr<RecHits>> &hitsPerCluster,
                             std::shared_ptr<SimClusters> clusters);
   
   /// Groups hits associated with hexels into array of clusters
@@ -103,12 +103,24 @@ public:
   /// \param i Index of the hit
   inline double GetEnergyOfHit(int i){return energy->at(i);}
   
+  /// Sets energy of i-th hit
+  /// \param i Index of the hit
+  /// \param val New value of energy of i-th hit
+  inline void   SetEnergyOfHit(int i, double val){energy->at(i) = val;}
+  
   /// Checks if i-th hit is above the noise threshold and calculates sigma noise
   /// \return Returns a tuple: aboveThreshold, sigmaNoise
   std::tuple<bool,double> RecHitAboveThreshold(double iHit);
   
+  /// Returns a vector of X coordinates of hits
   std::vector<float>* GetX(){return x;}
+  
+  /// Returns a vector of Y coordinates of hits
   std::vector<float>* GetY(){return y;}
+  
+  /// Finds hits that are common for this RecHits collection and the provided one and then modifies energy
+  /// of those common hits, weighting them by the total energy of the core (all hits minus those that are shared)
+  void ShareCommonHits(std::unique_ptr<RecHits> &hits);
   
 private:
   std::unique_ptr<RecHitCalibration> recHitCalib; ///< Stores current hits calibration

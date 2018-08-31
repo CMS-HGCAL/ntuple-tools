@@ -172,23 +172,17 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
 
 
 void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
-                                          vector<RecHits*> &recHitsPerCluster, vector<RecHits*> &simHitsPerCluster,
-                                          int layer)
+                                          vector<unique_ptr<RecHits>> &recHitsPerCluster,
+                                          vector<unique_ptr<RecHits>> &simHitsPerCluster)
 {
   vector<double> Xs,Ys,Rs, Es;
   double maxDistance = ConfigurationManager::Instance()->GetMachingMaxDistance();
   
   
   for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
-    
-    // Get rec cluster in correct layer
-    RecHits *recCluster = recHitsPerCluster[recClusterIndex];
-    unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
-    if(recHitsInLayerInCluster->N()==0) continue;
-    
     // Build new mached cluster for each rec cluster
     MatchedClusters *matchedCluster = new MatchedClusters();
-    matchedCluster->AddRecCluster(recClusterIndex, recHitsInLayerInCluster);
+    matchedCluster->AddRecCluster(recClusterIndex, recHitsPerCluster[recClusterIndex]);
     matched.push_back(matchedCluster);
     
     // Save coordinates of this rec cluster
@@ -201,15 +195,9 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
   
   
   for(uint simClusterIndex=0;simClusterIndex<simHitsPerCluster.size();simClusterIndex++){
-    
-    // Get sim cluster in correct layer
-    RecHits *simCluster = simHitsPerCluster[simClusterIndex];
-    unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
-    if(simHitsInLayerInCluster->N()==0) continue;
-    
     // Get coordinates of this sim cluster
     unique_ptr<MatchedClusters> matchedTmp = unique_ptr<MatchedClusters>(new MatchedClusters());
-    matchedTmp->AddSimCluster(simClusterIndex, simHitsInLayerInCluster);
+    matchedTmp->AddSimCluster(simClusterIndex, simHitsPerCluster[simClusterIndex]);
     BasicCluster *basicCluster = matchedTmp->GetSimClusterByIndex(simClusterIndex);
     
     // Check which of the rec clusters is the closest to this sim cluster
@@ -228,33 +216,21 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
     
     // If distance to the closest rec cluster is below the limit, add this sim cluster to the matched clusters
     if((distance <= maxDistance) || maxDistance < 0){
-      matched[parentRecCluster]->AddSimCluster(simClusterIndex, simHitsInLayerInCluster);
+      matched[parentRecCluster]->AddSimCluster(simClusterIndex, simHitsPerCluster[simClusterIndex]);
     }
   }
 }
 
 void ClusterMatcher::MatchClustersAllToAll(vector<MatchedClusters*> &matched,
-                                           vector<RecHits*> &recHitsPerCluster, vector<RecHits*> &simHitsPerCluster,
-                                           int layer)
+                                           vector<unique_ptr<RecHits>> &recHitsPerCluster,
+                                           vector<unique_ptr<RecHits>> &simHitsPerCluster)
 {
   for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
-    
-    RecHits *recCluster = recHitsPerCluster[recClusterIndex];
-    unique_ptr<RecHits> recHitsInLayerInCluster = recCluster->GetHitsInLayer(layer);
-    
-    if(recHitsInLayerInCluster->N()==0) continue;
-    
     for(uint simClusterIndex=0;simClusterIndex < simHitsPerCluster.size();simClusterIndex++){
-      
-      RecHits *simCluster = simHitsPerCluster[simClusterIndex];
-      unique_ptr<RecHits> simHitsInLayerInCluster = simCluster->GetHitsInLayer(layer);
-      
-      if(simHitsInLayerInCluster->N()==0) continue;
-      
+
       MatchedClusters *matchedCluster = new MatchedClusters();
-      matchedCluster->AddRecCluster(recClusterIndex, recHitsInLayerInCluster);
-      matchedCluster->AddSimCluster(simClusterIndex, simHitsInLayerInCluster);
-      
+      matchedCluster->AddRecCluster(recClusterIndex, recHitsPerCluster[recClusterIndex]);
+      matchedCluster->AddSimCluster(simClusterIndex, simHitsPerCluster[simClusterIndex]);
       matched.push_back(matchedCluster);
     }
   }

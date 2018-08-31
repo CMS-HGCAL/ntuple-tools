@@ -31,15 +31,15 @@ using namespace std;
 
 string baseResultsPath;
 
-string baseResultsSearchPath = "geneticResults/twoPions/";
+string baseResultsSearchPath = "geneticResults/twoPhotons/";
 string baseResultsDirName = "results_";
 
-int populationSize = 20;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
-int maxBatchSize = 20;  ///< execute this number of jobs simultaneously
+int populationSize = 50;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
+int maxBatchSize = 25;  ///< execute this number of jobs simultaneously
 int nGenerations = 100;     ///< Number of iterations
 int nEventsPerTest = 100;   ///< On how many events per ntuple each population member will be tested
 
-int processTimeout = 100; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
+int processTimeout = 200; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
 double mutationChance = 0.002;
 double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
@@ -55,9 +55,9 @@ int maxNtuple = 1;
 int minLayer = 1;
 int maxLayer = 53;
 
-//string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_";
+string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_";
 
-string dataPath = "../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p3_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_";
+//string dataPath = "../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p3_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_";
 
 string outputPath = "../clusteringResultsCXX/geneticOptimizer/";
 
@@ -257,7 +257,18 @@ void SetBaseResultsPath()
   
   if(!dir){
     cout<<"could not open directory:"<<baseResultsSearchPath<<endl;
-    return;
+    cout<<"trying to create it..."<<endl;
+    system(("mkdir -p "+baseResultsSearchPath).c_str());
+    
+    dir = opendir(baseResultsSearchPath.c_str());
+    
+    if(!dir){
+      cout<<"Failed! Please create this direcoty manually and try again."<<endl;
+      exit(0);
+    }
+    else{
+      cout<<"Successfully created output directory"<<endl;
+    }
   }
   
   struct dirent *ent;

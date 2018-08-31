@@ -28,9 +28,55 @@
 
 using namespace std;
 
-// specify here event to stop at and plot matched clusters
+// specify here an event to stop at and plot matched clusters (for debugging)
 int plotEvent = -1;
 int plotLayer = -1;
+
+enum EMonitor1D{
+  kResolution,
+  kSeparation,
+  kContainment,
+  kDeltaNclusters,
+  kNmonitors1D
+};
+
+enum EMonitor2D{
+  kResolutionVsEta,
+  kErecVsEsimUnmatched,
+  kErecVsEsimDetIdMatching,
+  kNrecVsNsim,
+  kNmonitors2D
+};
+
+// Limits of 1D monitoring histograms {nBinsX, minX, maxX}
+double monitorLimits1D[kNmonitors1D][3] = {
+  {1000,-5,5},    // resolution
+  {1000,0,10},    // separation
+  {1000,-1,1},    // containment
+  {2000,-10,10},  // ΔN_clusters
+};
+
+// Limits of 2D monitoring histograms {nBinsX, minX, maxX, nBinsY, minY, maxY}
+double monitorLimits2D[kNmonitors2D][6] = {
+  {100,1.5,3.2,100,-1.5,1.0}, // resolution vs. eta
+  {500,0,100,500,0,100},       // Erec vs. Esim (unmatched)
+  {500,0,100,500,0,100},      // Erec vs. Esim (matching by detID)
+  {20,1,20,20,1,20},          // Nrec vs. Nsim
+};
+
+const char* monitorNames1D[kNmonitors1D] = {
+  "resolution",
+  "separation",
+  "containment",
+  "deltaNclusters"
+};
+
+const char* monitorNames2D[kNmonitors2D] = {
+  "resolutionVsEta",
+  "ErecVsEsimUnmatched",
+  "ErecVsEsimDetIdMatching",
+  "NrecVsNsim"
+};
 
 int main(int argc, char* argv[])
 {
@@ -82,17 +128,19 @@ int main(int argc, char* argv[])
   ImagingAlgo *algo = new ImagingAlgo();
   ClusterMatcher *matcher = new ClusterMatcher();
   
-  TH1D *deltaE = new TH1D("resolution","resolution",1000,-5,5);
-  TH1D *separation = new TH1D("separation","separation",1000,0,10);
-  TH1D *containment = new TH1D("containment","containment",200,-1,1);
-  TH1D *deltaN = new TH1D("numberClusters","numberClusters",2000,-10,10);
-  TH1D *clusterRadius = new TH1D("clusterRadius","clusterRadius",3000,-1,300);
+  TH1D *monitors1D[kNmonitors1D];
+  TH2D *monitors2D[kNmonitors2D];
   
-  TH2D *ErecEsimVsEta = new TH2D("ErecEsim vs. eta","ErecEsim vs. eta",100,1.5,3.2,100,0,2.5);
-  TH2D *sigmaEvsEtaEsim = new TH2D("sigma(E)Esim vs. eta","sigma(E)Esim vs. eta",100,1.5,3.2,100,-1.5,1.0);
-  TH2D *NrecNsim = new TH2D("NrecNsim","NrecNsim",20,1,20,20,1,20);
-  TH2D *energyComparisonNoMatchingHist = new TH2D("no matching","no matching",500,0,100,500,0,100);
-  TH2D *energyComparisonClosestHist = new TH2D("closest rec cluster","closest rec cluster",500,0,100,500,0,100);
+  for(int i=0;i<kNmonitors1D;i++){
+    monitors1D[i] = new TH1D(monitorNames1D[i],monitorNames1D[i],
+                             monitorLimits1D[i][0],monitorLimits1D[i][1],monitorLimits1D[i][2]);
+  }
+  
+  for(int i=0;i<kNmonitors2D;i++){
+    monitors2D[i] = new TH2D(monitorNames2D[i],monitorNames2D[i],
+                             monitorLimits2D[i][0],monitorLimits2D[i][1],monitorLimits2D[i][2],
+                             monitorLimits2D[i][3],monitorLimits2D[i][4],monitorLimits2D[i][5]);
+  }
   
   int failure1=0, failure2=0, failure3=0;
   int nTotalLayerEvents = 0;
@@ -153,12 +201,12 @@ int main(int argc, char* argv[])
       shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
       
       // get simulated hits associated with a cluster
-      vector<RecHits*> simHitsPerClusterArray;
+      vector<unique_ptr<RecHits>> simHitsPerClusterArray;
       recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
       
       if(config->GetVerbosityLevel() > 0){
         cout<<"Simulated hits grouped by clusters:"<<endl;
-        for(RecHits *hits : simHitsPerClusterArray){
+        for(auto &hits : simHitsPerClusterArray){
           hits->Print();
         }
       }
@@ -183,7 +231,7 @@ int main(int argc, char* argv[])
         
         // Take sim clusters in this layer, check if there are any
         vector<unique_ptr<RecHits>> simHitsInClusterInLayer;
-        for(RecHits *cluster : simHitsPerClusterArray){
+        for(auto &cluster : simHitsPerClusterArray){
           unique_ptr<RecHits> clusterInLayer = cluster->GetHitsInLayer(layer);
           if(clusterInLayer->N() == 0) continue;
           simHitsInClusterInLayer.push_back(move(clusterInLayer));
@@ -194,6 +242,14 @@ int main(int argc, char* argv[])
             cout<<"No sim clusters in layer:"<<layer<<endl;
           }
           continue;
+        }
+        
+        // Those sim clusters will share some fraction of hits. Try to re-assign shared hits energy.
+        // This will not work very well if single hit is share by 3 or more clusters...
+        for(int i=0;i<simHitsInClusterInLayer.size();i++){
+          for(int j=i+1;j<simHitsInClusterInLayer.size();j++){
+            simHitsInClusterInLayer[i]->ShareCommonHits(simHitsInClusterInLayer[j]);
+          }
         }
         
         // If this event-layer makes sense at all (there are some sim clusters in it), count it for the denominator of failures fraction
@@ -215,8 +271,8 @@ int main(int argc, char* argv[])
           continue;
         }
         
-        NrecNsim->Fill(simHitsPerClusterArray.size(),recHitsPerClusterArray.size());
-        deltaN->Fill(((int)simHitsPerClusterArray.size()-(int)recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
+        monitors2D[kNrecVsNsim]->Fill(simHitsPerClusterArray.size(),recHitsPerClusterArray.size());
+        monitors1D[kDeltaNclusters]->Fill(((int)simHitsPerClusterArray.size()-(int)recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
         
         // Match rec clusters with sim clusters by det ID, check if there is at least one such pair
         vector<MatchedClusters*> matchedClusters;
@@ -226,7 +282,7 @@ int main(int argc, char* argv[])
         if(iEvent==plotEvent && layer==plotLayer) draw = true;
         
         matcher->MatchClustersByDetID(matchedClusters,recHitsInClusterInLayer,simHitsInClusterInLayer,draw);
-        matcher->MatchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        matcher->MatchClustersAllToAll(unmatchedClusters,recHitsInClusterInLayer,simHitsInClusterInLayer);
         
         if(iEvent==plotEvent && layer==plotLayer) goto finish; // psss, don't tell anyone...
         
@@ -259,8 +315,6 @@ int main(int argc, char* argv[])
             cout<<"ERROR -- No rec clusters in matched clusters in layer:"<<layer<<endl;
             continue;
           }
-          clusterRadius->Fill(clusters->GetRecRadius());
-          
           if(clusters->GetRecRadius() == 0){
             // Should never happen, as we set radius of 0.5 cm for single-hit clusters
             cout<<"ERROR -- Rec cluster with size zero"<<endl;
@@ -271,15 +325,14 @@ int main(int argc, char* argv[])
           double recEta    = clusters->GetRecEta();
           double simEnergy = clusters->GetSimEnergy();
         
-          ErecEsimVsEta->Fill(fabs(recEta),recEnergy/simEnergy);
-          sigmaEvsEtaEsim->Fill(fabs(recEta),(recEnergy-simEnergy)/simEnergy);
-          deltaE->Fill((recEnergy-simEnergy)/simEnergy);
-          containment->Fill(clusters->GetSharedFraction());
-          energyComparisonClosestHist->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
+          monitors2D[kResolutionVsEta]->Fill(fabs(recEta),(recEnergy-simEnergy)/simEnergy);
+          monitors1D[kResolution]->Fill((recEnergy-simEnergy)/simEnergy);
+          monitors1D[kContainment]->Fill(clusters->GetSharedFraction());
+          monitors2D[kErecVsEsimDetIdMatching]->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
         }
         
         for(MatchedClusters *clusters : unmatchedClusters){
-          energyComparisonNoMatchingHist->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
+          monitors2D[kErecVsEsimUnmatched]->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
         }
         
         for(uint i=0;i<matchedClusters.size();i++){
@@ -299,8 +352,8 @@ int main(int argc, char* argv[])
               continue;
             }
             
-            if(distance/(sigma1+sigma2) > 10) separation->Fill(9.9);
-            else                              separation->Fill(distance/(sigma1+sigma2));
+            if(distance/(sigma1+sigma2) > 10) monitors1D[kSeparation]->Fill(9.9);
+            else                              monitors1D[kSeparation]->Fill(distance/(sigma1+sigma2));
           }
         }
       }
@@ -315,72 +368,36 @@ int main(int argc, char* argv[])
   
 finish:
   
+  // Create output file
   string outpath = config->GetOutputPath();
-  
-  deltaE->SaveAs((outpath+"/resolution.root").c_str());
-  separation->SaveAs((outpath+"/separation.root").c_str());
-  containment->SaveAs((outpath+"/containment.root").c_str());
-  deltaN->SaveAs((outpath+"/deltaN.root").c_str());
-  clusterRadius->SaveAs((outpath+"/clusterRadius.root").c_str());
-  
-  ErecEsimVsEta->SaveAs((outpath+"/ErecEsimVsEta.root").c_str());
-  sigmaEvsEtaEsim->SaveAs((outpath+"/simgaEVsEtaEsim.root").c_str());
-  NrecNsim->SaveAs((outpath+"/NrecNsim.root").c_str());
-  energyComparisonNoMatchingHist->SaveAs((outpath+"/energyComparisonNoMatchingHist.root").c_str());
-  energyComparisonClosestHist->SaveAs((outpath+"/energyComparisonClosestHist.root").c_str());
-  
   ofstream outputFile;
   cout<<"writing output to:"<<config->GetScoreOutputPath()<<endl;
   outputFile.open(config->GetScoreOutputPath());
   
-  if(deltaE && deltaE->GetEntries()>0 && deltaE->GetStdDev() != 0){
-    outputFile<<deltaE->GetMean()<<endl;
-    outputFile<<deltaE->GetStdDev()<<endl;
-    cout<<"Average resolution per event:"<<deltaE->GetMean()<<endl;
-    cout<<"Resolution sigma:"<<deltaE->GetStdDev()<<endl;
+  // Save 1D monitors and put mean values in a text file
+  for(int i=0;i<kNmonitors1D;i++){
+    monitors1D[i]->SaveAs((outpath+"/"+monitorNames1D[i]+".root").c_str());
+    double mean, sigma;
+    
+    if(monitors1D[i] && monitors1D[i]->GetEntries()>0 && monitors1D[i]->GetStdDev() != 0){
+      mean = monitors1D[i]->GetMean();
+      sigma= monitors1D[i]->GetStdDev();
+    }
+    else{
+      mean = sigma = 999999;
+    }
+    outputFile<<mean<<endl;
+    outputFile<<sigma<<endl;
+    cout<<"Average "<<monitorNames1D[i]<<" per event:"<<mean<<endl;
+    cout<<monitorNames1D[i]<<" sigma:"<<sigma<<endl;
   }
-  else{
-    outputFile<<999999<<endl;
-    outputFile<<999999<<endl;
-    cout<<"Average resolution per event:"<<999999<<endl;
-    cout<<"Resolution sigma:"<<999999<<endl;
+  
+  // Save 2D monitors
+  for(int i=0;i<kNmonitors1D;i++){
+    monitors2D[i]->SaveAs((outpath+"/"+monitorNames2D[i]+".root").c_str());
   }
-  if(separation && separation->GetEntries()>0 && separation->GetStdDev() != 0){
-    outputFile<<separation->GetMean()<<endl;
-    outputFile<<separation->GetStdDev()<<endl;
-    cout<<"Average separation per event:"<<separation->GetMean()<<endl;
-    cout<<"Separation sigma:"<<separation->GetStdDev()<<endl;
-  }
-  else{
-    outputFile<<999999<<endl;
-    outputFile<<999999<<endl;
-    cout<<"Average separation per event:"<<999999<<endl;
-    cout<<"Separation sigma:"<<999999<<endl;
-  }
-  if(containment && containment->GetEntries()>0 && containment->GetStdDev() != 0){
-    outputFile<<containment->GetMean()<<endl;
-    outputFile<<containment->GetStdDev()<<endl;
-    cout<<"Average containment per event:"<<containment->GetMean()<<endl;
-    cout<<"Containment sigma:"<<containment->GetStdDev()<<endl;
-  }
-  else{
-    outputFile<<999999<<endl;
-    outputFile<<999999<<endl;
-    cout<<"Average containment per event:"<<999999<<endl;
-    cout<<"Containment sigma:"<<999999<<endl;
-  }
-  if(deltaN && deltaN->GetEntries()>0 && deltaN->GetStdDev() != 0){
-    outputFile<<deltaN->GetMean()<<endl;
-    outputFile<<deltaN->GetStdDev()<<endl;
-    cout<<"Average difference in N clusters (sim-rec) per event:"<<deltaN->GetMean()<<endl;
-    cout<<"N clusters (sim-rec) sigma:"<<deltaN->GetStdDev()<<endl;
-  }
-  else{
-    outputFile<<999999<<endl;
-    outputFile<<999999<<endl;
-    cout<<"Average difference in N clusters (sim-rec) per event:"<<999999<<endl;
-    cout<<"N clusters (sim-rec) sigma:"<<999999<<endl;
-  }
+  
+  // Save fraction of fails in the text file
   outputFile<<failure1/(double)(nTotalLayerEvents)<<endl;
   cout<<"\% of event-layers where algo failed to find sim clusters:"<<failure1/(double)(nTotalLayerEvents)<<endl;
   
@@ -389,7 +406,6 @@ finish:
   
   outputFile<<failure3/(double)(nTotalMatchedClusters)<<endl;
   cout<<"\% of fake rec clusters (those that don't match any sim cluster):"<<failure3/(double)(nTotalMatchedClusters)<<endl;
-  
   
   outputFile.close();
   

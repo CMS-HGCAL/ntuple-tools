@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
       // get simulated hits associated with a cluster
       cout<<"preparing simulated hits and clusters...";
       start = now();
-      vector<RecHits*> simHitsPerClusterArray;
+      vector<unique_ptr<RecHits>> simHitsPerClusterArray;
       recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
