@@ -46,9 +46,6 @@ kappa:    10.0
 ### cut on energy (absolute units):
 energy_min:    0.060
 
-### Request at least minClusters+1 2D clusters  (*clarification needed*)
-min_clusters: 3
-
 ### test only within this layers range:
 min_layer: 0
 max_layer: 40

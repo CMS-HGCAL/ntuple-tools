@@ -48,7 +48,8 @@ public:
   inline void SetSeverityFactor(double val){severityFactor = val;}
   inline void SetCrossover(ECrossover val){crossover = val;}
   inline void SetInputDataPath(std::string val){inputDataPath = val;}
-  
+  inline void SetMinLayer(int val){minLayer = val;}
+  inline void SetMaxLayer(int val){maxLayer = val;}
   
   // Getters
   inline double GetParam(EParam par){
@@ -81,6 +82,8 @@ private:
   std::string configPath;
   std::string clusteringOutputPath;
   std::string inputDataPath;
+  int minLayer;
+  int maxLayer;
   double mutationChance;
   double severityFactor;  // larger the value, more easily population members will die
   ECrossover crossover;

@@ -147,6 +147,8 @@ void Chromosome::StoreInConfig(string path)
   system(("cp baseConfig.md "+currentConfigPath).c_str());
   
   UpdateParamValue(currentConfigPath, "input_path",inputDataPath);
+  UpdateParamValue(currentConfigPath, "min_layer",minLayer);
+  UpdateParamValue(currentConfigPath, "max_layer",maxLayer);
   
   int kernelIndex = round(GetParam(kKernel));
   
@@ -315,6 +317,8 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
     children[iChild]->SetSeverityFactor(severityFactor);
     children[iChild]->SetCrossover(crossover);
     children[iChild]->SetInputDataPath(inputDataPath);
+    children[iChild]->SetMinLayer(minLayer);
+    children[iChild]->SetMaxLayer(maxLayer);
   }
   
   return children;

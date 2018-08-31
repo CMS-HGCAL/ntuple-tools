@@ -181,7 +181,10 @@ void GetParamFromConfig(std::string configPath, std::string keyToFind, T &return
   return;
 }
 
+/// This struct holds values showing how successful clustering was
 struct ClusteringOutput {
+  
+  /// Default constructor
   ClusteringOutput(){
     resolutionMean = 99999;
     resolutionSigma = 99999;
@@ -196,6 +199,7 @@ struct ClusteringOutput {
     nFakeRec = 99999;
   }
   
+  /// Prints clustering results
   void Print(){
     std::cout<<"Resolution:"<<resolutionMean<<" +/- "<<resolutionSigma<<std::endl;
     std::cout<<"Separation:"<<separationMean<<" +/- "<<separationSigma<<std::endl;
@@ -206,13 +210,13 @@ struct ClusteringOutput {
     std::cout<<"\% of fake rec clusters (those that don't match any sim cluster):"<<nFakeRec<<std::endl;
   }
   
-  double resolutionMean;
-  double resolutionSigma;
-  double separationMean;
-  double separationSigma;
-  double containmentMean;
-  double containmentSigma;
-  double deltaNclustersMean;
+  double resolutionMean;    ///< Mean resolution defined as (E_rec - E_sim)/E_sim
+  double resolutionSigma;   ///< Std dev of the resolution defined as (E_rec - E_sim)/E_sim
+  double separationMean;    ///< Mean of the separation factor defined as distance/(sigma_1+sigma_2)
+  double separationSigma;   ///< Std dev of the separation factor defined as distance/(sigma_1+sigma_2)
+  double containmentMean;   ///< Mean of the containment defined as Ei_matched/Ei_totalSim
+  double containmentSigma;  ///< Std dev of the containment defined as Ei_matched/Ei_totalSim
+  double deltaNclustersMean;///< Mean of the (N_simHits - N_recHits)/N_simHits
   double deltaNclustersSigma;
   double nRecoFailed;
   double nCantMatchRecSim;
@@ -220,7 +224,11 @@ struct ClusteringOutput {
   
 };
 
-inline ClusteringOutput ReadOutput(std::string fileName){
+/// Read specified file containing ouput of clusterization and load it to the ClusteringOutput object.
+/// \param fileName Path to the output file.
+/// \return ClusteringOutput object with fields populated from the output file specified.
+inline ClusteringOutput ReadOutput(std::string fileName)
+{
   std::ifstream is_file(fileName);
   std::string line;
   int iter=0;

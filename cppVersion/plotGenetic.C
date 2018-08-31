@@ -7,6 +7,7 @@ void PlotInCanvas(TCanvas *canvas, TCanvas *canvasWgt, TCanvas *canvas1D, int pa
   canvas->cd(pad);
   TH2D *hist = (TH2D*)file->Get(name.c_str());
   if(!hist) return;
+  hist->Rebin2D(1,5);
   hist->Draw("colz");
   canvasWgt->cd(pad);
   TH2D *histWgt = (TH2D*)file->Get((name+"wgt").c_str());

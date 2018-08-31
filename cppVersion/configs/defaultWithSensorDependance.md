@@ -46,9 +46,6 @@ kappa:  9.0
 ### cut on energy (relative to the noise):
 energy_min:  3.0
 
-### Request at least minClusters+1 2D clusters  (*clarification needed*)
-min_clusters: 3
-
 ### test only within this layers range:
 min_layer: 0
 max_layer: 40
