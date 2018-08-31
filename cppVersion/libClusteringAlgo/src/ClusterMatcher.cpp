@@ -6,6 +6,10 @@
 
 #include "ClusterMatcher.hpp"
 
+#include <TCanvas.h>
+#include <TGraph.h>
+#include <TAxis.h>
+
 using namespace std;
 
 ClusterMatcher::ClusterMatcher()
@@ -27,7 +31,8 @@ int ContainsSimCluster(vector<MatchedClusters*> &matched, int simClusterIndex){
 
 void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
                                           vector<unique_ptr<RecHits>> &recHitsPerCluster,
-                                          vector<unique_ptr<RecHits>> &simHitsPerCluster)
+                                          vector<unique_ptr<RecHits>> &simHitsPerCluster,
+                                          bool draw)
 {
   double maxDistance = ConfigurationManager::Instance()->GetMachingMaxDistance();
   int verbosityLevel = ConfigurationManager::Instance()->GetVerbosityLevel();
@@ -144,13 +149,17 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
     }
   }
   
+
+  
   if(verbosityLevel > 1){
     cout<<"\n\nMatched clusters after step 3\n\n"<<endl;
     for(auto cluster : matched){
       cluster->Print();
-      cout<<endl;
     }
+    cout<<endl;
   }
+    
+  if(draw) DrawMatched(matched);
   
   // remove matched clusters with no sim assigned to rec
 //  for(int i=0;i<matched.size();i++){
@@ -250,4 +259,84 @@ void ClusterMatcher::MatchClustersAllToAll(vector<MatchedClusters*> &matched,
     }
   }
 }
+
+void ClusterMatcher::DrawMatched(std::vector<MatchedClusters*> &matched)
+{
+  vector<TGraph*> recGraph;
+  TGraph *recHitsGraph = new TGraph();
+  TGraph *simGraph = new TGraph();
+  TGraph *simGraphDouble = new TGraph();
+  
+  int iPointRec=0;
+  int iPointSim=0;
+  int iPointSimDouble=0;
+  int iPointRecHits=0;
+  int iCluster=0;
+  double scale = 35;
+  
+  for(auto cluster : matched){
+    recGraph.push_back(new TGraph());
+    
+    std::unique_ptr<RecHits> recHits = std::unique_ptr<RecHits>(new RecHits());
+    std::unique_ptr<RecHits> simHits = std::unique_ptr<RecHits>(new RecHits());
+    
+    cluster->GetRecHits(recHits);
+    cluster->GetSimHits(simHits);
+    
+    recGraph[iCluster]->SetPoint(iPointRec++, cluster->GetRecX(), cluster->GetRecY());
+    
+    recGraph[iCluster]->SetMarkerSize(scale*cluster->GetRecRadius());
+    recGraph[iCluster]->SetMarkerColor(kRed);
+    recGraph[iCluster]->SetMarkerStyle(24);
+    
+    for(int i=0;i<recHits->N();i++){
+      recHitsGraph->SetPoint(iPointRecHits++, recHits->GetX()->at(i), recHits->GetY()->at(i));
+    }
+    for(int i=0;i<simHits->N();i++){
+      double x = simHits->GetX()->at(i);
+      double y = simHits->GetY()->at(i);
+      bool alreadyIn = false;
+      
+      for(int n=0;n<simGraph->GetN();n++){
+        double xx,yy;
+        simGraph->GetPoint(n, xx, yy);
+        if(xx == x && yy == y){
+          alreadyIn = true;
+        }
+        
+      }
+      if(alreadyIn) simGraphDouble->SetPoint(iPointSimDouble++, x, y);
+      else          simGraph->SetPoint(iPointSim++, x, y);
+    }
+  }
+
+  recHitsGraph->SetMarkerSize(0.15*scale);
+  recHitsGraph->SetMarkerStyle(25);
+  recHitsGraph->SetMarkerColor(kRed);
+  
+  simGraph->SetMarkerSize(0.05*scale);
+  simGraph->SetMarkerStyle(20);
+  simGraph->SetMarkerColor(kGreen+2);
+  
+  simGraphDouble->SetMarkerSize(0.10*scale);
+  simGraphDouble->SetMarkerStyle(24);
+  simGraphDouble->SetMarkerColor(kGreen+2);
+  
+  TCanvas *c1 = new TCanvas("c1","c1",1800,1000);
+  c1->cd();
+  
+  simGraph->Draw("AP");
+//  simGraph->GetXaxis()->SetLimits(-56, -48);
+//  simGraph->GetYaxis()->SetRangeUser(44,60);
+  
+  simGraphDouble->Draw("Psame");
+  recHitsGraph->Draw("Psame");
+  
+  for(int i=0;i<recGraph.size();i++){
+    recGraph[i]->Draw("Psame");
+  }
+  
+  c1->Update();
+}
+
 

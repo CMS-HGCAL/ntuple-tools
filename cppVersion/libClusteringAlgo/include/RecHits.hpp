@@ -107,6 +107,9 @@ public:
   /// \return Returns a tuple: aboveThreshold, sigmaNoise
   std::tuple<bool,double> RecHitAboveThreshold(double iHit);
   
+  std::vector<float>* GetX(){return x;}
+  std::vector<float>* GetY(){return y;}
+  
 private:
   std::unique_ptr<RecHitCalibration> recHitCalib; ///< Stores current hits calibration
   

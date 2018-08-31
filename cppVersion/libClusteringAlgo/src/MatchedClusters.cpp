@@ -31,21 +31,32 @@ void MatchedClusters::Print()
 //  cout<<"\teta:"<<GetSimEta();
   cout<<"\tx:"<<GetSimX();
   cout<<"\ty:"<<GetSimY();
+  cout<<"\tE:"<<GetSimEnergy();
   cout<<endl;
   
   for(int i=0;i<simClusters->size();i++){
-    cout<<"\tSim "<<i<<":\tx:"<<simClusters->at(i)->GetX()<<"\ty:"<<simClusters->at(i)->GetY()<<endl;
+    cout<<"\t\t\tSim "<<i<<":\tx:"<<simClusters->at(i)->GetX();
+    cout<<"\ty:"<<simClusters->at(i)->GetY();
+    cout<<"\tE:"<<simClusters->at(i)->GetEnergy();
+    cout<<endl;
   }
+  simHits->Print();
 
   cout<<"Merged rec properties:";
 //  cout<<"\teta:"<<GetRecEta();
   cout<<"\tx:"<<GetRecX();
   cout<<"\ty:"<<GetRecY();
+  cout<<"\tE:"<<GetRecEnergy();
   cout<<endl;
   
   for(int i=0;i<recClusters->size();i++){
-    cout<<"\tRec "<<i<<":\tx:"<<recClusters->at(i)->GetX()<<"\ty:"<<recClusters->at(i)->GetY()<<endl;
+    cout<<"\t\t\tRec "<<i<<":\tx:"<<recClusters->at(i)->GetX();
+    cout<<"\ty:"<<recClusters->at(i)->GetY();
+    cout<<"\tE:"<<recClusters->at(i)->GetEnergy();
+    cout<<endl;
   }
+  recHits->Print();
+  
 }
 
 void MatchedClusters::AddRecCluster(int index, std::unique_ptr<RecHits> &hits)

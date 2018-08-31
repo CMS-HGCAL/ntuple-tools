@@ -16,6 +16,7 @@
 #include <TFile.h>
 #include <TTree.h>
 #include <TH2D.h>
+#include <TApplication.h>
 
 #include <string>
 #include <cstdlib>
@@ -26,6 +27,10 @@
 #include <fstream>
 
 using namespace std;
+
+// specify here event to stop at and plot matched clusters
+int plotEvent = -1;
+int plotLayer = -1;
 
 int main(int argc, char* argv[])
 {
@@ -70,6 +75,7 @@ int main(int argc, char* argv[])
   
   
   gROOT->ProcessLine(".L loader.C+");
+  TApplication theApp("App", &argc, argv);
   
   std::system(("mkdir -p "+config->GetOutputPath()).c_str());
   
@@ -216,8 +222,13 @@ int main(int argc, char* argv[])
         vector<MatchedClusters*> matchedClusters;
         vector<MatchedClusters*> unmatchedClusters;
         
-        matcher->MatchClustersByDetID(matchedClusters,recHitsInClusterInLayer,simHitsInClusterInLayer);
+        bool draw=false;
+        if(iEvent==plotEvent && layer==plotLayer) draw = true;
+        
+        matcher->MatchClustersByDetID(matchedClusters,recHitsInClusterInLayer,simHitsInClusterInLayer,draw);
         matcher->MatchClustersAllToAll(unmatchedClusters,recHitsPerClusterArray,simHitsPerClusterArray,layer);
+        
+        if(iEvent==plotEvent && layer==plotLayer) goto finish; // psss, don't tell anyone...
         
         if(matchedClusters.size() == 0){
           // This is bad, because there are some sim and some rec clusters in this layer, but not even a single pair sim-rec was found
@@ -302,6 +313,8 @@ int main(int argc, char* argv[])
   }
   cout<<endl<<endl;
   
+finish:
+  
   string outpath = config->GetOutputPath();
   
   deltaE->SaveAs((outpath+"/resolution.root").c_str());
@@ -385,6 +398,8 @@ int main(int argc, char* argv[])
   
   delete algo;
   delete matcher;
+  
+  theApp.Run();
   return 0;
 }
 

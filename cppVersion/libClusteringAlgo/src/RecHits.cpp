@@ -83,6 +83,12 @@ void RecHits::Print()
   cout<<"\tavg x:"<<(GetXmax()+GetXmin())/2.;
   cout<<"\tavg y:"<<(GetYmax()+GetYmin())/2.;
   cout<<endl;
+  
+  if(ConfigurationManager::Instance()->GetVerbosityLevel() > 1){
+    for(int i=0;i<x->size();i++){
+      cout<<x->at(i)<<"\t"<<y->at(i)<<endl;
+    }
+  }
 }
 
 void RecHits::Clean()

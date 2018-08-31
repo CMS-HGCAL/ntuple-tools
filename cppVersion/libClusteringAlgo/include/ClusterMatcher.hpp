@@ -21,9 +21,11 @@ public:
   /// \param matched Vector that will be filled with rec and sim clusters
   /// \param recHitsPerCluster Vector of rec clusters in given layer
   /// \param simHitsPerCluster Vector or sim clusters in given layer
+  /// \param draw Should matched clusters in this layer be plotted
   void MatchClustersByDetID(std::vector<MatchedClusters*> &matched,
                             std::vector<std::unique_ptr<RecHits>> &recHitsPerCluster,
-                            std::vector<std::unique_ptr<RecHits>> &simHitsPerCluster);
+                            std::vector<std::unique_ptr<RecHits>> &simHitsPerCluster,
+                            bool draw=false);
   
   /// Fills a vector of matched rec and sim clusters finding the nearest rec cluster for given sim cluster
   /// \param matched Vector that will be filled with rec and sim clusters
@@ -44,6 +46,12 @@ public:
                              std::vector<RecHits*> &recHitsPerCluster,
                              std::vector<RecHits*> &simHitsPerCluster,
                              int layer);
+  
+  /// Plots sim hits, rec clusters and rec hits that belong to them from a vactor of matched clusters.
+  /// If there are two sim hits in the same position, the second one will be drawn as opened circle on top
+  /// of a closed one.
+  /// \param matched Vector of matched clusters to be drawn
+  void DrawMatched(std::vector<MatchedClusters*> &matched);
 };
 
 

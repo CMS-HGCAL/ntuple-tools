@@ -46,6 +46,7 @@ public:
   
   inline int GetFirstRecIndex(){return recIndices[0];}
   inline void GetRecHits(std::unique_ptr<RecHits> &hits){hits->AddHits(recHits);}
+  inline void GetSimHits(std::unique_ptr<RecHits> &hits){hits->AddHits(simHits);}
   
   bool    HasSimClusters();
   double  GetSimX();
