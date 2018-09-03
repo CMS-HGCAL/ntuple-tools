@@ -108,9 +108,9 @@ void RecHits::Clean()
   if(cluster2d){ cluster2d->clear(); delete cluster2d; cluster2d = new vector<int>;}
 }
 
-unique_ptr<RecHit> RecHits::GetHit(int index)
+unique_ptr<RecHit> RecHits::GetHit(int index, double energyFraction)
 {
-  unique_ptr<RecHit> hit(new RecHit(eta->at(index),phi->at(index),energy->at(index),x->at(index),y->at(index),z->at(index), layer->at(index),detid->at(index),thickness->at(index),isHalf->at(index),time->at(index),cluster2d->at(index)));
+  unique_ptr<RecHit> hit(new RecHit(eta->at(index),phi->at(index),energyFraction*energy->at(index),x->at(index),y->at(index),z->at(index), layer->at(index),detid->at(index),thickness->at(index),isHalf->at(index),time->at(index),cluster2d->at(index)));
 
   return hit;
 }
@@ -214,11 +214,12 @@ void RecHits::GetHitsPerSimCluster(vector<unique_ptr<RecHits>> &hitsPerCluster,
   int nAssociatedHits = 0;
   
   for(int iCluster=0;iCluster<clusters->N();iCluster++){
-    
     if(ConfigurationManager::Instance()->GetVerbosityLevel() > 0){
       clusters->Print(iCluster);
     }
-    vector<unsigned int> hitsInClusterDetIDs = clusters->GetHits()->at(iCluster);
+    vector<float>        hitsInClusterFractions = clusters->GetFractions()->at(iCluster);
+    vector<unsigned int> hitsInClusterDetIDs    = clusters->GetHits()->at(iCluster);
+    vector<unsigned int> hitsInClusterDetIDsUnsorted = clusters->GetHits()->at(iCluster);
     vector<unsigned int> clusterToHitID;
 
     sort(hitsDetIDs->begin(), hitsDetIDs->end());
@@ -232,7 +233,9 @@ void RecHits::GetHitsPerSimCluster(vector<unique_ptr<RecHits>> &hitsPerCluster,
 
     for(unsigned int i : clusterToHitID){
       ptrdiff_t pos = distance(detid->begin(), find(detid->begin(), detid->end(), i));
-      unique_ptr<RecHit> hit = GetHit((int)pos);
+      ptrdiff_t posCluster = distance(hitsInClusterDetIDsUnsorted.begin(), find(hitsInClusterDetIDsUnsorted.begin(), hitsInClusterDetIDsUnsorted.end(), i));
+      double energyFraction = hitsInClusterFractions[(int)posCluster];
+      unique_ptr<RecHit> hit = GetHit((int)pos,energyFraction);
       hitsInThisCluster->AddHit(hit);
     }
     nAssociatedHits += hitsInThisCluster->N();

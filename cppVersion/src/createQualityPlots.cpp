@@ -37,6 +37,7 @@ enum EMonitor1D{
   kSeparation,
   kContainment,
   kDeltaNclusters,
+  kFakeVsLayer,
   kNmonitors1D
 };
 
@@ -54,6 +55,7 @@ double monitorLimits1D[kNmonitors1D][3] = {
   {1000,0,10},    // separation
   {1000,-1,1},    // containment
   {2000,-10,10},  // ΔN_clusters
+  {100,0,100},    // fake rec clusters vs. layer
 };
 
 // Limits of 2D monitoring histograms {nBinsX, minX, maxX, nBinsY, minY, maxY}
@@ -68,14 +70,15 @@ const char* monitorNames1D[kNmonitors1D] = {
   "resolution",
   "separation",
   "containment",
-  "deltaNclusters"
+  "deltaNclusters",
+  "fakeVsLayer",
 };
 
 const char* monitorNames2D[kNmonitors2D] = {
   "resolutionVsEta",
   "ErecVsEsimUnmatched",
   "ErecVsEsimDetIdMatching",
-  "NrecVsNsim"
+  "NrecVsNsim",
 };
 
 int main(int argc, char* argv[])
@@ -244,13 +247,13 @@ int main(int argc, char* argv[])
           continue;
         }
         
-        // Those sim clusters will share some fraction of hits. Try to re-assign shared hits energy.
+        // Some sim clusters will share a fraction of hits. Try to re-assign shared hits energy.
         // This will not work very well if single hit is share by 3 or more clusters...
-        for(int i=0;i<simHitsInClusterInLayer.size();i++){
-          for(int j=i+1;j<simHitsInClusterInLayer.size();j++){
-            simHitsInClusterInLayer[i]->ShareCommonHits(simHitsInClusterInLayer[j]);
-          }
-        }
+//        for(int i=0;i<simHitsInClusterInLayer.size();i++){
+//          for(int j=i+1;j<simHitsInClusterInLayer.size();j++){
+//            simHitsInClusterInLayer[i]->ShareCommonHits(simHitsInClusterInLayer[j]);
+//          }
+//        }
         
         // If this event-layer makes sense at all (there are some sim clusters in it), count it for the denominator of failures fraction
         nTotalLayerEvents++;
@@ -307,6 +310,7 @@ int main(int argc, char* argv[])
             if(config->GetVerbosityLevel() > 1){
               cout<<"\n\nNo sim clusters in matched clusters in layer:"<<layer<<endl;
             }
+            monitors1D[kFakeVsLayer]->Fill(layer);
             failure3++;
             continue;
           }
@@ -393,8 +397,8 @@ finish:
   }
   
   // Save 2D monitors
-  for(int i=0;i<kNmonitors1D;i++){
-    monitors2D[i]->SaveAs((outpath+"/"+monitorNames2D[i]+".root").c_str());
+  for(int i=0;i<kNmonitors2D;i++){
+      monitors2D[i]->SaveAs((outpath+"/"+monitorNames2D[i]+".root").c_str());
   }
   
   // Save fraction of fails in the text file

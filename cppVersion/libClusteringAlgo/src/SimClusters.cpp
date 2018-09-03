@@ -16,7 +16,8 @@ phi(nullptr),
 energy(nullptr),
 pt(nullptr),
 hits(nullptr),
-layers(nullptr)
+layers(nullptr),
+fractions(nullptr)
 {
   _tree->SetBranchAddress("simcluster_eta",&eta);
   _tree->SetBranchAddress("simcluster_phi",&phi);
@@ -24,6 +25,7 @@ layers(nullptr)
   _tree->SetBranchAddress("simcluster_energy",&energy);
   _tree->SetBranchAddress("simcluster_hits",&hits);
   _tree->SetBranchAddress("simcluster_layers",&layers);
+  _tree->SetBranchAddress("simcluster_fractions",&fractions);
   // ... more branches can be add in the future if needed
 }
 
@@ -34,6 +36,7 @@ SimClusters::~SimClusters()
   if(energy){ energy->clear(); delete energy;}
   if(hits){ hits->clear(); delete hits;}
   if(layers){ layers->clear(); delete layers;}
+  if(fractions){ fractions->clear(); delete fractions;}
 }
 
 void SimClusters::Print(int index)
@@ -53,6 +56,7 @@ void SimClusters::Clean()
   if(energy){ energy->clear(); delete energy; energy = nullptr;}
   if(hits){ hits->clear(); delete hits; hits = nullptr;}
   if(layers){ layers->clear(); delete layers; layers = nullptr;}
+  if(fractions){ fractions->clear(); delete fractions; fractions = nullptr;}
 }
 
 int SimClusters::GetNsimClustersInLayer(unsigned int iLayer)

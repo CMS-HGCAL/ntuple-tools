@@ -53,8 +53,9 @@ public:
   
   /// Returns a single RecHit
   /// \param index Index of the desired RecHit
+  /// \param energyFraction Fraction to scale hit's energy (for sharing between multiple sim clusters)
   /// \return Pointer to the RecHit object
-  std::unique_ptr<RecHit> GetHit(int index);
+  std::unique_ptr<RecHit> GetHit(int index, double energyFraction=1.0);
   
   /// Adds a single hit to the colleciton
   /// \param hit Pointer to RecHit object to be added to the collection
