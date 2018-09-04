@@ -247,14 +247,6 @@ int main(int argc, char* argv[])
           continue;
         }
         
-        // Some sim clusters will share a fraction of hits. Try to re-assign shared hits energy.
-        // This will not work very well if single hit is share by 3 or more clusters...
-//        for(int i=0;i<simHitsInClusterInLayer.size();i++){
-//          for(int j=i+1;j<simHitsInClusterInLayer.size();j++){
-//            simHitsInClusterInLayer[i]->ShareCommonHits(simHitsInClusterInLayer[j]);
-//          }
-//        }
-        
         // If this event-layer makes sense at all (there are some sim clusters in it), count it for the denominator of failures fraction
         nTotalLayerEvents++;
         

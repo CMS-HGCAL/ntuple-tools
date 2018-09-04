@@ -120,14 +120,14 @@ double MatchedClusters::GetSharedFractionWithRecHits(vector<unsigned int> &detID
   // store DetIDs that are common for rec and sim clusters
   std::vector<unsigned int> common;
   std::set_intersection(detIDs.begin(), detIDs.end(),
-                        recHits->GetDetIDs()->begin(), recHits->GetDetIDs()->end(),
+                        recDetIDs.begin(), recDetIDs.end(),
                         std::back_inserter(common));
   
   // Sum up energy of shared hits
   double energySumShared=0;
   for(int i=0;i<common.size();i++){
-    auto pos = distance(recHits->GetDetIDs()->begin(),
-                        find(recHits->GetDetIDs()->begin(),recHits->GetDetIDs()->end(), common[i]));
+    auto pos = distance(recDetIDs.begin(),
+                        find(recDetIDs.begin(),recDetIDs.end(), common[i]));
     
     energySumShared += recHits->GetEnergyOfHit((int)pos);
   }

@@ -87,7 +87,7 @@ void RecHits::Print()
   
   if(ConfigurationManager::Instance()->GetVerbosityLevel() > 1){
     for(int i=0;i<x->size();i++){
-      cout<<"x:"<<x->at(i)<<"\ty:"<<y->at(i)<<"\tE:"<<energy->at(i)<<endl;
+      cout<<"x:"<<x->at(i)<<"\ty:"<<y->at(i)<<"\tE:"<<energy->at(i)<<"\tdetID:"<<detid->at(i)<<endl;
     }
   }
 }

@@ -109,47 +109,47 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
   }
  
   // Iterate over rec clusters that didn't get any sim clusters assigned and try to match them to existing sets of sim-rec clusters
-  for(MatchedClusters* cluster : matched){
-    if(!cluster->HasSimClusters()){
-      vector<unsigned int> recDetIDs = cluster->GetRecDetIDs();
+  vector<int> matchedToErase;
+  
+  for(int iRec=0;iRec<matched.size();iRec++){
+    MatchedClusters* failedRecCluster = matched[iRec];
+    
+    if(!failedRecCluster->HasSimClusters()){
+      
       double maxShared = 0;
       MatchedClusters *maxSharingMatchedCluster = nullptr;
       
       for(MatchedClusters* otherCluster : matched){
-        if(cluster == otherCluster) continue;
+        if(failedRecCluster == otherCluster) continue;
       
-        double shared = otherCluster->GetSharedFractionWithRecHits(recDetIDs);
+        vector<unsigned int> simDetIDs = otherCluster->GetSimDetIDs();
+        
+        double shared = failedRecCluster->GetSharedFractionWithRecHits(simDetIDs);
         if(shared > maxShared){
           maxShared = shared;
           maxSharingMatchedCluster = otherCluster;
         }
       }
       
-      MatchedClusters *matchedTmp = new MatchedClusters();
-      unique_ptr<RecHits> recHitsInThisCluster = unique_ptr<RecHits>(new RecHits());
-      cluster->GetRecHits(recHitsInThisCluster);
-      matchedTmp->AddSimCluster(cluster->GetFirstRecIndex(), recHitsInThisCluster);
-      
       if(!maxSharingMatchedCluster){
         if(ConfigurationManager::Instance()->GetVerbosityLevel() > 1){
           cout<<"\n========================================================"<<endl;
           cout<<"No sim cluster found for a rec cluster!!"<<endl;
           cout<<"Rec cluster:"<<endl;
-          matchedTmp->Print();
+          failedRecCluster->Print();
           cout<<endl;
         }
         continue;
       }
       
-      double distance = sqrt( pow(maxSharingMatchedCluster->GetRecX() - matchedTmp->GetSimX(),2)
-                             +pow(maxSharingMatchedCluster->GetRecY() - matchedTmp->GetSimY(),2));
+      double distance = sqrt( pow(maxSharingMatchedCluster->GetSimX() - failedRecCluster->GetRecX(),2)
+                             +pow(maxSharingMatchedCluster->GetSimY() - failedRecCluster->GetRecY(),2));
       
       if((distance > maxDistance) && maxDistance>=0) continue;
-      maxSharingMatchedCluster->Merge(cluster);
+      maxSharingMatchedCluster->Merge(failedRecCluster);
+      matchedToErase.push_back(iRec);
     }
   }
-  
-
   
   if(verbosityLevel > 1){
     cout<<"\n\nMatched clusters after step 3\n\n"<<endl;
@@ -158,16 +158,26 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
     }
     cout<<endl;
   }
-    
-  if(draw) DrawMatched(matched);
   
-  // remove matched clusters with no sim assigned to rec
-//  for(int i=0;i<matched.size();i++){
-//    if(matched[i]->simClusters->size() == 0){
-//      matched.erase(matched.begin()+i);
-//      i--;
-//    }
-//  }
+  vector<MatchedClusters*> newMached;
+  
+  for(int i=0;i<matched.size();i++){
+    if(find(matchedToErase.begin(),matchedToErase.end(),i) == matchedToErase.end()){
+      newMached.push_back(matched[i]);
+    }
+  }
+  
+  matched = newMached;
+  
+  if(verbosityLevel > 1){
+    cout<<"\n\nMatched clusters after step 4\n\n"<<endl;
+    for(auto cluster : matched){
+      cluster->Print();
+    }
+    cout<<endl;
+  }
+  
+  if(draw) DrawMatched(matched);
 }
 
 

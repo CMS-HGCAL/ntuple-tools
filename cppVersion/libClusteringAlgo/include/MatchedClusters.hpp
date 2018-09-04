@@ -36,6 +36,7 @@ public:
   double GetSharedFraction();
   double GetSharedFractionWithRecHits(std::vector<unsigned int> &detIDs);
   inline std::vector<unsigned int> GetRecDetIDs(){return recDetIDs;}
+  inline std::vector<unsigned int> GetSimDetIDs(){return simDetIDs;}
   
   bool    HasRecClusters();
   double  GetRecX();

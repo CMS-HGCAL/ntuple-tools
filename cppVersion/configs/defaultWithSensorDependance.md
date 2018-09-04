@@ -40,7 +40,7 @@ deltac_EE:    2.0
 deltac_FH:    2.0
 deltac_BH:    5.0
 
-### Critical energy density is defined as ρ_c = max(ρ)/κ. Hits with ρ > ρ_c will be considered as potential cluster seeds.
+### Critical energy density is defined as ρ_c = κ * noiseLevel. Hits with ρ > ρ_c will be considered as potential cluster seeds.
 kappa:  9.0
 
 ### cut on energy (relative to the noise):
