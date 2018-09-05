@@ -99,15 +99,37 @@ void MatchedClusters::Merge(MatchedClusters *clusters)
 BasicCluster* MatchedClusters::GetBasicClusterFromRecHits(std::unique_ptr<RecHits> &hits)
 {
   double recEnergy = hits->GetTotalEnergy();
-  double xMax   = hits->GetXmax();
-  double xMin   = hits->GetXmin();
-  double yMax   = hits->GetYmax();
-  double yMin   = hits->GetYmin();
-  
-  double clusterX = (xMax+xMin)/2.;
-  double clusterY = (yMax+yMin)/2.;
+  int maxHit = hits->GetHighestEnergyHitIndex();
+   
+  double clusterX   = hits->GetXofHit(maxHit);
+  double clusterY   = hits->GetYofHit(maxHit);
   double clusterEta = hits->GetCenterEta();
-  double clusterR = std::max((xMax-xMin)/2.,(yMax-yMin)/2.);
+  
+  // vector of squared distances and energies
+  vector<tuple<float,float>> distances2andEnergies;
+  
+  for(int i=0;i<hits->N();i++){
+    distances2andEnergies.push_back(make_tuple( pow(hits->GetXofHit(i)-clusterX,2)
+                                               +pow(hits->GetYofHit(i)-clusterY,2),
+                                               hits->GetEnergyOfHit(i)));
+  }
+  
+  // sort hits by distance to cluster's center
+  sort(begin(distances2andEnergies), end(distances2andEnergies),
+          [](tuple<float, float> const &t1, tuple<float, float> const &t2) {return get<0>(t1) < get<0>(t2);}
+       );
+  
+  double accumulatedEnergy = 0;
+  double clusterR = 0;
+  
+  
+  for(int i=0;i<distances2andEnergies.size();i++){
+    accumulatedEnergy += get<1>(distances2andEnergies[i]);
+    clusterR = get<0>(distances2andEnergies[i]);
+    
+    if(accumulatedEnergy > 0.68*recEnergy) break;
+  }
+  clusterR = sqrt(clusterR);
   
   if(clusterR==0) clusterR = 0.5; // this means that cluster has just one hit
   

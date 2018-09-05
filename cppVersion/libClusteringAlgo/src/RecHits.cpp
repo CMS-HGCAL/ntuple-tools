@@ -159,6 +159,21 @@ double RecHits::GetTotalEnergy()
   return totalEnergy;
 }
 
+
+int RecHits::GetHighestEnergyHitIndex()
+{
+  int highestIndex = -1;
+  double highestEnergy = -1;
+  
+  for(int i=0;i<energy->size();i++){
+    if(energy->at(i) > highestEnergy){
+      highestEnergy = energy->at(i);
+      highestIndex = i;
+    }
+  }
+  return highestIndex;
+}
+
 double RecHits::GetXmin()
 {
   if(!x || x->size()==0) return 99999;

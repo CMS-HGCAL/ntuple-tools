@@ -373,19 +373,22 @@ finish:
   // Save 1D monitors and put mean values in a text file
   for(int i=0;i<kNmonitors1D;i++){
     monitors1D[i]->SaveAs((outpath+"/"+monitorNames1D[i]+".root").c_str());
-    double mean, sigma;
     
-    if(monitors1D[i] && monitors1D[i]->GetEntries()>0 && monitors1D[i]->GetStdDev() != 0){
-      mean = monitors1D[i]->GetMean();
-      sigma= monitors1D[i]->GetStdDev();
+    if(i==kResolution || i==kSeparation || i==kContainment || i==kDeltaNclusters){
+      double mean, sigma;
+      
+      if(monitors1D[i] && monitors1D[i]->GetEntries()>0 && monitors1D[i]->GetStdDev() != 0){
+        mean = monitors1D[i]->GetMean();
+        sigma= monitors1D[i]->GetStdDev();
+      }
+      else{
+        mean = sigma = 999999;
+      }
+      outputFile<<mean<<endl;
+      outputFile<<sigma<<endl;
+      cout<<"Average "<<monitorNames1D[i]<<" per event:"<<mean<<endl;
+      cout<<monitorNames1D[i]<<" sigma:"<<sigma<<endl;
     }
-    else{
-      mean = sigma = 999999;
-    }
-    outputFile<<mean<<endl;
-    outputFile<<sigma<<endl;
-    cout<<"Average "<<monitorNames1D[i]<<" per event:"<<mean<<endl;
-    cout<<monitorNames1D[i]<<" sigma:"<<sigma<<endl;
   }
   
   // Save 2D monitors
@@ -411,7 +414,9 @@ finish:
   delete algo;
   delete matcher;
   
-  theApp.Run();
+  if(plotEvent >= 0 && plotLayer >=0){
+    theApp.Run();
+  }
   return 0;
 }
 

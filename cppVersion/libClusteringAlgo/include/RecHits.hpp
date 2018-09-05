@@ -36,6 +36,9 @@ public:
   /// Returns sum of the energies of all hits in the collection
   double GetTotalEnergy();
   
+  /// Returns index of the hit with the highest energy
+  int GetHighestEnergyHitIndex();
+  
   /// Returns the smallest X among all hits stored in the collection
   double GetXmin();
   
@@ -100,6 +103,14 @@ public:
     return detid;
   }
   
+  /// Returns X position of i-th hit
+  /// \param i Index of the hit
+  inline double GetXofHit(int i){return x->at(i);}
+  
+  /// Returns Y position of i-th hit
+  /// \param i Index of the hit
+  inline double GetYofHit(int i){return y->at(i);}
+  
   /// Returns energy of i-th hit
   /// \param i Index of the hit
   inline double GetEnergyOfHit(int i){return energy->at(i);}
@@ -118,6 +129,9 @@ public:
   
   /// Returns a vector of Y coordinates of hits
   std::vector<float>* GetY(){return y;}
+  
+  /// Returns a vector of energies of hits
+  std::vector<float>* GetEnergy(){return energy;}
   
   /// Finds hits that are common for this RecHits collection and the provided one and then modifies energy
   /// of those common hits, weighting them by the total energy of the core (all hits minus those that are shared)
