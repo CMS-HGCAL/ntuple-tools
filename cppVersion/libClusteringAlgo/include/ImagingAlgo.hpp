@@ -38,7 +38,17 @@ public:
   /// Get clustered hexels by re-running the clustering algorithm
   /// \param hexelsClustered Will be filled with non-halo 2D hexels containing info about cluster index and layer
   /// \param hits Rec hits to be clusterized
-  void getRecClusters(std::vector<std::shared_ptr<Hexel>> &hexelsClustered, std::shared_ptr<RecHits> &hits);
+  void getRecClusters(std::vector<std::shared_ptr<Hexel>> &hexelsClustered,
+                      std::shared_ptr<RecHits> &hits);
+  
+  /// Make 2D clusters out of recHits (need to introduce class with input params: delta_c, kappa, ecut, ...)
+  /// \param clusters Will be filled with hits grouped by layer by cluster
+  /// \param hits Input hits to be clusterized
+  void makeClusters(std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters,
+                    std::shared_ptr<RecHits> &hits);
+  
+  void make3DClusters(std::vector<std::shared_ptr<BasicCluster>> &thePreClusters,
+                      const std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters);
   
 private:
   std::string configPath;
@@ -80,21 +90,16 @@ private:
   /// \param hits Input hits to be grouped by layer
   void populate(std::vector<std::vector<std::unique_ptr<Hexel>>> &points, std::shared_ptr<RecHits> &hits);
   
-  /// Make 2D clusters out of recHits (need to introduce class with input params: delta_c, kappa, ecut, ...)
-  /// \param clusters Will be filled with hits grouped by layer by cluster
-  /// \param hits Input hits to be clusterized
-  void makeClusters(std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters, std::shared_ptr<RecHits> &hits);
-  
   /// Get flat list of BasicClusters from the list of hexels grouped by layer by cluster
   /// \param clustersFlat Will be filled with BasicClusters
   /// \param clusters Input hexels grouped by layer by cluster to be flatten
-  void getBasicClusters(std::vector<std::unique_ptr<BasicCluster>> &clustersFlat,
-                   std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters);
+  void getBasicClusters(std::vector<std::shared_ptr<BasicCluster>> &clustersFlat,
+                        const std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters);
 
   /// Calculates XYZ position of a cluster
   /// \param cluster Input cluster of hexels
   /// \return Returns a tuple containing X,Y,Z coordinates of the cluster
-  std::tuple<double,double,double>  calculatePosition(std::vector<std::unique_ptr<Hexel>> &cluster);
+  std::tuple<double,double,double>  calculatePosition(const std::vector<std::unique_ptr<Hexel>> &cluster);
   
   /// Sorts hexels by rho
   /// \param v Input vector of hexels to sort (will not be modified)
@@ -106,6 +111,8 @@ private:
   /// \return Returns vector of sorted indices
   std::vector<int> sortIndicesDeltaInverted(const std::vector<std::unique_ptr<Hexel>> &v);
   
+  std::vector<int> sortIndicesEnergyInverted(const std::vector<std::shared_ptr<BasicCluster>> &v);
+  
   /// Calculate max local density in a 2D plane of hexels
   /// \param hexels A vector of hexels for which max local density will be calculated
   /// \param lpX X coordinates of all hexels in this layer
@@ -114,6 +121,11 @@ private:
   /// \return Returns max local density
   double calculateLocalDensity(std::vector<std::unique_ptr<Hexel>> &hexels,
                                std::vector<double> lpX, std::vector<double> lpY, int layer);
+  
+  
+  double getMultiClusterEnergy(std::vector<std::shared_ptr<BasicCluster>> multi_clu);
+  
+  std::tuple<double,double,double> getMultiClusterPosition(std::vector<std::shared_ptr<BasicCluster>> multi_clu);
   
   
 };

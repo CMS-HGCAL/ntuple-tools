@@ -14,12 +14,15 @@ using namespace std;
 using namespace TMath;
 
 BasicCluster::BasicCluster(double _energy, double _x, double _y, double _z,
-                           vector<shared_ptr<Hexel>> _thisCluster):
+                           vector<shared_ptr<Hexel>> _thisCluster,
+                           vector<vector<shared_ptr<Hexel>>> _thisClusters):
 energy((_energy>=0) ? _energy : 0.),
 x(_x),
 y(_y),
 z(_z),
-thisCluster(_thisCluster)
+usedIn3Dcluster(0),
+thisCluster(_thisCluster),
+thisClusters(_thisClusters)
 {
   double theta = acos(z/sqrt(x*x+y*y+z*z));
   eta = -log(tan(theta/2.));
@@ -39,12 +42,27 @@ radius(_radius)
   phi = 0;
 }
 
+BasicCluster::BasicCluster(const BasicCluster &b) :
+energy(b.energy),
+x(b.x),
+y(b.y),
+z(b.z),
+eta(b.eta),
+phi(b.phi),
+radius(b.radius),
+usedIn3Dcluster(b.usedIn3Dcluster)
+{
+  for(auto hex : b.thisCluster){
+    thisCluster.push_back(hex);
+  }
+}
+
 BasicCluster::~BasicCluster()
 {
   thisCluster.clear();
 }
 
-bool BasicCluster::operator=(BasicCluster &b)
+bool BasicCluster::operator==(BasicCluster &b)
 {
   if(   fabs(energy - b.energy) < 0.000001
      && fabs(x - b.x)           < 0.000001

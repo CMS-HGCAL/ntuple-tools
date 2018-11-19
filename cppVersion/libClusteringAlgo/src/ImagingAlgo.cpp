@@ -161,6 +161,14 @@ vector<int> ImagingAlgo::sortIndicesDeltaInverted(const vector<unique_ptr<Hexel>
   return idx;
 }
 
+vector<int> ImagingAlgo::sortIndicesEnergyInverted(const vector<shared_ptr<BasicCluster>> &v)
+{
+  vector<int> idx(v.size());
+  iota(idx.begin(), idx.end(), 0);
+  stable_sort(idx.begin(), idx.end(),[&v](int i1, int i2) {return v[i1]->GetEnergy() > v[i2]->GetEnergy();});
+  return idx;
+}
+
 void ImagingAlgo::calculateDistanceToHigher(vector<unique_ptr<Hexel>> &nodes)
 {
   // sort vector of Hexels by decreasing local density
@@ -367,12 +375,12 @@ void ImagingAlgo::makeClusters(vector<vector<vector<unique_ptr<Hexel>>>> &cluste
   }
 }
 
-void ImagingAlgo::getBasicClusters(vector<unique_ptr<BasicCluster>> &clustersFlat,
-                              vector<vector<vector<unique_ptr<Hexel>>>> &clusters)
+void ImagingAlgo::getBasicClusters(vector<shared_ptr<BasicCluster>> &clustersFlat,
+                                   const vector<vector<vector<unique_ptr<Hexel>>>> &clusters)
 {
   // loop over all layers and all clusters in each layer
-  for(vector<vector<unique_ptr<Hexel>>> &clustersInLayer : clusters){
-    for(vector<unique_ptr<Hexel>> &cluster : clustersInLayer){
+  for(auto &clustersInLayer : clusters){
+    for(auto &cluster : clustersInLayer){
       auto position = calculatePosition(cluster);
 
       // skip the clusters where position could not be computed (either all weights are 0, or all hexels are tagged as Halo)
@@ -384,10 +392,10 @@ void ImagingAlgo::getBasicClusters(vector<unique_ptr<BasicCluster>> &clustersFla
         if(!iNode->isHalo) energy += iNode->weight;
         sharedCluster.push_back(shared_ptr<Hexel>(new Hexel(*iNode)));
       }
-      clustersFlat.push_back(unique_ptr<BasicCluster>(new BasicCluster(energy,get<0>(position),get<1>(position),get<2>(position), sharedCluster)));
+      clustersFlat.push_back(shared_ptr<BasicCluster>(new BasicCluster(energy,get<0>(position),get<1>(position),get<2>(position), sharedCluster)));
     }
 
-    sort(clustersFlat.begin( ), clustersFlat.end( ), [ ](const unique_ptr<BasicCluster> &lhs,const  unique_ptr<BasicCluster> &rhs){
+    sort(clustersFlat.begin( ), clustersFlat.end( ), [ ](const shared_ptr<BasicCluster> &lhs,const  shared_ptr<BasicCluster> &rhs){
       return lhs->GetEnergy() > rhs->GetEnergy();
     });
   }
@@ -400,7 +408,7 @@ void ImagingAlgo::getRecClusters(vector<shared_ptr<Hexel>> &hexelsClustered, sha
   makeClusters(clusters2D, hits);
   
   // get flat list of 2D clusters (as basic clusters)
-  std::vector<unique_ptr<BasicCluster>> clusters2Dflat;
+  std::vector<shared_ptr<BasicCluster>> clusters2Dflat;
   getBasicClusters(clusters2Dflat, clusters2D);
   
   // keep only non-halo hexels
@@ -413,7 +421,156 @@ void ImagingAlgo::getRecClusters(vector<shared_ptr<Hexel>> &hexelsClustered, sha
   }
 }
 
-tuple<double,double,double> ImagingAlgo::calculatePosition(vector<unique_ptr<Hexel>> &cluster)
+// make multi-clusters starting from the 2D clusters, with KDTree
+void ImagingAlgo::make3DClusters(vector<shared_ptr<BasicCluster>> &thePreClusters,
+                                 const vector<vector<vector<unique_ptr<Hexel>>>> &clusters)
+{
+// adjust multiclusterRadii, minClusters and/or verbosityLevel if necessary
+  double multiclusterRadii[3] = {2, 5, 5};
+  int minClusters = 3;
+  
+  // get clusters in one list (just following original approach)
+  vector<shared_ptr<BasicCluster>> thecls;
+  getBasicClusters(thecls,clusters);
+
+  // init "points" of 2D clusters for KDTree serach and zees of layers (check if it is really needed)
+  vector<vector<shared_ptr<BasicCluster>>> points;
+  vector<double> zees;
+  
+  for(int iLayer=0;iLayer<2*(maxlayer+1);iLayer++){ // initialise list of per-layer-lists of clusters
+    points.push_back(vector<shared_ptr<BasicCluster>>());
+    zees.push_back(0.);
+  }
+  
+  for(auto &cls : thecls){  // organise layers accoring to the sgn(z)
+    int layerID = cls->GetHexelsInThisCluster()[0]->layer;
+    layerID += (cls->GetZ() > 0) * (maxlayer + 1);  // +1 - yes or no?
+    points[layerID].push_back(cls);
+    zees[layerID] = cls->GetZ();
+  }
+    
+  // init lists and vars
+  vector<double> vused;
+  for(int i=0;i<thecls.size();i++){ vused.push_back(0.0);}
+  int used = 0;
+
+  // indices sorted by decreasing energy
+  vector<int> es = sortIndicesEnergyInverted(thecls);
+  
+  // loop over all clusters
+  int index = 0;
+  for(int i=0;i<thecls.size();i++){
+    if(!thecls[es[i]]->IsUsedIn3Dcluster()){
+      vector<shared_ptr<BasicCluster>> temp;
+      temp.push_back(thecls[es[i]]);
+      if(thecls[es[i]]->GetZ() > 0){
+        thecls[es[i]]->SetUsedIn3Dcluster(1);
+      }
+      else{
+        thecls[es[i]]->SetUsedIn3Dcluster(-1);
+      }
+      used++;
+      
+      double from_[3] = {thecls[es[i]]->GetX(), thecls[es[i]]->GetY(), thecls[es[i]]->GetZ()};
+      int firstlayer = (thecls[es[i]]->GetZ() > 0) * (maxlayer + 1);
+      int lastlayer = firstlayer + maxlayer + 1;
+      for(int j=firstlayer;j<lastlayer;j++){
+        if(zees[j] == 0.) continue;
+        double to_[3] = {0., 0., zees[j]};
+        to_[0] = (from_[0] / from_[2]) * to_[2];
+        to_[1] = (from_[1] / from_[2]) * to_[2];
+        int layer = j - (zees[j] > 0) * (maxlayer + 1);  // maps back from index used for KD trees to actual layer
+        double multiclusterRadius = 9999.;
+        if(layer <= lastLayerEE)       multiclusterRadius = multiclusterRadii[0];
+        else if(layer <= lastLayerFH)  multiclusterRadius = multiclusterRadii[1];
+        else if(layer <= maxlayer)     multiclusterRadius = multiclusterRadii[2];
+        else  cout<<"ERROR: Nonsense layer value - cannot assign multicluster radius"<<endl;
+        
+        // KD-tree search in layer j
+        vector<double> points_0, points_1;
+        for(auto &cls : points[j]){
+          points_0.push_back(cls->GetX()); // list of cls' coordinate 0 for layer j
+          points_1.push_back(cls->GetY()); // list of cls' coordinate 1 for layer j
+        }
+        
+        auto found = queryBallPoint(points_0, points_1, to_[0], to_[1], multiclusterRadius);
+        
+        for(int k : found){
+          if(!points[j][k]->IsUsedIn3Dcluster() && (distanceReal2(points[j][k]->GetX(),points[j][k]->GetY(), to_[0],to_[1]) < pow(multiclusterRadius,2))){
+            temp.push_back(points[j][k]);
+            points[j][k]->SetUsedIn3Dcluster(thecls[es[i]]->IsUsedIn3Dcluster());
+            used++;
+          }
+        }
+      }
+      if(temp.size() > minClusters){
+        auto position = getMultiClusterPosition(temp);
+        double energy = getMultiClusterEnergy(temp);
+        
+        vector<vector<shared_ptr<Hexel>>> hexels;
+        for(auto &clus : temp){
+          auto thisHexels = clus->GetHexelsInThisCluster();
+          hexels.push_back(thisHexels);
+        }
+        
+        if(fabs(get<2>(position)) < 0.00001){
+          cout<<"fail"<<endl;
+        }
+        
+        thePreClusters.push_back(unique_ptr<BasicCluster>(new BasicCluster(energy,get<0>(position),get<1>(position),get<2>(position),vector<shared_ptr<Hexel>>(0),hexels)));
+        if (verbosityLevel >= 1){
+          shared_ptr<BasicCluster> cluster = thePreClusters.back();
+          cout<<"Multi-cluster index: "<<index<<", No. of 2D-clusters = "<<temp.size();
+          cout<<", Energy  = "<<energy<<", Phi = "<<cluster->GetPhi()<<", Eta = "<<cluster->GetEta();
+          cout<<", z = "<< cluster->GetZ()<<endl;
+        }
+        index++;
+      }
+    }
+  }
+}
+
+double ImagingAlgo::getMultiClusterEnergy(vector<shared_ptr<BasicCluster>> multi_clu)
+{
+  double acc = 0.;
+  for(auto &layer_clu : multi_clu){
+    acc += layer_clu->GetEnergy();
+  }
+  return acc;
+}
+  
+// get position of the multi-cluster, based on the positions of its 2D clusters weighted by the energy
+tuple<double,double,double> ImagingAlgo::getMultiClusterPosition(vector<shared_ptr<BasicCluster>> multi_clu)
+{
+  if(multi_clu.size() == 0){
+    return make_tuple(0,0,0);
+  }
+  double mcenergy = getMultiClusterEnergy(multi_clu);
+  if(mcenergy == 0){
+    return make_tuple(0,0,0);
+  }
+
+  // compute weighted mean x/y/z position
+  double acc_x = 0.0, acc_y = 0.0, acc_z = 0.0, totweight = 0.0;
+  for(auto &layer_clu : multi_clu){
+    if(layer_clu->GetEnergy() < 0.01 * mcenergy){
+      continue;  // cutoff < 1% layer energy contribution
+    }
+    double weight = layer_clu->GetEnergy();  // weight each corrdinate only by the total energy of the layer cluster
+    acc_x += layer_clu->GetX() * weight;
+    acc_y += layer_clu->GetY() * weight;
+    acc_z += layer_clu->GetZ() * weight;
+    totweight += weight;
+  }
+  if(totweight != 0){
+    acc_x /= totweight;
+    acc_y /= totweight;
+    acc_z /= totweight;
+  }
+  return make_tuple(acc_x, acc_y, acc_z);  // return x/y/z in absolute coordinates
+}
+
+tuple<double,double,double> ImagingAlgo::calculatePosition(const vector<unique_ptr<Hexel>> &cluster)
 {
   double total_weight=0, x=0, y=0, z=0;
   bool haloOnlyCluster = true;

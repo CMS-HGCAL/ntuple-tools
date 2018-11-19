@@ -97,6 +97,17 @@ int main(int argc, char* argv[])
       algo->getRecClusters(recClusters, recHitsRaw);
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)"<<endl;
+      
+      // get 3D clusters with HGCalAlgo
+      cout<<"running clustering algorithm...";
+      start = now();
+      
+      vector<vector<vector<unique_ptr<Hexel>>>> clusters;
+      vector<shared_ptr<BasicCluster>> rec3Dclusters;
+      algo->makeClusters(clusters, recHitsRaw);
+      algo->make3DClusters(rec3Dclusters, clusters);
+      end = now();
+      cout<<" done ("<<duration(start,end)<<" s)"<<endl;
 
       // recClusters -> array of hexel objects
       cout<<"looking for hits associated with hexels...";
@@ -106,6 +117,16 @@ int main(int argc, char* argv[])
       end = now();
       cout<<" done ("<<duration(start,end)<<" s)\n"<<endl;
 
+      for(int index=0;index<rec3Dclusters.size();index++){
+        cout<<"Multi-cluster (RE-RUN) index: "<<index;
+        cout<<", No. of 2D-clusters = "<<rec3Dclusters[index]->GetHexelsPerLayer().size();
+        cout<<", Energy  = "<<rec3Dclusters[index]->GetEnergy();
+        cout<<", Phi = "<<rec3Dclusters[index]->GetPhi();
+        cout<<", Eta = "<<rec3Dclusters[index]->GetEta();
+        cout<<", z = "<<rec3Dclusters[index]->GetZ()<<endl;
+      }
+        
+      
       auto endEvent = now();
       cout<<"Total event processing time: "<<duration(startEvent,endEvent)<<" s"<<endl;
 

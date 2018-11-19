@@ -111,7 +111,11 @@ def getRecClustersFromImagingAlgo(recHitsRaw):
   clusters2D_rerun = HGCalAlgo.makeClusters(recHitsRaw,energyMin,True) # nested list of "hexels", per layer, per 2D cluster
   clusters2DList_rerun = HGCalAlgo.getClusters(clusters2D_rerun, verbosityLevel = 0) # flat list of 2D clusters (as basic clusters)
   hexelsClustered_rerun = [iNode for bClust in clusters2DList_rerun for iNode in bClust.thisCluster if not iNode.isHalo]  # flat list of clustered "hexeles", without the "halo" hexels
-  return hexelsClustered_rerun
+  
+  
+  clusters3D_rerun = HGCalAlgo.make3DClusters(clusters2D_rerun) # flat list of multi-clusters (as basic clusters)
+  
+  return (hexelsClustered_rerun,clusters3D_rerun)
 
 # check is two circles overlap
 def circlesOverlap(x1,y1,r1,x2,y2,r2,scale=1.0):
@@ -171,7 +175,7 @@ def main():
       # re-run clustering with HGCalAlgo, save to file
       print("running clustering algorithm...",end='')
       start = time.time()
-      recClusters = getRecClustersFromImagingAlgo(recHitsRaw)
+      recClusters, rec3Dclusters = getRecClustersFromImagingAlgo(recHitsRaw)
       end = time.time()
       print(" done (",end-start," s)")
       
@@ -241,6 +245,15 @@ def main():
       end = time.time()
       print(" done (",end-start," s)")
 
+      for index in range(len(rec3Dclusters)):
+            print(f"Multi-cluster (RE-RUN) index: {index}",
+                  f", No. of 2D-clusters = {len(rec3Dclusters[index].thisCluster)}",
+                  f", Energy  = {rec3Dclusters[index].energy:.2f}",
+                  f", Phi = {rec3Dclusters[index].phi:.2f}",
+                  f", Eta = {rec3Dclusters[index].eta:.2f}",
+                  f", z = {rec3Dclusters[index].z:.2f}")
+      
+      
       endEvent = time.time()
       print("Total event processing time: ",endEvent-startEvent," s")
 
