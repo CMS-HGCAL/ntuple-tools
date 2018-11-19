@@ -33,6 +33,8 @@ public:
   
   /// Constructor with config path. The global configuration will be ignored and values will be read directly from this config
   ImagingAlgo(std::string _configPath);
+  
+  /// Default destructor
   ~ImagingAlgo();
   
   /// Get clustered hexels by re-running the clustering algorithm
@@ -47,8 +49,11 @@ public:
   void makeClusters(std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters,
                     std::shared_ptr<RecHits> &hits);
   
-  void make3DClusters(std::vector<std::shared_ptr<BasicCluster>> &thePreClusters,
-                      const std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters);
+  /// Produces 3D clusters from list of hexels grouped by layer by cluster (output of the 2D clustering)
+  /// \param megaClusters Vector that will be filled with 3D clusters
+  /// \param clusters2D Input 2D clusters by layer by cluster
+  void make3DClusters(std::vector<std::shared_ptr<BasicCluster>> &megaClusters,
+                      const std::vector<std::vector<std::vector<std::unique_ptr<Hexel>>>> &clusters2D);
   
 private:
   std::string configPath;
@@ -63,6 +68,10 @@ private:
   double deltacEE;
   double deltacFH;
   double deltacBH;
+  double megaClusterRadiusEE;
+  double megaClusterRadiusFH;
+  double megaClusterRadiusBH;
+  int minClusters;
   
   TF1 *energyDensityFunction; ///< Function that will be used to determine energy density for each hit
   
@@ -122,10 +131,10 @@ private:
   double calculateLocalDensity(std::vector<std::unique_ptr<Hexel>> &hexels,
                                std::vector<double> lpX, std::vector<double> lpY, int layer);
   
+  /// Returns total energy of a 3D cluster
+  double getMegaclusterEnergy(std::vector<std::shared_ptr<BasicCluster>> megaCluster);
   
-  double getMultiClusterEnergy(std::vector<std::shared_ptr<BasicCluster>> multi_clu);
-  
-  std::tuple<double,double,double> getMultiClusterPosition(std::vector<std::shared_ptr<BasicCluster>> multi_clu);
+  std::tuple<double,double,double> getMegaclusterPosition(std::vector<std::shared_ptr<BasicCluster>> megaCluster);
   
   
 };

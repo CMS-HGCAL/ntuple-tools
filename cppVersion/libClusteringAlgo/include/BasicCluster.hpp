@@ -23,7 +23,6 @@ public:
   /// Default constructor taking as an input basic parameters of a cluster and a vector of hexels.
   BasicCluster(double _energy=-1, double _x=0, double _y=0, double _z=0, double _eta=0, double _radius=0);
   
-  
   /// Copy constructor
   BasicCluster(const BasicCluster &b);
   
