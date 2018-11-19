@@ -296,11 +296,11 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
       iNode->isHalo = true;  // some issues to be debugged?
     }
     if(ci != -1){
-      clusters[ci].push_back(move(iNode));
       if(verbosityLevel > 2){
         cout<<"Pushing hit "<<&iNode<<" into cluster with index "<<ci<<endl;
         cout<<"   rho_b[ci]: "<<rho_b[ci]<<", iNode.rho: "<<iNode->rho<<" iNode.isHalo: "<<iNode->isHalo<<endl;
       }
+      clusters[ci].push_back(move(iNode));
     }
   }
   return;
