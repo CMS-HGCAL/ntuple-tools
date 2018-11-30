@@ -31,7 +31,7 @@ public:
   void Clean();
   
   /// Returns number of stored RecHit objects
-  inline int N(){return (int)eta->size();}
+  inline int N(){return (int)x->size();}
   
   /// Returns sum of the energies of all hits in the collection
   double GetTotalEnergy();

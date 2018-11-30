@@ -17,6 +17,10 @@ string baseDir = "clusteringResultsCXX/pedja_photon_Pt6_dR0p10";
 
 //string baseDir = "clusteringResultsCXX/geneticOptimizerTwoPionDeltaR0p4/";
 
+
+//string baseDir = "clusteringResultsCXX/geneticOptimizerTwoPhotons/";
+//string baseDir = "clusteringResultsCXX/clemens_twoPhoton_fixed/";
+
 vector<string> fileNames = {
   "ErecVsEsimUnmatched",
   "ErecVsEsimDetIdMatching",
@@ -26,6 +30,7 @@ vector<string> fileNames = {
   "separation",
   "containment",
   "deltaNclusters",
+  "fakeVsLayer"
 };
 
 void analyzeClustering(string inputPath="")
@@ -46,6 +51,8 @@ void analyzeClustering(string inputPath="")
     TH1D *hist = (TH1D*)file->Get(names.c_str());
     
     canvas->cd(iter);
+    if(iter>4) hist->SetFillColorAlpha(kBlue,0.3);
+    
     hist->Draw("colz");
     
     if(iter < 3) fun->Draw("same");

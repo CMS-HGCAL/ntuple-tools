@@ -22,14 +22,7 @@ public:
   ~Event();
   
   /// Jump to event
-  inline void GoToEvent(int event){
-    genParticles->Clean();
-    recHits->Clean();
-    simClusters->Clean();
-    clusters2D->Clean();
-    
-    tree->GetEntry(event);
-  }
+  void GoToEvent(int event);
   
   /// Returns collection of generated particles
   inline std::shared_ptr<GenParticles> GetGenParticles(){return genParticles;}
@@ -43,6 +36,8 @@ public:
   /// Returns collection of 2D clusters from the original reconstruction
   inline std::shared_ptr<Clusters2D> GetClusters2D(){return clusters2D;}
   
+  /// Tells if this event comes from the testbeam
+  inline bool IsTestBeam(){return isTestBeam;}
 private:
   TTree *tree;  ///< Pointer to tree containing HGCal events
   
@@ -50,6 +45,13 @@ private:
   std::shared_ptr<RecHits> recHits;           ///< Collection of rec hits
   std::shared_ptr<SimClusters> simClusters;   ///< Collection of sim clusters
   std::shared_ptr<Clusters2D> clusters2D;     ///< Collection of 2D clusters from the original reconstruction
+  
+  bool  isTestBeam;  ///< Tells if this event comes from the testbeam
+  uint  eventNumber;
+  uint  runNumber;
+  int   pdgID;
+  float beamEnergy;
+  float trueBeamEnergy;
 };
 
 #endif /* HGCalEvent_hpp */

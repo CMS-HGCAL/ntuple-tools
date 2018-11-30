@@ -13,7 +13,7 @@ GEN_DIR = ${current_dir}/libChromosome
 GEN_LIB = ${GEN_DIR}/lib
 GEN_INC = ${GEN_DIR}/include
 
-EXECS = algoBenchmark createQualityPlots geneticOptimizer rootOptimizer
+EXECS = algoBenchmark createQualityPlots geneticOptimizer rootOptimizer analyzeTestbeam
 
 LDFLAGS = `root-config --libs` -Wall -Wextra -g -O0 -L${ALGO_LIB} -L${GEN_LIB}
 CCFLAGS = `root-config --cflags` -g -c -std=c++1y -Wall -Wextra -O0 -I${ALGO_INC} -I${GEN_INC}
@@ -31,6 +31,9 @@ geneticOptimizer: ${OBJ_DIR}/geneticOptimizer.o ${GEN_LIB}/libChromo.so
 
 rootOptimizer: ${OBJ_DIR}/rootOptimizer.o ${ALGO_LIB}/libAlgo.so
 	$(CC) $^ -o $@ $(LDFLAGS) -lAlgo -Wl,-rpath,${ALGO_LIB}/libAlgo.so -lMinuit
+
+analyzeTestbeam: ${OBJ_DIR}/analyzeTestbeam.o ${ALGO_LIB}/libAlgo.so
+	$(CC) $^ -o $@ $(LDFLAGS) -lAlgo -Wl,-rpath,${ALGO_LIB}/libAlgo.so
 
 ${ALGO_LIB}/libAlgo.so:
 	+$(MAKE) -C ${ALGO_DIR}

@@ -26,8 +26,12 @@ public:
   /// Copy constructor
   BasicCluster(const BasicCluster &b);
   
+  /// Default destructor
   ~BasicCluster();
 
+  /// Prints basic information about this cluster
+  void Print();
+  
   /// Allows to specify if this basic cluster is already used in a 3D cluster
   inline void SetUsedIn3Dcluster(int val){ usedIn3Dcluster = val;}
   

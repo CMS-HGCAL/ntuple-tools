@@ -5,6 +5,7 @@
 //
 
 #include <memory>
+#include <iostream>
 
 #include "BasicCluster.hpp"
 
@@ -60,6 +61,13 @@ usedIn3Dcluster(b.usedIn3Dcluster)
 BasicCluster::~BasicCluster()
 {
   thisCluster.clear();
+}
+
+void BasicCluster::Print()
+{
+  cout<<"Basic cluster:"<<endl;
+  cout<<"\tE:"<<energy<<"\tposition:("<<x<<","<<y<<","<<z<<")"<<endl;
+  cout<<"\tradius:"<<radius<<"\teta:"<<eta<<"\tphi:"<<phi<<endl;
 }
 
 bool BasicCluster::operator==(BasicCluster &b)

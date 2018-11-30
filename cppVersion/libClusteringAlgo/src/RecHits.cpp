@@ -45,18 +45,30 @@ cluster2d(nullptr)
 {
   recHitCalib = unique_ptr<RecHitCalibration>(new RecHitCalibration());
   
-  _tree->SetBranchAddress("rechit_eta",&eta);
-  _tree->SetBranchAddress("rechit_phi",&phi);
-  _tree->SetBranchAddress("rechit_energy",&energy);
-  _tree->SetBranchAddress("rechit_x",&x);
-  _tree->SetBranchAddress("rechit_y",&y);
-  _tree->SetBranchAddress("rechit_z",&z);
-  _tree->SetBranchAddress("rechit_layer",&layer);
-  _tree->SetBranchAddress("rechit_detid",&detid);
-  _tree->SetBranchAddress("rechit_thickness",&thickness);
-  _tree->SetBranchAddress("rechit_isHalf",&isHalf);
-  _tree->SetBranchAddress("rechit_time",&time);
-  _tree->SetBranchAddress("rechit_cluster2d",&cluster2d);
+  if(_tree->GetBranchStatus("trueBeamEnergy")){ // Is we are in the testbeam setup
+    _tree->SetBranchAddress("rechit_energy",&energy);
+    _tree->SetBranchAddress("rechit_x",&x);
+    _tree->SetBranchAddress("rechit_y",&y);
+    _tree->SetBranchAddress("rechit_z",&z);
+    _tree->SetBranchAddress("rechit_layer",&layer);
+    _tree->SetBranchAddress("rechit_detid",&detid);
+    _tree->SetBranchAddress("rechit_time",&time);
+  }
+  else{ // If we work with the MC data
+    _tree->SetBranchAddress("rechit_energy",&energy);
+    _tree->SetBranchAddress("rechit_x",&x);
+    _tree->SetBranchAddress("rechit_y",&y);
+    _tree->SetBranchAddress("rechit_z",&z);
+    _tree->SetBranchAddress("rechit_layer",&layer);
+    _tree->SetBranchAddress("rechit_detid",&detid);
+    _tree->SetBranchAddress("rechit_time",&time);
+    
+    _tree->SetBranchAddress("rechit_eta",&eta);
+    _tree->SetBranchAddress("rechit_phi",&phi);
+    _tree->SetBranchAddress("rechit_thickness",&thickness);
+    _tree->SetBranchAddress("rechit_isHalf",&isHalf);
+    _tree->SetBranchAddress("rechit_cluster2d",&cluster2d);
+  }
 }
 
 RecHits::~RecHits()
@@ -110,7 +122,18 @@ void RecHits::Clean()
 
 unique_ptr<RecHit> RecHits::GetHit(int index, double energyFraction)
 {
-  unique_ptr<RecHit> hit(new RecHit(eta->at(index),phi->at(index),energyFraction*energy->at(index),x->at(index),y->at(index),z->at(index), layer->at(index),detid->at(index),thickness->at(index),isHalf->at(index),time->at(index),cluster2d->at(index)));
+  unique_ptr<RecHit> hit(new RecHit(eta ? eta->at(index) : 0,
+                                    phi ? phi->at(index) : 0,
+                                    energyFraction*energy->at(index),
+                                    x->at(index),
+                                    y->at(index),
+                                    z->at(index),
+                                    layer->at(index),
+                                    detid->at(index),
+                                    thickness ? thickness->at(index) : 0,
+                                    isHalf ? isHalf->at(index) : false,
+                                    time->at(index),
+                                    cluster2d ? cluster2d->at(index) : 0));
 
   return hit;
 }
@@ -324,7 +347,8 @@ tuple<bool,double> RecHits::RecHitAboveThreshold(double iHit)
     int thickIndex = -1;
     
     if(layer->at(iHit) <= lastLayerFH){  // EE + FH
-      if(thickness->at(iHit) > 99. && thickness->at(iHit) < 101.)        thickIndex = 0;
+      if(!thickness) thickIndex = 0;  // for testbeam there's not thickness information at the moment
+      else if(thickness->at(iHit) > 99. && thickness->at(iHit) < 101.)   thickIndex = 0;
       else if(thickness->at(iHit) > 199. && thickness->at(iHit) < 201.)  thickIndex = 1;
       else if(thickness->at(iHit) > 299. && thickness->at(iHit) < 301.)  thickIndex = 2;
       else cout<<"ERROR - silicon thickness has a nonsensical value"<<endl;

@@ -38,6 +38,10 @@ int main(int argc, char* argv[])
 
     TFile *inFile = TFile::Open(Form("%s%i.root",config->GetInputPath().c_str(),nTupleIter));
     TTree *tree = (TTree*)inFile->Get("ana/hgc");
+    if(!tree){
+      cout<<"Failed to load MC data. Trying to load testbeam data."<<endl;
+      tree = (TTree*)inFile->Get("rechitntupler/hits");
+    }
     long long nEvents = tree->GetEntries();
 
 
@@ -55,8 +59,10 @@ int main(int argc, char* argv[])
       auto startEvent = now();
       hgCalEvent->GoToEvent(iEvent);
 
+      bool isTestBeam = hgCalEvent->IsTestBeam();
+      
       // check if particles reached EE
-      if(config->GetReachedEEonly()){
+      if(config->GetReachedEEonly() && !isTestBeam){
         bool skipEvent = false;
         for(auto reachedEE : *(hgCalEvent->GetGenParticles()->GetReachedEE())){
           if(reachedEE==0){
@@ -75,21 +81,24 @@ int main(int argc, char* argv[])
       shared_ptr<SimClusters> simClusters = hgCalEvent->GetSimClusters();
 
       // get simulated hits associated with a cluster
-      cout<<"preparing simulated hits and clusters...";
-      start = now();
       vector<unique_ptr<RecHits>> simHitsPerClusterArray;
-      recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
-      end = now();
-      cout<<" done ("<<duration(start,end)<<" s)"<<endl;
-
+      if(!isTestBeam){
+        cout<<"preparing simulated hits and clusters...";
+        start = now();
+        recHitsRaw->GetHitsPerSimCluster(simHitsPerClusterArray, simClusters);
+        end = now();
+        cout<<" done ("<<duration(start,end)<<" s)"<<endl;
+      }
 
       // get original 2d clusters from the tree
-      cout<<"preparing 2d clusters from the original reco...";
-      start = now();
-      shared_ptr<Clusters2D> clusters2D = hgCalEvent->GetClusters2D();
-      end = now();
-      cout<<" done ("<<duration(start,end)<<" s)"<<endl;
-      
+      if(!isTestBeam){
+        cout<<"preparing 2d clusters from the original reco...";
+        start = now();
+        shared_ptr<Clusters2D> clusters2D = hgCalEvent->GetClusters2D();
+        end = now();
+        cout<<" done ("<<duration(start,end)<<" s)"<<endl;
+      }
+        
       // re-run clustering with HGCalAlgo, save to file
       cout<<"running clustering algorithm...";
       start = now();
@@ -131,7 +140,7 @@ int main(int argc, char* argv[])
       cout<<"Total event processing time: "<<duration(startEvent,endEvent)<<" s"<<endl;
 
       recHitsPerClusterArray.clear();
-      simHitsPerClusterArray.clear();
+      if(!isTestBeam) simHitsPerClusterArray.clear();
 
     }
     delete tree;
