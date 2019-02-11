@@ -88,7 +88,7 @@ int main(int argc, char* argv[])
     exit(0);
   }
   
-  ConfigurationManager *config = nullptr;
+  shared_ptr<ConfigurationManager> config = nullptr;
   
   if(argc == 2){
     string configPath(argv[1]);
@@ -270,8 +270,8 @@ int main(int argc, char* argv[])
         monitors1D[kDeltaNclusters]->Fill(((int)simHitsPerClusterArray.size()-(int)recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
         
         // Match rec clusters with sim clusters by det ID, check if there is at least one such pair
-        vector<MatchedClusters*> matchedClusters;
-        vector<MatchedClusters*> unmatchedClusters;
+        vector<shared_ptr<MatchedClusters>> matchedClusters;
+        vector<shared_ptr<MatchedClusters>> unmatchedClusters;
         
         bool draw=false;
         if(iEvent==plotEvent && layer==plotLayer) draw = true;
@@ -294,7 +294,7 @@ int main(int argc, char* argv[])
           continue;
         }
         
-        for(MatchedClusters *clusters : matchedClusters){
+        for(auto &clusters : matchedClusters){
           nTotalMatchedClusters++;
           
           if(!clusters->HasSimClusters()){
@@ -327,7 +327,7 @@ int main(int argc, char* argv[])
           monitors2D[kErecVsEsimDetIdMatching]->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
         }
         
-        for(MatchedClusters *clusters : unmatchedClusters){
+        for(auto &clusters : unmatchedClusters){
           monitors2D[kErecVsEsimUnmatched]->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
         }
         

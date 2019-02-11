@@ -76,7 +76,7 @@ private:
   TF1 *energyDensityFunction; ///< Function that will be used to determine energy density for each hit
   
   std::unique_ptr<RecHitCalibration> recHitCalib; ///< Contains calibration of rec hits
-  ConfigurationManager *config;                   ///< Manager keeping current configuration
+  std::shared_ptr<ConfigurationManager> config;                   ///< Manager keeping current configuration
   
   /// Calculates distance to the nearest hit with higher density
   /// \param nodes Nodes will be filled with the information about nearest higher-density hit

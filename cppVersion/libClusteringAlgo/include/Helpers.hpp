@@ -14,6 +14,7 @@
 #include <string>
 #include <sstream>
 #include <fstream>
+#include <memory>
 
 
 // Define constants

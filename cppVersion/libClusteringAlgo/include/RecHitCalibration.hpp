@@ -13,9 +13,10 @@
 
 class RecHitCalibration {
 public:
-  RecHitCalibration(){}
+  RecHitCalibration(bool _testBeam=false) : testBeam(_testBeam){}
     
   inline double MeVperMIP(int layer,int thicknessIndex){
+    if(testBeam) return dEdX_weights_testBeam[layer];
     if(layer > 40) return dEdX_weights[layer]; // no thickness correction for BH
     return dEdX_weights[layer]/thicknessCorrection[thicknessIndex];
   }
@@ -25,7 +26,8 @@ public:
   }
   
   inline double sigmaNoiseMIP(int layer,int thicknessIndex){
-    if(layer > 40)return noise_MIP; // for BH, sigmaNoiseMIP = noise_MIP
+    if(testBeam) return noise_MIP;
+    if(layer > 40) return noise_MIP; // for BH, sigmaNoiseMIP = noise_MIP
     return fC_per_ele * nonAgedNoises[thicknessIndex]/fCPerMIP[thicknessIndex];
   }
   
@@ -34,64 +36,23 @@ public:
   }
   
 private:
+  bool testBeam; ///< Do we want a calibration for the test beam events?
+  
   // https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/RecoLocalCalo/HGCalRecProducers/python/HGCalRecHit_cfi.py#L5
-  double dEdX_weights[53] = {
+  double dEdX_weights[28] = { // in Mev
     0.0,   // there is no layer zero
-    8.603,  // Mev
-    8.0675,
-    8.0675,
-    8.0675,
-    8.0675,
-    8.0675,
-    8.0675,
-    8.0675,
-    8.0675,
-    8.9515,
-    10.135,
-    10.135,
-    10.135,
-    10.135,
-    10.135,
-    10.135,
-    10.135,
-    10.135,
-    10.135,
-    11.682,
-    13.654,
-    13.654,
-    13.654,
-    13.654,
-    13.654,
-    13.654,
-    13.654,
-    38.2005,
-    55.0265,
-    49.871,
-    49.871,
-    49.871,
-    49.871,
-    49.871,
-    49.871,
-    49.871,
-    49.871,
-    49.871,
-    49.871,
-    62.005,
-    83.1675,
-    92.196,
-    92.196,
-    92.196,
-    92.196,
-    92.196,
-    92.196,
-    92.196,
-    92.196,
-    92.196,
-    92.196,
-    46.098};
+    10.058, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 9.600, 11.109, 11.109, 11.109, 11.109, 10.744, 10.744, 10.901
+  };
+  
+  double dEdX_weights_testBeam[53] = { // in Mev
+    0.0,   // there is no layer zero
+    8.603, 8.0675, 8.0675, 8.0675, 8.0675, 8.0675, 8.0675, 8.0675, 8.0675, 8.9515, 10.135, 10.135, 10.135, 10.135, 10.135, 10.135, 10.135, 10.135, 10.135, 11.682, 13.654, 13.654, 13.654, 13.654, 13.654, 13.654, 13.654, 38.2005, 55.0265, 49.871, 49.871, 49.871, 49.871, 49.871, 49.871, 49.871, 49.871, 49.871, 49.871, 62.005, 83.1675, 92.196, 92.196, 92.196, 92.196, 92.196, 92.196, 92.196, 92.196, 92.196, 92.196, 46.098
+  };
+  
+  
   
   // https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/RecoLocalCalo/HGCalRecProducers/python/HGCalRecHit_cfi.py#L86
-  double thicknessCorrection[3] = {1.132,1.092,1.084};  // 100, 200, 300 um
+  double thicknessCorrection[3] = {1.132, 1.092, 1.084};  // 100, 200, 300 um
   
   // Base configurations for HGCal digitizers
   // https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/SimCalorimetry/HGCalSimProducers/python/hgcalDigitizer_cfi.py#L5

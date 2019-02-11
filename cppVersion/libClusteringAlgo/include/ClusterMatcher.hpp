@@ -22,7 +22,7 @@ public:
   /// \param recHitsPerCluster Vector of rec clusters in given layer
   /// \param simHitsPerCluster Vector or sim clusters in given layer
   /// \param draw Should matched clusters in this layer be plotted
-  void MatchClustersByDetID(std::vector<MatchedClusters*> &matched,
+  void MatchClustersByDetID(std::vector<std::shared_ptr<MatchedClusters>> &matched,
                             std::vector<std::unique_ptr<RecHits>> &recHitsPerCluster,
                             std::vector<std::unique_ptr<RecHits>> &simHitsPerCluster,
                             bool draw=false);
@@ -31,7 +31,7 @@ public:
   /// \param matched Vector that will be filled with rec and sim clusters
   /// \param recHitsPerCluster Vector of rec clusters in given layer
   /// \param simHitsPerCluster Vector or sim clusters in given layer
-  void MatchClustersClosest(std::vector<MatchedClusters*> &matched,
+  void MatchClustersClosest(std::vector<std::shared_ptr<MatchedClusters>> &matched,
                             std::vector<std::unique_ptr<RecHits>> &recHitsPerCluster,
                             std::vector<std::unique_ptr<RecHits>> &simHitsPerCluster);
   
@@ -39,7 +39,7 @@ public:
   /// \param matched Vector that will be filled with rec and sim clusters
   /// \param recHitsPerCluster Vector of rec clusters in given layer
   /// \param simHitsPerCluster Vector or sim clusters in given layer
-  void MatchClustersAllToAll(std::vector<MatchedClusters*> &matched,
+  void MatchClustersAllToAll(std::vector<std::shared_ptr<MatchedClusters>> &matched,
                              std::vector<std::unique_ptr<RecHits>> &recHitsPerCluster,
                              std::vector<std::unique_ptr<RecHits>> &simHitsPerCluster);
   
@@ -47,7 +47,7 @@ public:
   /// If there are two sim hits in the same position, the second one will be drawn as opened circle on top
   /// of a closed one.
   /// \param matched Vector of matched clusters to be drawn
-  void DrawMatched(std::vector<MatchedClusters*> &matched);
+  void DrawMatched(std::vector<std::shared_ptr<MatchedClusters>> &matched);
 };
 
 

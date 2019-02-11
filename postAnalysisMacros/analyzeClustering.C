@@ -12,7 +12,8 @@
 //string baseDir = "clusteringResultsCXX/geneticOptimizer";
 //string baseDir = "clusteringResultsCXX/geneticOptimizerBest";
 //string baseDir = "clusteringResultsCXX/singleGamma";
-string baseDir = "clusteringResultsCXX/pedja_photon_Pt6_dR0p10";
+//string baseDir = "clusteringResultsCXX/pedja_photon_Pt6_dR0p10";
+string baseDir = "clusteringResultsCXX/qcd";
 //string baseDir = "clusteringResultsCXX/pedja_photon_Pt10_dR0p02";
 
 //string baseDir = "clusteringResultsCXX/geneticOptimizerTwoPionDeltaR0p4/";

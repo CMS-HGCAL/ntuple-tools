@@ -28,10 +28,10 @@ public:
   void AddRecCluster(int index,std::unique_ptr<RecHits> &hits);
   void AddSimCluster(int index,std::unique_ptr<RecHits> &hits);
   
-  void Merge(MatchedClusters *clusters);
+  void Merge(std::shared_ptr<MatchedClusters> &clusters);
   
-  BasicCluster* GetRecClusterByIndex(int index);
-  BasicCluster* GetSimClusterByIndex(int index);
+  std::shared_ptr<BasicCluster> GetRecClusterByIndex(int index);
+  std::shared_ptr<BasicCluster> GetSimClusterByIndex(int index);
   
   double GetSharedFraction();
   double GetSharedFractionWithRecHits(std::vector<unsigned int> &detIDs);
@@ -59,17 +59,17 @@ public:
   bool ContainsSimCluster(int simClusterIndex);
   
 private:
-  std::vector<BasicCluster*> *simClusters;  ///< Vector of simulated clusters
+  std::unique_ptr<std::vector<std::shared_ptr<BasicCluster>>> simClusters;  ///< Vector of simulated clusters
   std::vector<int> simIndices;
   std::vector<unsigned int> simDetIDs;
   std::unique_ptr<RecHits> simHits;
   
-  std::vector<BasicCluster*> *recClusters;  ///< Vector of reconstructed clusters
+  std::unique_ptr<std::vector<std::shared_ptr<BasicCluster>>> recClusters;  ///< Vector of reconstructed clusters
   std::vector<int> recIndices;
   std::vector<unsigned int> recDetIDs;
   std::unique_ptr<RecHits> recHits;
   
-  BasicCluster* GetBasicClusterFromRecHits(std::unique_ptr<RecHits> &hits);
+  std::shared_ptr<BasicCluster> GetBasicClusterFromRecHits(std::unique_ptr<RecHits> &hits);
 };
 
 #endif /* MatchedClusters_hpp */

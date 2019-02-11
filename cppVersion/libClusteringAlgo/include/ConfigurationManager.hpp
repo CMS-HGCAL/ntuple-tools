@@ -15,29 +15,29 @@
 
 class ConfigurationManager {
 public:  
-  static ConfigurationManager* Instance(std::string _configPath="");
+  static std::shared_ptr<ConfigurationManager> Instance(std::string _configPath="");
   
-  static ConfigurationManager* Instance(bool _dependSensor,
-                                       std::string _inputPath,
-                                       std::string _outputPath,
-                                       double _deltac_EE,
-                                       double _deltac_FH,
-                                       double _deltac_BH,
-                                       double _minEnergy,
-                                       double _criticalDistance_EE,
-                                       double _criticalDistance_FH,
-                                       double _criticalDistance_BH,
-                                       double _kappa,
-                                       int _verbosityLevel,
-                                       int _minNtuple,
-                                       int _maxNtuple,
-                                       int _minLayer,
-                                       int _maxLayer,
-                                       int _eventsPerTuple,
-                                       std::string _energyDensityFunction,
-                                       bool _reachedEEonly,
-                                       double _matchingMaxDistance,
-                                       std::string _scoreOutputPath);
+  static std::shared_ptr<ConfigurationManager> Instance(bool _dependSensor,
+                                                        std::string _inputPath,
+                                                        std::string _outputPath,
+                                                        double _deltac_EE,
+                                                        double _deltac_FH,
+                                                        double _deltac_BH,
+                                                        double _minEnergy,
+                                                        double _criticalDistance_EE,
+                                                        double _criticalDistance_FH,
+                                                        double _criticalDistance_BH,
+                                                        double _kappa,
+                                                        int _verbosityLevel,
+                                                        int _minNtuple,
+                                                        int _maxNtuple,
+                                                        int _minLayer,
+                                                        int _maxLayer,
+                                                        int _eventsPerTuple,
+                                                        std::string _energyDensityFunction,
+                                                        bool _reachedEEonly,
+                                                        double _matchingMaxDistance,
+                                                        std::string _scoreOutputPath);
 
   /// Returns the path to the input files with ntuples
   inline std::string GetInputPath(){return inputPath;}
@@ -93,7 +93,6 @@ public:
   
   void Print();
   
-private:
   ConfigurationManager(std::string _configPath);
   
   ConfigurationManager(bool _dependSensor,
@@ -120,7 +119,9 @@ private:
   
   ~ConfigurationManager(){};
   
-  static ConfigurationManager *instance;
+private:
+  
+  static std::shared_ptr<ConfigurationManager> instance;
   
   TEnv *settings;           ///< Object storing current configuration
   std::string configPath;   ///< Current path to the configuration

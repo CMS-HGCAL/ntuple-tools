@@ -12,9 +12,9 @@
 
 using namespace std;
 
-ConfigurationManager* ConfigurationManager::instance  = nullptr;
+shared_ptr<ConfigurationManager> ConfigurationManager::instance  = nullptr;
 
-ConfigurationManager* ConfigurationManager::Instance(string _configPath)
+shared_ptr<ConfigurationManager> ConfigurationManager::Instance(string _configPath)
 {
   if(instance){
     if(_configPath != ""){
@@ -22,59 +22,59 @@ ConfigurationManager* ConfigurationManager::Instance(string _configPath)
     }
   }
   else{
-    instance = new ConfigurationManager(_configPath);
+    instance = make_shared<ConfigurationManager>(_configPath);
   }
   return instance;
 }
 
-ConfigurationManager* ConfigurationManager::Instance(bool _dependSensor,
-                                                     std::string _inputPath,
-                                                     std::string _outputPath,
-                                                     double _deltac_EE,
-                                                     double _deltac_FH,
-                                                     double _deltac_BH,
-                                                     double _minEnergy,
-                                                     double _criticalDistance_EE,
-                                                     double _criticalDistance_FH,
-                                                     double _criticalDistance_BH,
-                                                     double _kappa,
-                                                     int _verbosityLevel,
-                                                     int _minNtuple,
-                                                     int _maxNtuple,
-                                                     int _minLayer,
-                                                     int _maxLayer,
-                                                     int _eventsPerTuple,
-                                                     std::string _energyDensityFunction,
-                                                     bool _reachedEEonly,
-                                                     double _matchingMaxDistance,
-                                                     std::string _scoreOutputPath)
+shared_ptr<ConfigurationManager> ConfigurationManager::Instance(bool _dependSensor,
+                                                                std::string _inputPath,
+                                                                std::string _outputPath,
+                                                                double _deltac_EE,
+                                                                double _deltac_FH,
+                                                                double _deltac_BH,
+                                                                double _minEnergy,
+                                                                double _criticalDistance_EE,
+                                                                double _criticalDistance_FH,
+                                                                double _criticalDistance_BH,
+                                                                double _kappa,
+                                                                int _verbosityLevel,
+                                                                int _minNtuple,
+                                                                int _maxNtuple,
+                                                                int _minLayer,
+                                                                int _maxLayer,
+                                                                int _eventsPerTuple,
+                                                                std::string _energyDensityFunction,
+                                                                bool _reachedEEonly,
+                                                                double _matchingMaxDistance,
+                                                                std::string _scoreOutputPath)
 {
   if(instance){
     cout<<"WARNING - Configuration Manager was already created!!"<<endl;
   }
   else{
-    instance = new ConfigurationManager(_dependSensor,
-                                        _inputPath,
-                                        _outputPath,
-                                        _deltac_EE,
-                                        _deltac_FH,
-                                        _deltac_BH,
-                                        _minEnergy,
-                                        _criticalDistance_EE,
-                                        _criticalDistance_FH,
-                                        _criticalDistance_BH,
-                                        _kappa,
-                                        _verbosityLevel,
-                                        _minNtuple,
-                                        _maxNtuple,
-                                        _minLayer,
-                                        _maxLayer,
-                                        _eventsPerTuple,
-                                        _energyDensityFunction,
-                                        _reachedEEonly,
-                                        _matchingMaxDistance,
-                                        _scoreOutputPath
-                                        );
+    instance = make_shared<ConfigurationManager>(_dependSensor,
+                                                 _inputPath,
+                                                 _outputPath,
+                                                 _deltac_EE,
+                                                 _deltac_FH,
+                                                 _deltac_BH,
+                                                 _minEnergy,
+                                                 _criticalDistance_EE,
+                                                 _criticalDistance_FH,
+                                                 _criticalDistance_BH,
+                                                 _kappa,
+                                                 _verbosityLevel,
+                                                 _minNtuple,
+                                                 _maxNtuple,
+                                                 _minLayer,
+                                                 _maxLayer,
+                                                 _eventsPerTuple,
+                                                 _energyDensityFunction,
+                                                 _reachedEEonly,
+                                                 _matchingMaxDistance,
+                                                 _scoreOutputPath
+                                                 );
   }
   return instance;
 }

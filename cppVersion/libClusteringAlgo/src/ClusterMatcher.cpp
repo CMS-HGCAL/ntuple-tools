@@ -29,7 +29,7 @@ int ContainsSimCluster(vector<MatchedClusters*> &matched, int simClusterIndex){
   return -1;
 }
 
-void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
+void ClusterMatcher::MatchClustersByDetID(vector<shared_ptr<MatchedClusters>> &matched,
                                           vector<unique_ptr<RecHits>> &recHitsPerCluster,
                                           vector<unique_ptr<RecHits>> &simHitsPerCluster,
                                           bool draw)
@@ -44,14 +44,14 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
       recHitsPerCluster[recClusterIndex]->Print();
     }
     // Create new matched cluster for each rec cluster
-    MatchedClusters *matchedCluster = new MatchedClusters();
+    auto matchedCluster = make_shared<MatchedClusters>();
     matchedCluster->AddRecCluster(recClusterIndex,recHitsPerCluster[recClusterIndex]);
     matched.push_back(matchedCluster);
   }
   
   if(verbosityLevel > 1){
     cout<<"\n\nMatched clusters after step 1\n\n"<<endl;
-    for(auto cluster : matched){
+    for(auto &cluster : matched){
       cluster->Print();
       cout<<endl;
     }
@@ -69,8 +69,8 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
     
     // Find matched cluster that shares the most hits with this sim cluster
     double maxShared = 0;
-    MatchedClusters *maxSharingMatchedCluster = nullptr;
-    for(auto matchedCluster : matched){
+    shared_ptr<MatchedClusters> maxSharingMatchedCluster = nullptr;
+    for(auto &matchedCluster : matched){
       double shared = matchedCluster->GetSharedFractionWithRecHits(detIDsInSimCluster);
       if(shared > maxShared){
         maxShared = shared;
@@ -112,14 +112,14 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
   vector<int> matchedToErase;
   
   for(int iRec=0;iRec<matched.size();iRec++){
-    MatchedClusters* failedRecCluster = matched[iRec];
+    auto failedRecCluster = matched[iRec];
     
     if(!failedRecCluster->HasSimClusters()){
       
       double maxShared = 0;
-      MatchedClusters *maxSharingMatchedCluster = nullptr;
+      shared_ptr<MatchedClusters> maxSharingMatchedCluster = nullptr;
       
-      for(MatchedClusters* otherCluster : matched){
+      for(auto &otherCluster : matched){
         if(failedRecCluster == otherCluster) continue;
       
         vector<unsigned int> simDetIDs = otherCluster->GetSimDetIDs();
@@ -159,7 +159,7 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
     cout<<endl;
   }
   
-  vector<MatchedClusters*> newMached;
+  vector<shared_ptr<MatchedClusters>> newMached;
   
   for(int i=0;i<matched.size();i++){
     if(find(matchedToErase.begin(),matchedToErase.end(),i) == matchedToErase.end()){
@@ -181,7 +181,7 @@ void ClusterMatcher::MatchClustersByDetID(vector<MatchedClusters*> &matched,
 }
 
 
-void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
+void ClusterMatcher::MatchClustersClosest(vector<shared_ptr<MatchedClusters>> &matched,
                                           vector<unique_ptr<RecHits>> &recHitsPerCluster,
                                           vector<unique_ptr<RecHits>> &simHitsPerCluster)
 {
@@ -191,12 +191,12 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
   
   for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
     // Build new mached cluster for each rec cluster
-    MatchedClusters *matchedCluster = new MatchedClusters();
+    auto matchedCluster = make_shared<MatchedClusters>();
     matchedCluster->AddRecCluster(recClusterIndex, recHitsPerCluster[recClusterIndex]);
     matched.push_back(matchedCluster);
     
     // Save coordinates of this rec cluster
-    BasicCluster *basicCluster = matchedCluster->GetRecClusterByIndex(recClusterIndex);
+    shared_ptr<BasicCluster> basicCluster = matchedCluster->GetRecClusterByIndex(recClusterIndex);
     Xs.push_back(basicCluster->GetX());
     Ys.push_back(basicCluster->GetY());
     Rs.push_back(basicCluster->GetRadius());
@@ -208,7 +208,7 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
     // Get coordinates of this sim cluster
     unique_ptr<MatchedClusters> matchedTmp = unique_ptr<MatchedClusters>(new MatchedClusters());
     matchedTmp->AddSimCluster(simClusterIndex, simHitsPerCluster[simClusterIndex]);
-    BasicCluster *basicCluster = matchedTmp->GetSimClusterByIndex(simClusterIndex);
+    shared_ptr<BasicCluster> basicCluster = matchedTmp->GetSimClusterByIndex(simClusterIndex);
     
     // Check which of the rec clusters is the closest to this sim cluster
     int parentRecCluster = findClosestCircle(Xs, Ys, Rs, basicCluster->GetX(), basicCluster->GetY());
@@ -231,14 +231,14 @@ void ClusterMatcher::MatchClustersClosest(vector<MatchedClusters*> &matched,
   }
 }
 
-void ClusterMatcher::MatchClustersAllToAll(vector<MatchedClusters*> &matched,
+void ClusterMatcher::MatchClustersAllToAll(vector<shared_ptr<MatchedClusters>> &matched,
                                            vector<unique_ptr<RecHits>> &recHitsPerCluster,
                                            vector<unique_ptr<RecHits>> &simHitsPerCluster)
 {
   for(uint recClusterIndex=0;recClusterIndex < recHitsPerCluster.size();recClusterIndex++){
     for(uint simClusterIndex=0;simClusterIndex < simHitsPerCluster.size();simClusterIndex++){
 
-      MatchedClusters *matchedCluster = new MatchedClusters();
+      auto matchedCluster = make_shared<MatchedClusters>();
       matchedCluster->AddRecCluster(recClusterIndex, recHitsPerCluster[recClusterIndex]);
       matchedCluster->AddSimCluster(simClusterIndex, simHitsPerCluster[simClusterIndex]);
       matched.push_back(matchedCluster);
@@ -246,7 +246,7 @@ void ClusterMatcher::MatchClustersAllToAll(vector<MatchedClusters*> &matched,
   }
 }
 
-void ClusterMatcher::DrawMatched(std::vector<MatchedClusters*> &matched)
+void ClusterMatcher::DrawMatched(vector<shared_ptr<MatchedClusters>> &matched)
 {
   vector<TGraph*> recGraph;
   TGraph *recHitsGraph = new TGraph();

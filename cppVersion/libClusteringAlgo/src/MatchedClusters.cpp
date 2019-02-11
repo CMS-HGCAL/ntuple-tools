@@ -12,8 +12,8 @@ using namespace std;
 
 MatchedClusters::MatchedClusters()
 {
-  recClusters = new std::vector<BasicCluster*>;
-  simClusters = new std::vector<BasicCluster*>;
+  recClusters = make_unique<std::vector<shared_ptr<BasicCluster>>>();
+  simClusters = make_unique<std::vector<shared_ptr<BasicCluster>>>();
   recHits = std::unique_ptr<RecHits>(new RecHits());
   simHits = std::unique_ptr<RecHits>(new RecHits());
 }
@@ -83,7 +83,7 @@ void MatchedClusters::AddSimCluster(int index,std::unique_ptr<RecHits> &hits)
   simHits->AddHits(hits);
 }
 
-void MatchedClusters::Merge(MatchedClusters *clusters)
+void MatchedClusters::Merge(shared_ptr<MatchedClusters> &clusters)
 {
   for(auto basicCluster : *(clusters->simClusters)){simClusters->push_back(basicCluster);}
   for(auto index : clusters->simIndices){simIndices.push_back(index);}
@@ -96,7 +96,7 @@ void MatchedClusters::Merge(MatchedClusters *clusters)
   recHits->AddHits(clusters->recHits);
 }
 
-BasicCluster* MatchedClusters::GetBasicClusterFromRecHits(std::unique_ptr<RecHits> &hits)
+shared_ptr<BasicCluster> MatchedClusters::GetBasicClusterFromRecHits(std::unique_ptr<RecHits> &hits)
 {
   double recEnergy = hits->GetTotalEnergy();
   int maxHit = hits->GetHighestEnergyHitIndex();
@@ -133,7 +133,7 @@ BasicCluster* MatchedClusters::GetBasicClusterFromRecHits(std::unique_ptr<RecHit
   
   if(clusterR==0) clusterR = 0.5; // this means that cluster has just one hit
   
-  BasicCluster *basicCluster = new BasicCluster(recEnergy,clusterX,clusterY,0,clusterEta,clusterR);
+  auto basicCluster = make_shared<BasicCluster>(recEnergy,clusterX,clusterY,0,clusterEta,clusterR);
   return basicCluster;
 }
 
@@ -179,13 +179,13 @@ double MatchedClusters::GetSharedFraction()
   return energySumShared/GetSimEnergy();
 }
 
-BasicCluster* MatchedClusters::GetRecClusterByIndex(int index){
+shared_ptr<BasicCluster> MatchedClusters::GetRecClusterByIndex(int index){
   ptrdiff_t pos = distance(recIndices.begin(), find(recIndices.begin(), recIndices.end(), index));
   if(pos >= recClusters->size()) return nullptr;
   return recClusters->at(pos);
 }
 
-BasicCluster* MatchedClusters::GetSimClusterByIndex(int index){
+shared_ptr<BasicCluster> MatchedClusters::GetSimClusterByIndex(int index){
   ptrdiff_t pos = distance(simIndices.begin(), find(simIndices.begin(), simIndices.end(), index));
   if(pos >= simClusters->size()) return nullptr;
   return simClusters->at(pos);

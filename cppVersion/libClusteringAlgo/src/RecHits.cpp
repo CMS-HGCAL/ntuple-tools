@@ -132,7 +132,7 @@ unique_ptr<RecHit> RecHits::GetHit(int index, double energyFraction)
                                     detid->at(index),
                                     thickness ? thickness->at(index) : 0,
                                     isHalf ? isHalf->at(index) : false,
-                                    time->at(index),
+                                    time->size() > 0 ? time->at(index) : 0,
                                     cluster2d ? cluster2d->at(index) : 0));
 
   return hit;
@@ -339,7 +339,7 @@ unique_ptr<RecHits> RecHits::GetHitsInLayer(int layerIndex)
 
 tuple<bool,double> RecHits::RecHitAboveThreshold(double iHit)
 {
-  ConfigurationManager *config = ConfigurationManager::Instance();
+  auto config = ConfigurationManager::Instance();
   
   double sigmaNoise = 1.;
   
@@ -449,7 +449,7 @@ unique_ptr<Hexel> RecHit::GetHexel()
 
 tuple<bool,double> RecHit::RecHitAboveThreshold()
 {
-  ConfigurationManager *config = ConfigurationManager::Instance();
+  auto config = ConfigurationManager::Instance();
   
   double sigmaNoise = 1.;
 
