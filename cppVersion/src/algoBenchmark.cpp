@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
     exit(0);
   }
   string configPath(argv[1]);
-  ConfigurationManager *config = ConfigurationManager::Instance(configPath);
+  auto config = ConfigurationManager::Instance(configPath);
   
   gROOT->ProcessLine(".L loader.C+");
 

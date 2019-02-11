@@ -26,13 +26,13 @@ minLayer=0
 maxLayer=40
 
 # range of ntuples to test (will be appended to the inputPath string below):
-minNtuple = 11
-maxNtuple = 11
+minNtuple = 1
+maxNtuple = 1
 
 # base input and output paths:
 inputPath = "../data/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_"
 
-outDir = "clusteringResults"
+outDir = "clusteringResultsPython/"
 #----------------------------------------------------------------------------------------
 
 
@@ -107,9 +107,9 @@ def getRecHitsPerHexel(hits, hexels):
 
 # get clustered hexels by re-running the clustering algorithm
 def getRecClustersFromImagingAlgo(recHitsRaw):
-  HGCalAlgo = HGCalImagingAlgo(energyMin, deltac, multiclusterRadii, minClusters, dependSensor, verbosityLevel = 0)
+  HGCalAlgo = HGCalImagingAlgo(energyMin, deltac, multiclusterRadii, minClusters, dependSensor, verbosityLevel = 2)
   clusters2D_rerun = HGCalAlgo.makeClusters(recHitsRaw,energyMin,True) # nested list of "hexels", per layer, per 2D cluster
-  clusters2DList_rerun = HGCalAlgo.getClusters(clusters2D_rerun, verbosityLevel = 0) # flat list of 2D clusters (as basic clusters)
+  clusters2DList_rerun = HGCalAlgo.getClusters(clusters2D_rerun, verbosityLevel = 2) # flat list of 2D clusters (as basic clusters)
   hexelsClustered_rerun = [iNode for bClust in clusters2DList_rerun for iNode in bClust.thisCluster if not iNode.isHalo]  # flat list of clustered "hexeles", without the "halo" hexels
   
   

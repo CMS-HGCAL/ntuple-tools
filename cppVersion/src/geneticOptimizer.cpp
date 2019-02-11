@@ -31,13 +31,13 @@ using namespace std;
 
 string baseResultsPath;
 
-string baseResultsSearchPath = "geneticResults/twoPions/";
+string baseResultsSearchPath = "geneticResults/qcd/";
 string baseResultsDirName = "results_";
 
-int populationSize = 40;  ///< Size of the population, will stay the same for all generations. Make it an even numb er, otherwise there may be some complications.
+int populationSize = 5;  ///< Size of the population, will stay the same for all generations. Make it an even number, otherwise there may be some complications.
 int maxBatchSize = 20;  ///< execute this number of jobs simultaneously
 int nGenerations = 100;     ///< Number of iterations
-int nEventsPerTest = 100;   ///< On how many events per ntuple each population member will be tested
+int nEventsPerTest = 10;   ///< On how many events per ntuple each population member will be tested
 
 int processTimeout = 200; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
@@ -45,7 +45,7 @@ double mutationChance = 0.003;
 double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
 
 bool dependSensor = true;
-bool reachedEE = true;
+bool reachedEE = false;
 
 Chromosome::ECrossover crossoverStrategy = Chromosome::kFixedSinglePoint;
 
@@ -55,14 +55,20 @@ int maxNtuple = 1;
 int minLayer = 1;
 int maxLayer = 53;
 
+double energyThreshold = 3.0;
+int kernelFunction = 0; // 0 - step, 1 - gauss, 2 - exp
+double matchingDistance = 10.0;
 
 // two-photons
 //string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_";
 
 // two-pions
-string dataPath = "../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p1_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_";
+//string dataPath = "../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p1_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_";
 
-string outputPath = "../clusteringResultsCXX/geneticOptimizer/";
+// QCD event
+string dataPath = "../../data/eventQCD_wf24031p0_Pt_80_120_14TeV_2023D28_noPU_jniedzie_20190208/NTUP/eventQCD_x1320_1.0To35.0_NTUP_";
+
+string outputPath = "../clusteringResultsCXX/geneticOptimizerQCD/";
 
 mt19937 randGenerator;
 
@@ -79,7 +85,7 @@ atomic<bool> allKidsFinished;
 
 int scheduleClustering(Chromosome *chromo)
 {
-  int kernelIndex = round(chromo->GetParam(kKernel));
+  int kernelIndex = kernelFunction;//round(chromo->GetParam(kKernel));
   string kernel;
   if(kernelIndex == 0) kernel = "step";
   if(kernelIndex == 1) kernel = "gaus";
@@ -92,7 +98,7 @@ int scheduleClustering(Chromosome *chromo)
   +to_string(chromo->GetParam(kDeltacEE))+" "
   +to_string(chromo->GetParam(kDeltacFH))+" "
   +to_string(chromo->GetParam(kDeltacBH))+" "
-  +to_string(chromo->GetParam(kEnergyThreshold))+" "
+  +to_string(energyThreshold /*chromo->GetParam(kEnergyThreshold)*/)+" "
   +to_string(chromo->GetParam(kCriticalDistanceEE))+" "
   +to_string(chromo->GetParam(kCriticalDistanceFH))+" "
   +to_string(chromo->GetParam(kCriticalDistanceBH))+" "
@@ -105,7 +111,7 @@ int scheduleClustering(Chromosome *chromo)
   +to_string(nEventsPerTest)+" "
   +kernel+" "
   +to_string(reachedEE)+" "
-  +to_string(chromo->GetParam(kMatchingDistance))+" "
+  +to_string(matchingDistance /*chromo->GetParam(kMatchingDistance)*/)+" "
   +chromo->GetClusteringOutputPath()+" "
   +" > /dev/null 2>&1";
   
@@ -298,7 +304,7 @@ int main(int argc, char* argv[])
     cout<<"Usage:"<<endl;
     cout<<"./geneticOptimizer"<<endl;
     cout<<"or with custom parameters:"<<endl;
-    cout<<"./ geneticOptimizer populationSize nGenerations nEventsPerTest processTimeout mutationChance severityFactor dataPath outputPath"<<endl;
+    cout<<"./geneticOptimizer populationSize nGenerations nEventsPerTest processTimeout mutationChance severityFactor dataPath outputPath"<<endl;
     exit(0);
   }
   if(argc == 9){

@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
     cout<<"Usage: analyzeTestbeam path_to_config"<<endl;
     exit(0);
   }
-  ConfigurationManager *config = ConfigurationManager::Instance(argv[1]);
+  auto config = ConfigurationManager::Instance(argv[1]);
   cout<<endl;config->Print();
   
   gROOT->ProcessLine(".L loader.C+");

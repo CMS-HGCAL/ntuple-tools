@@ -1,6 +1,6 @@
 #include <dirent.h>
 
-string basePath = "geneticResults/twoPions/";
+string basePath = "geneticResults/qcd/";
 
 void PlotInCanvas(TCanvas *canvas, TCanvas *canvasWgt, TCanvas *canvas1D, int pad, TFile *file, string name)
 {
