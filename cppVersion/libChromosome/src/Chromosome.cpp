@@ -35,9 +35,13 @@ inputDataPath("")
   int nChromosomes = 3;
   for(int i=0;i<nChromosomes;i++){bitChromosome.push_back(0);}
   
+  
   clusteringOutput = ClusteringOutput();
 
-  for(int i=0;i<kNparams;i++){params.push_back(0.0);}
+  for(int i=0;i<kNparams;i++){
+    params.push_back(0.0);
+    isParamFixed.push_back(false);
+  }
   
   uniqueID = reinterpret_cast<uint64_t>(this);
   configPath = "tmp/config_"+to_string(uniqueID)+".md";
@@ -49,14 +53,19 @@ Chromosome::~Chromosome()
   
 }
 
-Chromosome* Chromosome::GetRandom()
+void Chromosome::FixParam(EParam par, double val)
 {
-  Chromosome *result = new Chromosome();
+  SetParam(par, val);
+  isParamFixed[par] = true;
+}
+
+shared_ptr<Chromosome> Chromosome::GetRandom()
+{
+  auto result = make_shared<Chromosome>();
   
   for(int i=0;i<kNparams;i++){
     result->SetParam((EParam)i,RandDouble(paramMin[i],paramMax[i]));
   }
-  
   return result;
 }
 
@@ -239,9 +248,9 @@ vector<uint64_t> Chromosome::SinglePointCrossover(uint64_t a, uint64_t b, bool f
   return newBitChromosomes;
 }
 
-vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
+vector<shared_ptr<Chromosome>> Chromosome::ProduceChildWith(const shared_ptr<Chromosome> partner)
 {
-  vector<Chromosome*> children = {new Chromosome(),new Chromosome()};
+  vector<shared_ptr<Chromosome>> children = {make_shared<Chromosome>(),make_shared<Chromosome>()};
   // combine chromosomes of parents in a random way
   
   if(crossover == kMultiPoint){ // single-point crossover in each chromosome
@@ -309,8 +318,6 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
     
     int wasOutside = children[iChild]->BackToLimits();
     if(wasOutside) cout<<"Was outside:"<<wasOutside<<endl;
-    // update the bits after updating values!!
-    children[iChild]->SaveToBitChromosome();
     
     // set other parameters
     children[iChild]->SetMutationChance(mutationChance);
@@ -319,6 +326,14 @@ vector<Chromosome*> Chromosome::ProduceChildWith(Chromosome *partner)
     children[iChild]->SetInputDataPath(inputDataPath);
     children[iChild]->SetMinLayer(minLayer);
     children[iChild]->SetMaxLayer(maxLayer);
+    
+    for(int iPar=0;iPar<kNparams;iPar++){
+      if(isParamFixed[iPar]){
+        children[iChild]->FixParam((EParam)iPar,GetParam((EParam)iPar));
+      }
+    }
+    // update the bits after updating values!!
+    children[iChild]->SaveToBitChromosome();
   }
   
   return children;

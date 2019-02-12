@@ -33,11 +33,13 @@ public:
   /// Default destructor
   ~Chromosome();
   
-  static Chromosome* GetRandom();
+  static std::shared_ptr<Chromosome> GetRandom();
   
   inline void SetParam(EParam par, double val){
     params[par] = static_cast<uint16_t>(std::numeric_limits<uint16_t>::max()/(paramMax[par]-paramMin[par])*(val-paramMin[par]));
   }
+  
+  void FixParam(EParam par, double val);
   
   inline void SetBitChromosome(int i, uint64_t bits){bitChromosome[i] = bits;}
   
@@ -71,9 +73,10 @@ public:
   void Print();
   void CalculateScore();
   
-  std::vector<Chromosome*> ProduceChildWith(Chromosome *partner);
+  std::vector<std::shared_ptr<Chromosome>> ProduceChildWith(const std::shared_ptr<Chromosome> partner);
 private:
   std::vector<uint16_t> params;
+  std::vector<bool> isParamFixed;
   
   std::vector<uint64_t> bitChromosome;
   

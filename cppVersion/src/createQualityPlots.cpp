@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
 {
   if((argc != 2) && (argc != 22)){
     cout<<"Usage: createQualityPlots path_to_config"<<endl;
+    cout<<"or createQualityPlots depend_sensor input_path output_path deltac_EE deltac_FH deltac_BH energy_threshold crit_dist_EE crit_dist_FH crit_dist_BH kappa verbosity min_n_tuple max_n_tuple min_layer max_layer events_per_tuple energy_density_function reached_EE_only matching_distance score_output_path"<<endl;
     exit(0);
   }
   
@@ -95,29 +96,28 @@ int main(int argc, char* argv[])
     config = ConfigurationManager::Instance(configPath);
   }
   if(argc == 22){
-    config = ConfigurationManager::Instance(atoi(argv[1]), // depend sensor
-                                            argv[2], // input path
-                                            argv[3], // output path
-                                            atof(argv[4]), // deltac EE
-                                            atof(argv[5]), // deltac FH
-                                            atof(argv[6]), // deltac BH
-                                            atof(argv[7]), // energy threshold
-                                            atof(argv[8]), // crit dist EE
-                                            atof(argv[9]),// crit dist FH
-                                            atof(argv[10]),// crit dist BH
-                                            atof(argv[11]),// kappa
-                                            atoi(argv[12]),// verbosity
-                                            atoi(argv[13]),// min n tuple
-                                            atoi(argv[14]),// max n tuple
-                                            atoi(argv[15]),// min layer
-                                            atoi(argv[16]),// max layer
-                                            atoi(argv[17]),// events per tuple
-                                            argv[18],// energy density function
-                                            atoi(argv[19]),// reached EE only
-                                            atof(argv[20]),// matching distance
-                                            argv[21] // score output path
+    config = ConfigurationManager::Instance(atoi(argv[1]),  // depend sensor
+                                            argv[2],        // input path
+                                            argv[3],        // output path
+                                            atof(argv[4]),  // deltac EE
+                                            atof(argv[5]),  // deltac FH
+                                            atof(argv[6]),  // deltac BH
+                                            atof(argv[7]),  // energy threshold
+                                            atof(argv[8]),  // crit dist EE
+                                            atof(argv[9]),  // crit dist FH
+                                            atof(argv[10]), // crit dist BH
+                                            atof(argv[11]), // kappa
+                                            atoi(argv[12]), // verbosity
+                                            atoi(argv[13]), // min n tuple
+                                            atoi(argv[14]), // max n tuple
+                                            atoi(argv[15]), // min layer
+                                            atoi(argv[16]), // max layer
+                                            atoi(argv[17]), // events per tuple
+                                            argv[18],       // energy density function
+                                            atoi(argv[19]), // reached EE only
+                                            atof(argv[20]), // matching distance
+                                            argv[21]        // score output path
                                             );
-    
   }
   
   cout<<endl;config->Print();

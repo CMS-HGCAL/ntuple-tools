@@ -34,10 +34,10 @@ string baseResultsPath;
 string baseResultsSearchPath = "geneticResults/qcd/";
 string baseResultsDirName = "results_";
 
-int populationSize = 5;  ///< Size of the population, will stay the same for all generations. Make it an even number, otherwise there may be some complications.
+int populationSize = 10;  ///< Size of the population, will stay the same for all generations. Make it an even number, otherwise there may be some complications.
 int maxBatchSize = 20;  ///< execute this number of jobs simultaneously
 int nGenerations = 100;     ///< Number of iterations
-int nEventsPerTest = 10;   ///< On how many events per ntuple each population member will be tested
+int nEventsPerTest = 5;   ///< On how many events per ntuple each population member will be tested
 
 int processTimeout = 200; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
@@ -55,8 +55,11 @@ int maxNtuple = 1;
 int minLayer = 1;
 int maxLayer = 53;
 
+bool fixEnergyThreshold = true;
 double energyThreshold = 3.0;
+bool fixKernelFunction = true;
 int kernelFunction = 0; // 0 - step, 1 - gauss, 2 - exp
+bool fixMatchingDistance = true;
 double matchingDistance = 10.0;
 
 // two-photons
@@ -83,9 +86,9 @@ TH1D *paramHistsPassed[kNparams];
 
 atomic<bool> allKidsFinished;
 
-int scheduleClustering(Chromosome *chromo)
+int scheduleClustering(shared_ptr<Chromosome> chromo)
 {
-  int kernelIndex = kernelFunction;//round(chromo->GetParam(kKernel));
+  int kernelIndex = round(chromo->GetParam(kKernel));
   string kernel;
   if(kernelIndex == 0) kernel = "step";
   if(kernelIndex == 1) kernel = "gaus";
@@ -98,7 +101,7 @@ int scheduleClustering(Chromosome *chromo)
   +to_string(chromo->GetParam(kDeltacEE))+" "
   +to_string(chromo->GetParam(kDeltacFH))+" "
   +to_string(chromo->GetParam(kDeltacBH))+" "
-  +to_string(energyThreshold /*chromo->GetParam(kEnergyThreshold)*/)+" "
+  +to_string(chromo->GetParam(kEnergyThreshold))+" "
   +to_string(chromo->GetParam(kCriticalDistanceEE))+" "
   +to_string(chromo->GetParam(kCriticalDistanceFH))+" "
   +to_string(chromo->GetParam(kCriticalDistanceBH))+" "
@@ -111,7 +114,7 @@ int scheduleClustering(Chromosome *chromo)
   +to_string(nEventsPerTest)+" "
   +kernel+" "
   +to_string(reachedEE)+" "
-  +to_string(matchingDistance /*chromo->GetParam(kMatchingDistance)*/)+" "
+  +to_string(chromo->GetParam(kMatchingDistance))+" "
   +chromo->GetClusteringOutputPath()+" "
   +" > /dev/null 2>&1";
   
@@ -159,7 +162,8 @@ int GetWeightedRandom(discrete_distribution<double> dist)
   return dist(randGenerator);
 }
 
-void TestPopulation(vector<Chromosome*> population, TH1D *hist, discrete_distribution<double> &dist, int generation)
+void TestPopulation(vector<shared_ptr<Chromosome>> population,
+                    TH1D *hist, discrete_distribution<double> &dist, int generation)
 {
   std::vector<int> childPid;
   
@@ -345,7 +349,7 @@ int main(int argc, char* argv[])
   outfile->Close();
   delete outfile;
   
-  vector<Chromosome*> population;
+  vector<shared_ptr<Chromosome>> population;
   discrete_distribution<double> scores;
   
   for(int iGeneration=0;iGeneration<nGenerations;iGeneration++){
@@ -354,8 +358,11 @@ int main(int argc, char* argv[])
     if(iGeneration==0){
       // draw initial population
       for(int i=0;i<populationSize;i++){
-        Chromosome *chromo;
-        chromo = Chromosome::GetRandom();
+        auto chromo = Chromosome::GetRandom();
+        if(fixEnergyThreshold)  chromo->FixParam(kEnergyThreshold, energyThreshold);
+        if(fixKernelFunction)   chromo->FixParam(kKernel, kernelFunction);
+        if(fixMatchingDistance) chromo->FixParam(kMatchingDistance, matchingDistance);
+        
         chromo->SaveToBitChromosome();
         chromo->SetMutationChance(mutationChance);
         chromo->SetSeverityFactor(severityFactor);
@@ -368,10 +375,14 @@ int main(int argc, char* argv[])
     }
     else{
       // draw new population
+      vector<shared_ptr<Chromosome>> oldPopulation;
+      for(auto &chromo : population){
+        oldPopulation.push_back(chromo);
+      }
       population.clear();
       
       for(int i=0;i<populationSize/2;i++){
-        Chromosome *mom, *dad;
+        shared_ptr<Chromosome> mom, dad;
         
         int iter=0;
         do {
@@ -379,11 +390,11 @@ int main(int argc, char* argv[])
           if(iter>20) exit(0);
           iter++;
           
-          mom = population[(int)scores(randGenerator)];
-          dad = population[(int)scores(randGenerator)];
+          mom = oldPopulation[(int)scores(randGenerator)];
+          dad = oldPopulation[(int)scores(randGenerator)];
         } while (mom==dad);
 
-        vector<Chromosome*> children = dad->ProduceChildWith(mom);
+        auto children = dad->ProduceChildWith(mom);
         population.push_back(children[0]);
         population.push_back(children[1]);
       }
