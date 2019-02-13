@@ -1,6 +1,6 @@
 #include "GeneticHelpers.hpp"
 
-#include "Chromosome.hpp"
+#include "ChromosomeProcessor.hpp"
 
 #include <TMath.h>
 #include <TH1D.h>
@@ -39,15 +39,21 @@ int maxBatchSize = 20;  ///< execute this number of jobs simultaneously
 int nGenerations = 100;     ///< Number of iterations
 int nEventsPerTest = 5;   ///< On how many events per ntuple each population member will be tested
 
-int processTimeout = 200; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
+int processTimeout = 600; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
+
+//---------------------------------------------------------------
+// Chromosome processor parameters
+unique_ptr<ChromosomeProcessor> chromoProcessor;
 double mutationChance = 0.003;
 double severityFactor = 10.0; // larger the value, more easily population members will die (and the more good solutions will be promoted)
+ECrossover crossoverStrategy = kFixedSinglePoint;
+//
+//---------------------------------------------------------------
+
 
 bool dependSensor = true;
 bool reachedEE = false;
-
-Chromosome::ECrossover crossoverStrategy = Chromosome::kFixedSinglePoint;
 
 int minNtuple = 1;
 int maxNtuple = 1;
@@ -192,7 +198,7 @@ void TestPopulation(vector<shared_ptr<Chromosome>> population,
   int bestGuyIndex = -1;
   
   for(int i=0;i<populationSize;i++){
-    population[i]->CalculateScore();
+    chromoProcessor->CalculateScore(population[i]);
     double score = population[i]->GetScore();
     if(score < minScore && score > 1E-5) minScore = score; // make sure to remove veeery bad results
     if(score > maxScore){
@@ -220,7 +226,8 @@ void TestPopulation(vector<shared_ptr<Chromosome>> population,
   cout<<"\n\n================================================="<<endl;
   cout<<"The best guy in this generation was..."<<endl;
   population[bestGuyIndex]->Print();
-  population[bestGuyIndex]->StoreInConfig(baseResultsPath+"bestGenetic"+to_string(generation)+".md");
+  string configOutputPath = baseResultsPath+"bestGenetic"+to_string(generation)+".md";
+  chromoProcessor->StoreChromosomeInConfig(population[bestGuyIndex], configOutputPath);
   
   dist = discrete_distribution<double>(scoresNormalized.begin(), scoresNormalized.end());
 }
@@ -255,7 +262,7 @@ void SaveConfigurationToFile(){
   outputFile<<"N tuple max:\t"<<maxNtuple<<endl;
   outputFile<<"Mutation probability:\t"<<mutationChance<<endl;
   outputFile<<"Severity_factor:\t"<<severityFactor<<endl;
-  outputFile<<"Crossover_strategy:\t"<<Chromosome::crossoverName[crossoverStrategy]<<endl;
+  outputFile<<"Crossover_strategy:\t"<<crossoverName[crossoverStrategy]<<endl;
   outputFile<<"Timeout for each generation:\t"<<processTimeout<<" (s)"<<endl;
   outputFile<<"Sensor dependance:\t"<<dependSensor<<endl;
   outputFile<<"Reached EE only:\t"<<reachedEE<<endl;
@@ -325,6 +332,8 @@ int main(int argc, char* argv[])
   gROOT->ProcessLine(".L loader.C+");
   TApplication theApp("App", &argc, argv);
 
+  chromoProcessor = make_unique<ChromosomeProcessor>(mutationChance, severityFactor, crossoverStrategy);
+  
   SetBaseResultsPath();
   system(("mkdir -p "+baseResultsPath).c_str());
   SaveConfigurationToFile();
@@ -358,18 +367,14 @@ int main(int argc, char* argv[])
     if(iGeneration==0){
       // draw initial population
       for(int i=0;i<populationSize;i++){
-        auto chromo = Chromosome::GetRandom();
+        auto chromo = chromoProcessor->GetRandomChromosome();
+        
         if(fixEnergyThreshold)  chromo->FixParam(kEnergyThreshold, energyThreshold);
         if(fixKernelFunction)   chromo->FixParam(kKernel, kernelFunction);
         if(fixMatchingDistance) chromo->FixParam(kMatchingDistance, matchingDistance);
         
         chromo->SaveToBitChromosome();
-        chromo->SetMutationChance(mutationChance);
-        chromo->SetSeverityFactor(severityFactor);
-        chromo->SetCrossover(crossoverStrategy);
-        chromo->SetInputDataPath(dataPath);
-        chromo->SetMinLayer(minLayer);
-        chromo->SetMaxLayer(maxLayer);
+        
         population.push_back(chromo);
       }
     }
@@ -394,9 +399,9 @@ int main(int argc, char* argv[])
           dad = oldPopulation[(int)scores(randGenerator)];
         } while (mom==dad);
 
-        auto children = dad->ProduceChildWith(mom);
-        population.push_back(children[0]);
-        population.push_back(children[1]);
+        auto children = chromoProcessor->CrossChromosomes(mom, dad);
+        population.push_back(children.first);
+        population.push_back(children.second);
       }
     }
     

@@ -88,6 +88,21 @@ enum EDet {
   kBH   ///< back hadronic endcap (plastic)
 };
 
+enum ECrossover{
+  kUniform,           ///< each bit has a chance to be exchaned between parents
+  kSinglePoint,       ///< one chromosome gets crossed, the rest stays the same or is exchaned intact
+  kFixedSinglePoint,  ///< one chromosome gets crossed at point that doesn't modify any of the parameters, the rest stays the same or is exchaned intact
+  kMultiPoint,        ///< each chromosome is crossed at a random point
+  kNcrossover
+};
+
+inline static std::string crossoverName[kNcrossover] = {
+  "Uniform",
+  "Single point",
+  "Fixed single point",
+  "Multi point"
+};
+
 inline double RandDouble(double min, double max)
 {
   return min + static_cast<double>(rand()) /( static_cast<double>(RAND_MAX/(max-min)));
@@ -186,17 +201,17 @@ struct ClusteringOutput {
   
   /// Default constructor
   ClusteringOutput(){
-    resolutionMean = 99999;
-    resolutionSigma = 99999;
-    separationMean = 99999;
-    separationSigma = 99999;
-    containmentMean = 99999;
-    containmentSigma = 99999;
-    deltaNclustersMean = 99999;
+    resolutionMean      = 99999;
+    resolutionSigma     = 99999;
+    separationMean      = 99999;
+    separationSigma     = 99999;
+    containmentMean     = 99999;
+    containmentSigma    = 99999;
+    deltaNclustersMean  = 99999;
     deltaNclustersSigma = 99999;
-    nRecoFailed = 99999;
-    nCantMatchRecSim = 99999;
-    nFakeRec = 99999;
+    nRecoFailed         = 99999;
+    nCantMatchRecSim    = 99999;
+    nFakeRec            = 99999;
   }
   
   /// Prints clustering results

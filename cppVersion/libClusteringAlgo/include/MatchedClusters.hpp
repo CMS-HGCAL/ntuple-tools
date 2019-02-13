@@ -56,6 +56,9 @@ public:
   double  GetSimEta();
   double  GetSimEnergy();
   
+  inline int GetNsimClusters(){return (int)simClusters->size();}
+  inline int GetNrecClusters(){return (int)recClusters->size();}
+  
   bool ContainsSimCluster(int simClusterIndex);
   
 private:

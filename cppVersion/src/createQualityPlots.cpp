@@ -266,9 +266,6 @@ int main(int argc, char* argv[])
           continue;
         }
         
-        monitors2D[kNrecVsNsim]->Fill(simHitsPerClusterArray.size(),recHitsPerClusterArray.size());
-        monitors1D[kDeltaNclusters]->Fill(((int)simHitsPerClusterArray.size()-(int)recHitsPerClusterArray.size())/(double)simHitsPerClusterArray.size());
-        
         // Match rec clusters with sim clusters by det ID, check if there is at least one such pair
         vector<shared_ptr<MatchedClusters>> matchedClusters;
         vector<shared_ptr<MatchedClusters>> unmatchedClusters;
@@ -296,7 +293,7 @@ int main(int argc, char* argv[])
         
         for(auto &clusters : matchedClusters){
           nTotalMatchedClusters++;
-          
+        
           if(!clusters->HasSimClusters()){
             // This may happen when fake rec cluster was found and there are no simulated clusters around. One should minimize probability of that to happen
             if(config->GetVerbosityLevel() > 1){
@@ -325,6 +322,8 @@ int main(int argc, char* argv[])
           monitors1D[kResolution]->Fill((recEnergy-simEnergy)/simEnergy);
           monitors1D[kContainment]->Fill(clusters->GetSharedFraction());
           monitors2D[kErecVsEsimDetIdMatching]->Fill(clusters->GetRecEnergy(),clusters->GetSimEnergy());
+          monitors2D[kNrecVsNsim]->Fill(clusters->GetNsimClusters(),clusters->GetNrecClusters());
+          monitors1D[kDeltaNclusters]->Fill((clusters->GetNsimClusters()-clusters->GetNrecClusters())/(double)clusters->GetNsimClusters());
         }
         
         for(auto &clusters : unmatchedClusters){

@@ -9,87 +9,68 @@
 
 #include "GeneticHelpers.hpp"
 
+/// Representation of Imaging Algo parameters that can be used for optimization with use
+/// of a genetic algorithm. Allows to save and read double parameters in a vector of 64bit
+/// unsigned integers.
 class Chromosome
 {
-public:
-  enum ECrossover{
-    kUniform,       ///< each bit has a chance to be exchaned between parents
-    kSinglePoint,   ///< one chromosome gets crossed, the rest stays the same or is exchaned intact
-    kFixedSinglePoint,///< one chromosome gets crossed at point that doesn't modify any of the parameters, the rest stays the same or is exchaned intact
-    kMultiPoint,     ///< each chromosome is crossed at a random point
-    kNcrossover
-  };
-  
-  inline static std::string crossoverName[kNcrossover] = {
-    "Uniform",
-    "Single point",
-    "Fixed single point",
-    "Multi point"
-  };
-  
+public:  
   /// Default constructor
   Chromosome();
   
   /// Default destructor
   ~Chromosome();
   
-  static std::shared_ptr<Chromosome> GetRandom();
+  /// Prints basic information about this creature
+  void Print();
   
-  inline void SetParam(EParam par, double val){
-    params[par] = static_cast<uint16_t>(std::numeric_limits<uint16_t>::max()/(paramMax[par]-paramMin[par])*(val-paramMin[par]));
-  }
+  /// Sets value of parameter. It will NOT be automatically added to bitChromosome - user has to
+  /// call SaveToBitChromosome() manually.
+  /// \par Type of parameter
+  /// \val Value of the parameter
+  void SetParam(EParam par, double val);
   
+  /// Fixes value of parameter. It will NOT be automatically added to bitChromosome - user has to
+  /// call SaveToBitChromosome() manually.
+  /// \par Type of parameter
+  /// \val Value of the parameter
   void FixParam(EParam par, double val);
   
-  inline void SetBitChromosome(int i, uint64_t bits){bitChromosome[i] = bits;}
+  /// Returns value of the parameter. This should be the only way of accessing parameters!
+  /// Don't try to access it directly, even within this class.
+  double GetParam(EParam par);
   
-  inline void SetScore(double val){score = val;}
+  /// Saves all parameters in a vector of 64bit integers that will be used for crossover and mutation.
+  void  SaveToBitChromosome();
+  
+  /// Restores all parameters from a vector of 64bit integers used for crossover and mutation.
+  void  ReadFromBitChromosome();
+  
+  // Trivial setters
   inline void SetNormalizedScore(double val){normalizedScore = val;}
   inline void SetExecutionTime(double val){executionTime = val;}
-  inline void SetMutationChance(double val){mutationChance = val;}
-  inline void SetSeverityFactor(double val){severityFactor = val;}
-  inline void SetCrossover(ECrossover val){crossover = val;}
-  inline void SetInputDataPath(std::string val){inputDataPath = val;}
-  inline void SetMinLayer(int val){minLayer = val;}
-  inline void SetMaxLayer(int val){maxLayer = val;}
+  inline void SetClusteringOutput(ClusteringOutput val){clusteringOutput = val;}
   
-  // Getters
-  inline double GetParam(EParam par){
-    return paramMin[par] + (double)params[par]*(paramMax[par]-paramMin[par])/std::numeric_limits<uint16_t>::max();
-  }
-  inline uint64_t GetBitChromosome(int i){return bitChromosome[i];}
+  // Trivial getters
+  inline double       GetScore(){return score;}
+  inline double       GetNormalizedScore(){return normalizedScore;}
+  inline uint64_t     GetUniqueID(){return uniqueID;}
+  inline std::string  GetConfigPath(){return configPath;}
+  inline std::string  GetClusteringOutputPath(){return clusteringOutputPath;}
   
-  inline double  GetScore(){return score;}
-  inline double  GetNormalizedScore(){return normalizedScore;}
-  inline uint64_t GetUniqueID(){return uniqueID;}
-  inline std::string GetConfigPath(){return configPath;}
-  inline std::string GetClusteringOutputPath(){return clusteringOutputPath;}
   
-  void SaveToBitChromosome();
-  void ReadFromBitChromosome();
-  
-  void StoreInConfig(std::string path="");
-  
-  void Print();
-  void CalculateScore();
-  
-  std::vector<std::shared_ptr<Chromosome>> ProduceChildWith(const std::shared_ptr<Chromosome> partner);
 private:
-  std::vector<uint16_t> params;
-  std::vector<bool> isParamFixed;
+  std::vector<uint16_t> params;       ///< Vector of chromosome parameters (see EParam)
+  std::vector<bool>     isParamFixed; ///< Tells if a parameter should be fixed
   
-  std::vector<uint64_t> bitChromosome;
+  std::vector<uint64_t> bitChromosome;///< Bits representing all parameters (used for crossover
+                                      ///  and mutation
   
   // other variables not stored in bit chromosome
-  uint64_t uniqueID;
-  std::string configPath;
-  std::string clusteringOutputPath;
-  std::string inputDataPath;
-  int minLayer;
-  int maxLayer;
-  double mutationChance;
-  double severityFactor;  // larger the value, more easily population members will die
-  ECrossover crossover;
+  uint64_t    uniqueID;             ///< Unique identifier of this creature
+  std::string configPath;           ///< Path to file in which this creature will be stored
+  std::string clusteringOutputPath; ///< Path to file to which results of clustering with params
+                                    ///  of this creature should be stored
   
   ClusteringOutput clusteringOutput;
   double executionTime;
@@ -102,9 +83,9 @@ private:
   template<class T>
   void SetValueFromChromosome(T &value, int &shift, int chromoIndex);
   
-  std::vector<uint64_t> SinglePointCrossover(uint64_t a, uint64_t b, bool fixed = false);
-  
   int BackToLimits();
+  
+  friend class ChromosomeProcessor;
 };
 
 #endif /* Chromosome_hpp */
