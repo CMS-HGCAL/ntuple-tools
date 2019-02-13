@@ -123,6 +123,7 @@ inline bool RandBool()
   return rand() % 2;
 }
 
+/// Inverts value of bit at position pos in bits
 inline void ReverseBit(uint64_t &bits, int pos)
 {
   uint64_t mask = pow(2,pos);

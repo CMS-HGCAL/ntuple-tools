@@ -106,85 +106,67 @@ ChromosomeProcessor::CrossChromosomes(const shared_ptr<Chromosome> mom, const sh
 {
   pair<shared_ptr<Chromosome>, shared_ptr<Chromosome>> children(make_shared<Chromosome>(),
                                                                 make_shared<Chromosome>());
-  // combine chromosomes of parents in a random way
   
-  if(crossover == kMultiPoint){ // single-point crossover in each chromosome
-    for(int i=0;i<mom->bitChromosome.size();i++){
-      auto newBitChromosomes = SinglePointCrossover(mom->bitChromosome[i],
-                                                    dad->bitChromosome[i]);
-      
-      children.first->bitChromosome[i] = newBitChromosomes.first;
-      children.second->bitChromosome[i] = newBitChromosomes.second;
+  // Perform crossover accoring to the strategy specified by the user
+  int crossingChromo = RandInt(0, (int)mom->bitChromosome.size()-1);
+  pair<uint64_t,uint64_t>  newBitChromosomes;
+  
+  for(int i=0;i<mom->bitChromosome.size();i++){
+    if(crossover == kMultiPoint){
+      newBitChromosomes = SinglePointCrossover(mom->bitChromosome[i], dad->bitChromosome[i]);
     }
-  }
-  else if(crossover == kSinglePoint || crossover == kFixedSinglePoint){ // true single-point crossover (can be fixed)
-    int crossingChromo = RandInt(0, (int)mom->bitChromosome.size()-1);
-    
-    for(int i=0;i<mom->bitChromosome.size();i++){
-      
-      if(i < crossingChromo){
-        children.first->bitChromosome[i]  = mom->bitChromosome[i];
-        children.second->bitChromosome[i] = dad->bitChromosome[i];
+    else if(crossover == kSinglePoint || crossover == kFixedSinglePoint){
+      if(i == crossingChromo){
+        newBitChromosomes = SinglePointCrossover(mom->bitChromosome[i], dad->bitChromosome[i],
+                                                 (crossover==kFixedSinglePoint));
       }
-      else if(i == crossingChromo){
-        auto newBitChromosomes = SinglePointCrossover(mom->bitChromosome[i],
-                                                      dad->bitChromosome[i],
-                                                      (crossover==kFixedSinglePoint));
-        
-        children.first->bitChromosome[i] = newBitChromosomes.first;
-        children.second->bitChromosome[i] = newBitChromosomes.second;
-      }
-      else{
-        children.first->bitChromosome[i]  = dad->bitChromosome[i];
-        children.second->bitChromosome[i] = mom->bitChromosome[i];
-      }
+      else if(i < crossingChromo)   newBitChromosomes = make_pair(mom->bitChromosome[i], dad->bitChromosome[i]);
+      else                          newBitChromosomes = make_pair(dad->bitChromosome[i], mom->bitChromosome[i]);
     }
-  }
-  else if(crossover == kUniform){
-    for(int i=0;i<mom->bitChromosome.size();i++){
-      uint64_t dadBits = dad->bitChromosome[i];
-      uint64_t momBits = mom->bitChromosome[i];
+    else if(crossover == kUniform){
+      newBitChromosomes = make_pair(mom->bitChromosome[i], dad->bitChromosome[i]);
       
       for(int j=0;j<64;j++){
-        bool cross = RandBool();
-        if(cross){
-          ReverseBit(dadBits, j);
-          ReverseBit(momBits, j);
+        if(RandBool()){
+          ReverseBit(newBitChromosomes.first, j);
+          ReverseBit(newBitChromosomes.second, j);
         }
       }
-      children.first->bitChromosome[i] = dadBits;
-      children.second->bitChromosome[i] = momBits;
     }
+    children.first->bitChromosome[i]  = newBitChromosomes.first;
+    children.second->bitChromosome[i] = newBitChromosomes.second;
   }
   
-  // perform child genes mutation
+  // Perform child genes mutation
   for(int i=0;i<mom->bitChromosome.size();i++){
-    pair<uint64_t, uint64_t> bits(children.first->bitChromosome[i],
-                                  children.second->bitChromosome[i]);
+    pair<uint64_t, uint64_t> bits(children.first->bitChromosome[i], children.second->bitChromosome[i]);
     
     for(int iBit=0;iBit<BitSize(bits.first);iBit++){
       if(RandDouble(0, 1) < mutationChance)  ReverseBit(bits.first, iBit);
       if(RandDouble(0, 1) < mutationChance)  ReverseBit(bits.second, iBit);
     }
-    children.first->bitChromosome[i] = bits.first;
+    children.first->bitChromosome[i]  = bits.first;
     children.second->bitChromosome[i] = bits.second;
   }
-  // populate fields
+  
+  // Populate fields
   children.first->ReadFromBitChromosome();
   children.second->ReadFromBitChromosome();
   
-  int wasOutside = children.first->BackToLimits();
-  if(wasOutside) cout<<"Was outside:"<<wasOutside<<endl;
-  wasOutside = children.second->BackToLimits();
-  if(wasOutside) cout<<"Was outside:"<<wasOutside<<endl;
+  // Make sure that new parameters are within limits
+  if(children.first->BackToLimits() || children.second->BackToLimits()){
+    cout<<"Param was outside (should never happen!)"<<endl;
+  }
   
+  // Fix parameters that should be fixed
   for(int iPar=0;iPar<kNparams;iPar++){
     if(mom->isParamFixed[iPar]){
       children.first->FixParam((EParam)iPar,mom->GetParam((EParam)iPar));
       children.second->FixParam((EParam)iPar,mom->GetParam((EParam)iPar));
     }
   }
-  // update the bits after updating values!!
+  
+  // Update the bits after updating values!!
   children.first->SaveToBitChromosome();
   children.second->SaveToBitChromosome();
   
@@ -195,7 +177,7 @@ pair<uint64_t,uint64_t> ChromosomeProcessor::SinglePointCrossover(uint64_t a, ui
 {
   int crossingPoint;
   if(fixed){
-    int crossingParam = RandInt(0, 3); // this is the index of parameter to cross after
+    int crossingParam = RandInt(0, 3);  // this is the index of parameter to cross after
     crossingPoint = crossingParam * 16; // crossing point will be 0, 16, 32 or 48, preserving parameter content
   }
   else{
