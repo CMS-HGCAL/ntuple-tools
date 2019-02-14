@@ -26,6 +26,8 @@
 
 #include <stdio.h>
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 using namespace std;
 
@@ -163,13 +165,8 @@ void killChildrenAfterTimeout(vector<int> childPid, int timeout)
   }
 }
 
-int GetWeightedRandom(discrete_distribution<double> dist)
-{
-  return dist(randGenerator);
-}
-
 void TestPopulation(vector<shared_ptr<Chromosome>> population,
-                    TH1D *hist, discrete_distribution<double> &dist, int generation)
+                    TH1D *hist, discrete_distribution<int> &dist, int generation)
 {
   std::vector<int> childPid;
   
@@ -229,7 +226,7 @@ void TestPopulation(vector<shared_ptr<Chromosome>> population,
   string configOutputPath = baseResultsPath+"bestGenetic"+to_string(generation)+".md";
   chromoProcessor->StoreChromosomeInConfig(population[bestGuyIndex], configOutputPath);
   
-  dist = discrete_distribution<double>(scoresNormalized.begin(), scoresNormalized.end());
+  dist = discrete_distribution<int>(scoresNormalized.begin(), scoresNormalized.end());
 }
 
 void SaveHists()
@@ -359,7 +356,7 @@ int main(int argc, char* argv[])
   delete outfile;
   
   vector<shared_ptr<Chromosome>> population;
-  discrete_distribution<double> scores;
+  discrete_distribution<int> scores;
   
   for(int iGeneration=0;iGeneration<nGenerations;iGeneration++){
     cout<<"\n\nGeneration "<<iGeneration<<"\n\n"<<endl;
@@ -395,8 +392,8 @@ int main(int argc, char* argv[])
           if(iter>20) exit(0);
           iter++;
           
-          mom = oldPopulation[(int)scores(randGenerator)];
-          dad = oldPopulation[(int)scores(randGenerator)];
+          mom = oldPopulation[scores(randGenerator)];
+          dad = oldPopulation[scores(randGenerator)];
         } while (mom==dad);
 
         auto children = chromoProcessor->CrossChromosomes(mom, dad);

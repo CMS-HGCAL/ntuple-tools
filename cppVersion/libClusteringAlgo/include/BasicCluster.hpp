@@ -10,6 +10,7 @@
 #include "Hexel.hpp"
 
 #include <vector>
+#include <memory>
 
 /// Class representing cluster of hexels
 class BasicCluster{

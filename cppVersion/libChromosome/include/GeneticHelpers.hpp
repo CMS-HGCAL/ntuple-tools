@@ -13,8 +13,15 @@
 #include <sstream>
 #include <fstream>
 #include <bitset>
+#include <memory>
+#include <chrono>
 
 #include <TMath.h>
+
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 enum EParam{
   kCriticalDistanceEE,
@@ -69,7 +76,7 @@ const double paramStart[kNparams] = {
   0.0   ///< initial kernel index (0 - step, 1 - gaus, 2 - exp)
 };
   
-inline const char* paramTitle[kNparams] = {
+static const char* paramTitle[kNparams] = {
   "critDistEE",
   "critDistFH",
   "critDistBH",
@@ -96,7 +103,7 @@ enum ECrossover{
   kNcrossover
 };
 
-inline static std::string crossoverName[kNcrossover] = {
+static std::string crossoverName[kNcrossover] = {
   "Uniform",
   "Single point",
   "Fixed single point",
