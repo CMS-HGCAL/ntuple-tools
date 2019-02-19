@@ -7,13 +7,13 @@ min_Ntuple:  10
 max_Ntuple:  11
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:     1000
+analyze_events_per_tuple:     10
 
 ### input and output paths
 
-input_path: ../../data/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_
+input_path: /eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO/NTUP/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_93X_upgrade2023_realistic_v2-v1_GEN-SIM-RECO_NTUP_
 
-output_path: ../../clusteringResultsCXX
+output_path: ../clusteringResultsCXX/singleGamma_test/
 
 
 
@@ -47,8 +47,8 @@ kappa:  9.0
 energy_min:  3.0
 
 ### test only within this layers range:
-min_layer: 0
-max_layer: 40
+min_layer: 1
+max_layer: 53
 
 ### Include only events were all particles reached EE before converting
 reachedEE_only: 1

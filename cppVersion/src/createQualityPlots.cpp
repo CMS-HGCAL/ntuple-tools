@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
   
   
   gROOT->ProcessLine(".L loader.C+");
-  TApplication theApp("App", &argc, argv);
+//  TApplication theApp("App", &argc, argv);
   
   std::system(("mkdir -p "+config->GetOutputPath()).c_str());
   
@@ -414,7 +414,7 @@ finish:
   delete matcher;
   
   if(plotEvent >= 0 && plotLayer >=0){
-    theApp.Run();
+//    theApp.Run();
   }
   return 0;
 }

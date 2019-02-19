@@ -39,7 +39,7 @@ string baseResultsDirName = "results_";
 int populationSize = 10;  ///< Size of the population, will stay the same for all generations. Make it an even number, otherwise there may be some complications.
 int maxBatchSize = 20;  ///< execute this number of jobs simultaneously
 int nGenerations = 100;     ///< Number of iterations
-int nEventsPerTest = 5;   ///< On how many events per ntuple each population member will be tested
+int nEventsPerTest = 1;   ///< On how many events per ntuple each population member will be tested
 
 int processTimeout = 600; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
@@ -77,7 +77,7 @@ double matchingDistance = 10.0;
 //string dataPath = "../../data/MultiParticleInConeGunProducer_SinglePion_Pt80_Eta2_InConePion_DeltaR0p1_clange_20171102/NTUP/partGun_PDGid211_x120_Pt80.0To80.0_NTUP_";
 
 // QCD event
-string dataPath = "../../data/eventQCD_wf24031p0_Pt_80_120_14TeV_2023D28_noPU_jniedzie_20190208/NTUP/eventQCD_x1320_1.0To35.0_NTUP_";
+string dataPath = "/eos/cms/store/cmst3/group/hgcal/CMG_studies/Production/eventQCD_wf24031p0_Pt_80_120_14TeV_2023D28_noPU_jniedzie_20190208/NTUP/eventQCD_x1320_1.0To35.0_NTUP_";
 
 string outputPath = "../clusteringResultsCXX/geneticOptimizerQCD/";
 
@@ -325,9 +325,9 @@ int main(int argc, char* argv[])
     dataPath = argv[7];
     outputPath = argv[8];
   }
-  
+  cout<<"Starting generic optimizer"<<endl;
   gROOT->ProcessLine(".L loader.C+");
-  TApplication theApp("App", &argc, argv);
+//  TApplication theApp("App", &argc, argv);
 
   chromoProcessor = make_unique<ChromosomeProcessor>(mutationChance, severityFactor, crossoverStrategy);
   
@@ -436,6 +436,6 @@ int main(int argc, char* argv[])
 //    }
   }
   
-  theApp.Run();
+//  theApp.Run();
   return 0;
 }

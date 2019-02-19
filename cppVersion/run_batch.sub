@@ -1,0 +1,10 @@
+executable 		= run_genetic.sh
+output                	= output/geneticOptimizer.$(ClusterId).$(ProcId).out
+error                 	= error/geneticOptimizer.$(ClusterId).$(ProcId).err
+log                   	= log/geneticOptimizer.$(ClusterId).log
+RequestCpus 		= 32
+requirements 		= (OpSysAndVer =?= "CentOS7")
+#transfer_input_files = input_QED_q1.DAT
+#transfer_output_files = outputs/output_QED_q1_noCuts.dat, evrecs/evrecs_QED_q1_noCuts.dat
++JobFlavour = "espresso"
+queue

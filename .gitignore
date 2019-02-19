@@ -113,7 +113,21 @@ cppVersion/configs/jniedzieTwoPionDeltaR0p4.md
 cppVersion/configs/singleGamma.md
 cppVersion/configs/pedja_photon_Pt10_dR0p02.md
 cppVersion/configs/twoPionDeltaR0p4.md
-
+*CMakeCache.txt
+*CMakeFiles*
+*cmake_install.cmake*
+cppVersion/*Makefile
+cppVersion/*/Makefile
+cppVersion/algoBenchmark
+cppVersion/analyzeTestbeam
+cppVersion/createQualityPlots
+cppVersion/error/
+cppVersion/geneticOptimizer
+cppVersion/geneticResults/
+cppVersion/output/
+cppVersion/rootOptimizer
+*tmp
+*.a
 
 
 
