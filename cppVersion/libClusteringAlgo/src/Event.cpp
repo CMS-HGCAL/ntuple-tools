@@ -64,7 +64,7 @@ void Event::GoToEvent(int event)
   recHits->Clean();
   tree->GetEntry(event);
   if(!testbeamTracksTree){
-    cout<<"Test beam tree does not exist!"<<endl;
+//    cout<<"Test beam tree does not exist!"<<endl;
   }
   else if(event > testbeamTracksTree->GetEntries()){
     cout<<"Requested an event beyond test beam tracks tree limits!!"<<endl;

@@ -224,10 +224,21 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   vector<int> ds = sortIndicesDeltaInverted(nodes);
 
   double delta_c=0;
-  if(layer <= lastLayerEE)      delta_c = deltacEE;
-  else if(layer <= lastLayerFH) delta_c = deltacFH;
-  else                          delta_c = deltacBH;
-
+	double criticalDistance = 0;
+	
+	if(layer <= lastLayerEE){
+		delta_c = deltacEE;
+		criticalDistance = criticalDistanceEE;
+	}
+	else if(layer <= lastLayerFH){
+		delta_c = deltacFH;
+		criticalDistance = criticalDistanceFH;
+	}
+	else{
+		delta_c = deltacBH;
+		criticalDistance = criticalDistanceBH;
+	}
+	
   for(uint i=0; i<nodes.size();i++){
     if(nodes[ds[i]]->delta < delta_c) break;  // no more cluster centers to be looked at
     // skip this as a potential cluster center because it fails the density cut
@@ -258,18 +269,16 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   // assign to clusters, using the nearestHigher set from previous step (always set except for top density hit that is skipped)...
   for(uint oi=1;oi<nodes.size();oi++){
     int ci = nodes[rs[oi]]->clusterIndex;
-    if(ci == -1) nodes[rs[oi]]->clusterIndex = nodes[nodes[rs[oi]]->nearestHigher]->clusterIndex;
+		if(ci == -1 && nodes[rs[oi]]->delta < criticalDistance){
+			nodes[rs[oi]]->clusterIndex = nodes[nodes[rs[oi]]->nearestHigher]->clusterIndex;
+		}
   }
 
   // assign points closer than dc to other clusters to border region and find critical border density
   double rho_b[clusterIndex];
   for(int i=0;i<clusterIndex;i++){rho_b[i]=0.;}
 
-  double criticalDistance = 0;
-  
-  if(layer <= lastLayerEE)       criticalDistance = criticalDistanceEE;
-  else if(layer <= lastLayerFH)  criticalDistance = criticalDistanceFH;
-  else                           criticalDistance = criticalDistanceBH;
+
   
   // now loop on all hits again :( and check: if there are hits from another cluster within d_c -> flag as border hit
   for(auto &iNode : nodes){
