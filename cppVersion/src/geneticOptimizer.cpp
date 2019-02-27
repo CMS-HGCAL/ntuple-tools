@@ -36,10 +36,10 @@ string baseResultsPath;
 string baseResultsSearchPath = "geneticResults/qcd/";
 string baseResultsDirName = "results_";
 
-int populationSize = 10;  ///< Size of the population, will stay the same for all generations. Make it an even number, otherwise there may be some complications.
+int populationSize = 100;  ///< Size of the population, will stay the same for all generations. Make it an even number, otherwise there may be some complications.
 int maxBatchSize = 20;  ///< execute this number of jobs simultaneously
-int nGenerations = 100;     ///< Number of iterations
-int nEventsPerTest = 1;   ///< On how many events per ntuple each population member will be tested
+int nGenerations = 1000;     ///< Number of iterations
+int nEventsPerTest = 20;   ///< On how many events per ntuple each population member will be tested
 
 int processTimeout = 600; ///< this is a timeout for the test of whole population in given generation, give it at least 2-3 seconds per member per event (processTimeout ~ 2*maxBatchSize*nEventsPerTest)
 
@@ -68,7 +68,7 @@ double energyThreshold = 3.0;
 bool fixKernelFunction = true;
 int kernelFunction = 0; // 0 - step, 1 - gauss, 2 - exp
 bool fixMatchingDistance = true;
-double matchingDistance = 10.0;
+double matchingDistance = 29.9;
 
 // two-photons
 //string dataPath = "../../data/MultiParticleInConeGunProducer_PDGid22_nPart1_Pt6p57_Eta2p2_InConeDR0p10_PDGid22_predragm_cmssw1020pre1_20180730/NTUP/partGun_PDGid22_x96_Pt6.57To6.57_NTUP_";
