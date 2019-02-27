@@ -4,10 +4,10 @@ verbosity_level:  0
 
 ### range of ntuples to test (will be appended to the inputPath string below)
 min_Ntuple:  1
-max_Ntuple:  1
+max_Ntuple:  10
 
 ### stop analyzing each ntuple after that many events: 
-analyze_events_per_tuple:	100
+analyze_events_per_tuple:	1000
 
 ### input and output paths
 
@@ -47,8 +47,8 @@ kappa:  9.0
 energy_min:  3.0
 
 ### test only within this layers range:
-min_layer: 0
-max_layer: 52
+min_layer: 1
+max_layer: 53
 
 ### Include only events were all particles reached EE before converting
 reachedEE_only: 1
@@ -56,4 +56,4 @@ reachedEE_only: 1
 **Cluster Matching parameters**
 
 ### Sim clusters further than matching_max_distance from the clostest rec cluster will not be matched 
-matching_max_distance: 999999.0
+matching_max_distance: 30.0
