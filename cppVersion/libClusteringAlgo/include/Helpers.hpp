@@ -160,5 +160,23 @@ inline double GetDoubleFromConfig(std::string configPath, std::string keyToFind)
   return stod(GetParamFromConfig(configPath,keyToFind));
 }
 
+/// Calculate duration between two events
+/// \param t0 Start time
+/// \param t1 End time
+/// \return Difference between events t0 and t1 in seconds
+template<class T>
+double duration(T t0,T t1)
+{
+	auto elapsed_secs = t1-t0;
+	typedef std::chrono::duration<float> float_seconds;
+	auto secs = std::chrono::duration_cast<float_seconds>(elapsed_secs);
+	return secs.count();
+}
+
+/// Returns current time
+inline std::chrono::time_point<std::chrono::steady_clock> now()
+{
+	return std::chrono::steady_clock::now();
+}
 
 #endif /* Helpers_h */

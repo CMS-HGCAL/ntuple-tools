@@ -3,6 +3,7 @@
 #include "ImagingAlgo.hpp"
 #include "Helpers.hpp"
 #include "ConfigurationManager.hpp"
+#include "Helpers.hpp"
 
 #include <TROOT.h>
 #include <TFile.h>
