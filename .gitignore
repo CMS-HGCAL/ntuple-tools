@@ -126,6 +126,7 @@ cppVersion/geneticOptimizer
 cppVersion/geneticResults/
 cppVersion/output/
 cppVersion/rootOptimizer
+cppVersion/scoreVsParam
 *tmp
 *.a
 

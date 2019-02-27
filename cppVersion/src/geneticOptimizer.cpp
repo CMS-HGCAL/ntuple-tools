@@ -1,4 +1,5 @@
 #include "GeneticHelpers.hpp"
+#include "Helpers.hpp"
 
 #include "ChromosomeProcessor.hpp"
 
@@ -329,7 +330,7 @@ int main(int argc, char* argv[])
   gROOT->ProcessLine(".L loader.C+");
 //  TApplication theApp("App", &argc, argv);
 
-  chromoProcessor = make_unique<ChromosomeProcessor>(mutationChance, severityFactor, crossoverStrategy);
+	chromoProcessor = my::make_unique<ChromosomeProcessor>(mutationChance, severityFactor, crossoverStrategy);
   
   SetBaseResultsPath();
   system(("mkdir -p "+baseResultsPath).c_str());
