@@ -12,8 +12,8 @@ using namespace std;
 
 MatchedClusters::MatchedClusters()
 {
-  recClusters = make_unique<std::vector<shared_ptr<BasicCluster>>>();
-  simClusters = make_unique<std::vector<shared_ptr<BasicCluster>>>();
+	recClusters = my::make_unique<std::vector<shared_ptr<BasicCluster>>>();
+	simClusters = my::make_unique<std::vector<shared_ptr<BasicCluster>>>();
   recHits = std::unique_ptr<RecHits>(new RecHits());
   simHits = std::unique_ptr<RecHits>(new RecHits());
 }

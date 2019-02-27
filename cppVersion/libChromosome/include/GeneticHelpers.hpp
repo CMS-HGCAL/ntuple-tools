@@ -4,8 +4,8 @@
 //  Created by Jeremi Niedziela on 13/06/2018.
 //
 
-#ifndef Helpers_h
-#define Helpers_h
+#ifndef GeneticHelpers_h
+#define GeneticHelpers_h
 
 #include <cstdint>
 #include <iostream>
@@ -17,13 +17,6 @@
 #include <chrono>
 
 #include <TMath.h>
-
-namespace my{
-  template<typename T, typename... Args>
-  std::unique_ptr<T> make_unique(Args&&... args) {
-    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
-  }
-}
 
 enum EParam{
   kCriticalDistanceEE,
@@ -89,12 +82,6 @@ static const char* paramTitle[kNparams] = {
   "eMin",
   "matchingDist",
   "kernel"
-};
-
-enum EDet {
-  kEE,  ///< electromagneric endcap (silicon)
-  kFH,  ///< front hadronic endcap (silicon)
-  kBH   ///< back hadronic endcap (plastic)
 };
 
 enum ECrossover{
@@ -294,7 +281,6 @@ double duration(T t0,T t1)
 inline std::chrono::time_point<std::chrono::steady_clock> now()
 {
   return std::chrono::steady_clock::now();
-//  return std::chrono::system_clock::now();
 }
 
   

@@ -126,13 +126,6 @@ inline double duration(std::chrono::time_point<std::chrono::system_clock> t0,
   return secs.count();
 }
 
-/// Returns current time
-inline std::chrono::time_point<std::chrono::system_clock> now()
-{
-  return std::chrono::system_clock::now();
-}
-
-
 inline std::string GetParamFromConfig(std::string configPath, std::string keyToFind)
 {
   std::ifstream is_file(configPath);
