@@ -15,11 +15,6 @@
 
 using namespace std;
 
-
-string testParam = "critical_distance_EE";
-EParam paramNum = kCriticalDistanceEE;
-double testParamStep = 0.5;
-
 const double severityFactor = 10.0;
 const string baseConfigPath = "testScore.md";
 string configPath;
@@ -69,6 +64,31 @@ double GetScore()
 
 int main(int argc, char* argv[])
 {
+	if(argc != 3){
+		cout<<"Usage: param_name step"<<endl;
+		cout<<"\nwhere param name can be:"<<endl;
+		cout<<"\tcritical_distance_EE\n\tcritical_distance_FH\n\tcritical_distance_BH"<<endl;
+		cout<<"\tdeltac_EE\n\tdeltac_FH\n\tdeltac_BH\n\tkappa"<<endl;
+		exit(0);
+	}
+	string testParam = argv[1];
+	double testParamStep = stod(argv[2]);
+	
+	EParam paramNum;
+	if(			testParam == "critical_distance_EE") 	paramNum = kCriticalDistanceEE;
+	else if(testParam == "critical_distance_FH") 	paramNum = kCriticalDistanceFH;
+	else if(testParam == "critical_distance_BH") 	paramNum = kCriticalDistanceBH;
+	else if(testParam == "deltac_EE") 						paramNum = kDeltacEE;
+	else if(testParam == "deltac_FH") 						paramNum = kDeltacFH;
+	else if(testParam == "deltac_BH") 						paramNum = kDeltacBH;
+	else if(testParam == "kappa") 								paramNum = kKappa;
+	else{
+		cout<<"Passed unknown param "<<testParam<<endl;
+		exit(1);
+	}
+	
+	cout<<"Testing "<<testParam<<" with title "<<paramTitle[paramNum]<<" and step "<<testParamStep<<endl;
+	
 	cout<<"Starting score vs. param"<<endl;
 	gROOT->ProcessLine(".L loader.C+");
 	
@@ -83,6 +103,10 @@ int main(int argc, char* argv[])
 	configPath = "testScore_"+to_string(r)+".md";
 	system(("cp "+baseConfigPath+" "+configPath).c_str());
 	
+	// Put random score output path in the random config
+	string scoreOutputPath = "testScore_"+to_string(r)+".out";
+	UpdateParamValue(configPath, "score_output_path", scoreOutputPath);
+	
 	for(double param = paramMin[paramNum]; param < paramMax[paramNum]; param += testParamStep){
 		UpdateParamValue(configPath, testParam, param);
 		
@@ -91,8 +115,9 @@ int main(int argc, char* argv[])
 		cout<<"Score:"<<score<<endl;
 	}
 	
-	// Save the initial value back in the config
+	// Remove random files
 	system(("rm "+configPath).c_str());
+	system(("rm "+scoreOutputPath).c_str());
 	
 	scoreVsParamHist->SaveAs(("score_vs_"+testParam+".root").c_str());
 	return 0;
