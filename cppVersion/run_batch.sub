@@ -1,10 +1,9 @@
-executable 		= run_genetic.sh
+executable 		= run_test_score.sh
+arguments		= testScoreResults/qcd deltac_BH
 output                	= output/geneticOptimizer.$(ClusterId).$(ProcId).out
 error                 	= error/geneticOptimizer.$(ClusterId).$(ProcId).err
 log                   	= log/geneticOptimizer.$(ClusterId).log
-RequestCpus 		= 32
+RequestCpus 		= 8
 requirements 		= (OpSysAndVer =?= "CentOS7")
-#transfer_input_files = input_QED_q1.DAT
-#transfer_output_files = outputs/output_QED_q1_noCuts.dat, evrecs/evrecs_QED_q1_noCuts.dat
-+JobFlavour = "espresso"
++JobFlavour = "nextweek"
 queue
