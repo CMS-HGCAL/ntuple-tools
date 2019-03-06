@@ -27,6 +27,9 @@ public:
                                                         double _criticalDistance_EE,
                                                         double _criticalDistance_FH,
                                                         double _criticalDistance_BH,
+                                                        double _assignmentDistance_EE,
+                                                        double _assignmentDistance_FH,
+                                                        double _assignmentDistance_BH,
                                                         double _kappa,
                                                         int _verbosityLevel,
                                                         int _minNtuple,
@@ -56,6 +59,9 @@ public:
   
   /// Returns maximum distance to include hits in the energy density calculation.
   double GetCriticalDistance(EDet det);
+  
+  /// Returns maximum distance to link hits to a cluster
+  double GetAssignmentDistance(EDet det);
   
   /// Returns kappa parameter defining minimum energy density to consider a hit as a cluster seed
   /// Critical energy density rho_c = max(rho)/kappa
@@ -105,6 +111,9 @@ public:
                        double _criticalDistance_EE,
                        double _criticalDistance_FH,
                        double _criticalDistance_BH,
+                       double _assignmentDistance_EE,
+                       double _assignmentDistance_FH,
+                       double _assignmentDistance_BH,
                        double _kappa,
                        int _verbosityLevel,
                        int _minNtuple,
@@ -136,6 +145,9 @@ private:
   double criticalDistance_EE;
   double criticalDistance_FH;
   double criticalDistance_BH;
+  double assignmentDistance_EE;
+  double assignmentDistance_FH;
+  double assignmentDistance_BH;
   double kappa;
   int verbosityLevel;
   int minNtuple;

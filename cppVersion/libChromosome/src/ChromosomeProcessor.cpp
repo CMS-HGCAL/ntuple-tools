@@ -46,6 +46,9 @@ void ChromosomeProcessor::StoreChromosomeInConfig(const shared_ptr<Chromosome> c
   UpdateParamValue(currentConfigPath, "critical_distance_EE",chromo->GetParam(kCriticalDistanceEE));
   UpdateParamValue(currentConfigPath, "critical_distance_FH",chromo->GetParam(kCriticalDistanceFH));
   UpdateParamValue(currentConfigPath, "critical_distance_BH",chromo->GetParam(kCriticalDistanceBH));
+  UpdateParamValue(currentConfigPath, "assignment_distance_EE",chromo->GetParam(kAssignmentDistanceEE));
+  UpdateParamValue(currentConfigPath, "assignment_distance_FH",chromo->GetParam(kAssignmentDistanceFH));
+  UpdateParamValue(currentConfigPath, "assignment_distance_BH",chromo->GetParam(kAssignmentDistanceBH));
   UpdateParamValue(currentConfigPath, "deltac_EE",chromo->GetParam(kDeltacEE));
   UpdateParamValue(currentConfigPath, "deltac_FH",chromo->GetParam(kDeltacFH));
   UpdateParamValue(currentConfigPath, "deltac_BH",chromo->GetParam(kDeltacBH));

@@ -105,6 +105,11 @@ void Chromosome::Print()
   cout<<"\tFH:"<<GetParam(kCriticalDistanceFH);
   cout<<"\tBH:"<<GetParam(kCriticalDistanceBH)<<endl;
   
+  cout<<"Assignment distance:";
+  cout<<"\tEE:"<<GetParam(kAssignmentDistanceEE);
+  cout<<"\tFH:"<<GetParam(kAssignmentDistanceFH);
+  cout<<"\tBH:"<<GetParam(kAssignmentDistanceBH)<<endl;
+  
   cout<<"Kernel: ";
   if(round(GetParam(kKernel)) == 0)        cout<<"step"<<endl;
   else if(round(GetParam(kKernel)) == 1)   cout<<"gaus"<<endl;

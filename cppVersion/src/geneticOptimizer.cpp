@@ -114,6 +114,9 @@ int scheduleClustering(shared_ptr<Chromosome> chromo)
   +to_string(chromo->GetParam(kCriticalDistanceEE))+" "
   +to_string(chromo->GetParam(kCriticalDistanceFH))+" "
   +to_string(chromo->GetParam(kCriticalDistanceBH))+" "
+  +to_string(chromo->GetParam(kAssignmentDistanceEE))+" "
+  +to_string(chromo->GetParam(kAssignmentDistanceFH))+" "
+  +to_string(chromo->GetParam(kAssignmentDistanceBH))+" "
   +to_string(chromo->GetParam(kKappa))+" "
   +"0 " // verbosity
   +to_string(minNtuple)+" "

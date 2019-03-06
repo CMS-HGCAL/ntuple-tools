@@ -22,6 +22,9 @@ enum EParam{
   kCriticalDistanceEE,
   kCriticalDistanceFH,
   kCriticalDistanceBH,
+  kAssignmentDistanceEE,
+  kAssignmentDistanceFH,
+  kAssignmentDistanceBH,
   kDeltacEE,
   kDeltacFH,
   kDeltacBH,
@@ -36,6 +39,9 @@ const double paramMin[kNparams] = {
   0.0,  ///< min critical distance EE
   2.0,  ///< min critical distance FH (all dies below 2.0)
   5.0,  ///< min critical distance BH (all dies below 5.0)
+  0.0,  ///< min assignment distance EE
+  2.0,  ///< min assignment distance FH
+  5.0,  ///< min assignment distance BH
   0.01, ///< min critical delta EE (too small - algorithm cannot find clusters)
   0.01, ///< min critical delta FH
   0.01, ///< min critical delta BH
@@ -49,6 +55,9 @@ const double paramMax[kNparams] = {
   20.0, ///< max critical distance EE (almost all dies above 20)
   30.0, ///< max critical distance FH
   50.0, ///< max critical distance BH
+  20.0, ///< max assignment distance EE
+  30.0, ///< max assignment distance FH
+  50.0, ///< max assignment distance BH
   30.0, ///< max critical delta EE (above ~30 problems start to occur)
   30.0, ///< max critical delta FH
   40.0, ///< max critical delta BH
@@ -62,6 +71,9 @@ const double paramStart[kNparams] = {
   2.00, ///< initial critical distance EE
   2.00, ///< initial critical distance FH
   2.00, ///< initial critical distance BH
+  2.00, ///< initial assignemnt distance EE
+  2.00, ///< initial assignemnt distance FH
+  2.00, ///< initial assignemnt distance BH
   2.00, ///< initial critical delta EE
   2.00, ///< initial critical delta FH
   5.00, ///< initial critical delta BH
@@ -75,6 +87,9 @@ static const char* paramTitle[kNparams] = {
   "critDistEE",
   "critDistFH",
   "critDistBH",
+  "assignDistEE",
+  "assignDistFH",
+  "assignDistBH",
   "deltaEE",
   "deltaFH",
   "deltaBH",

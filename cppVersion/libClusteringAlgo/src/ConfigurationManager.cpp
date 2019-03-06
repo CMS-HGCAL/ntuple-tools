@@ -37,6 +37,9 @@ shared_ptr<ConfigurationManager> ConfigurationManager::Instance(bool _dependSens
                                                                 double _criticalDistance_EE,
                                                                 double _criticalDistance_FH,
                                                                 double _criticalDistance_BH,
+                                                                double _assignmentDistance_EE,
+                                                                double _assignmentDistance_FH,
+                                                                double _assignmentDistance_BH,
                                                                 double _kappa,
                                                                 int _verbosityLevel,
                                                                 int _minNtuple,
@@ -63,6 +66,9 @@ shared_ptr<ConfigurationManager> ConfigurationManager::Instance(bool _dependSens
                                                  _criticalDistance_EE,
                                                  _criticalDistance_FH,
                                                  _criticalDistance_BH,
+                                                 _assignmentDistance_EE,
+                                                 _assignmentDistance_FH,
+                                                 _assignmentDistance_BH,
                                                  _kappa,
                                                  _verbosityLevel,
                                                  _minNtuple,
@@ -117,6 +123,10 @@ configPath(_configPath)
   criticalDistance_FH = settings->GetValue("critical_distance_FH",2.0);
   criticalDistance_BH = settings->GetValue("critical_distance_BH",5.0);
   
+  assignmentDistance_EE = settings->GetValue("assignment_distance_EE",2.0);
+  assignmentDistance_FH = settings->GetValue("assignment_distance_FH",2.0);
+  assignmentDistance_BH = settings->GetValue("assignment_distance_BH",2.0);
+  
   kappa = settings->GetValue("kappa",9.0);
   
   verbosityLevel = settings->GetValue("verbosity_level",0);
@@ -136,26 +146,29 @@ configPath(_configPath)
 }
 
 ConfigurationManager::ConfigurationManager(bool _dependSensor,
-                                                     std::string _inputPath,
-                                                     std::string _outputPath,
-                                                     double _deltac_EE,
-                                                     double _deltac_FH,
-                                                     double _deltac_BH,
-                                                     double _minEnergy,
-                                                     double _criticalDistance_EE,
-                                                     double _criticalDistance_FH,
-                                                     double _criticalDistance_BH,
-                                                     double _kappa,
-                                                     int _verbosityLevel,
-                                                     int _minNtuple,
-                                                     int _maxNtuple,
-                                                     int _minLayer,
-                                                     int _maxLayer,
-                                                     int _eventsPerTuple,
-                                                     std::string _energyDensityFunction,
-                                                     bool _reachedEEonly,
-                                                     double _matchingMaxDistance,
-                                                     std::string _scoreOutputPath)
+                                           std::string _inputPath,
+                                           std::string _outputPath,
+                                           double _deltac_EE,
+                                           double _deltac_FH,
+                                           double _deltac_BH,
+                                           double _minEnergy,
+                                           double _criticalDistance_EE,
+                                           double _criticalDistance_FH,
+                                           double _criticalDistance_BH,
+                                           double _assignmentDistance_EE,
+                                           double _assignmentDistance_FH,
+                                           double _assignmentDistance_BH,
+                                           double _kappa,
+                                           int _verbosityLevel,
+                                           int _minNtuple,
+                                           int _maxNtuple,
+                                           int _minLayer,
+                                           int _maxLayer,
+                                           int _eventsPerTuple,
+                                           std::string _energyDensityFunction,
+                                           bool _reachedEEonly,
+                                           double _matchingMaxDistance,
+                                           std::string _scoreOutputPath)
 {
   dependSensor = _dependSensor;
 //  cout<<"depend sensor:"<<dependSensor<<endl;
@@ -170,6 +183,9 @@ ConfigurationManager::ConfigurationManager(bool _dependSensor,
   criticalDistance_EE = _criticalDistance_EE;
   criticalDistance_FH = _criticalDistance_FH;
   criticalDistance_BH = _criticalDistance_BH;
+  assignmentDistance_EE = _assignmentDistance_EE;
+  assignmentDistance_FH = _assignmentDistance_FH;
+  assignmentDistance_BH = _assignmentDistance_BH;
   kappa = _kappa;
   verbosityLevel = _verbosityLevel;
   minNtuple = _minNtuple;
@@ -195,6 +211,13 @@ double ConfigurationManager::GetCriticalDistance(EDet det)
   if(det == kEE) return criticalDistance_EE;
   if(det == kFH) return criticalDistance_FH;
   return criticalDistance_BH;
+}
+
+double ConfigurationManager::GetAssignmentDistance(EDet det)
+{
+  if(det == kEE) return assignmentDistance_EE;
+  if(det == kFH) return assignmentDistance_FH;
+  return assignmentDistance_BH;
 }
 
 void ConfigurationManager::Print()

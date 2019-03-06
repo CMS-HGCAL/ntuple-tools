@@ -68,6 +68,7 @@ int main(int argc, char* argv[])
 		cout<<"Usage: param_name step"<<endl;
 		cout<<"\nwhere param name can be:"<<endl;
 		cout<<"\tcritical_distance_EE\n\tcritical_distance_FH\n\tcritical_distance_BH"<<endl;
+    cout<<"\tassignment_distance_EE\n\tassignment_distance_FH\n\tassignment_distance_BH"<<endl;
 		cout<<"\tdeltac_EE\n\tdeltac_FH\n\tdeltac_BH\n\tkappa"<<endl;
 		exit(0);
 	}
@@ -75,13 +76,16 @@ int main(int argc, char* argv[])
 	double testParamStep = stod(argv[2]);
 	
 	EParam paramNum;
-	if(			testParam == "critical_distance_EE") 	paramNum = kCriticalDistanceEE;
-	else if(testParam == "critical_distance_FH") 	paramNum = kCriticalDistanceFH;
-	else if(testParam == "critical_distance_BH") 	paramNum = kCriticalDistanceBH;
-	else if(testParam == "deltac_EE") 						paramNum = kDeltacEE;
-	else if(testParam == "deltac_FH") 						paramNum = kDeltacFH;
-	else if(testParam == "deltac_BH") 						paramNum = kDeltacBH;
-	else if(testParam == "kappa") 								paramNum = kKappa;
+	if(			testParam == "critical_distance_EE") 	  paramNum = kCriticalDistanceEE;
+	else if(testParam == "critical_distance_FH") 	  paramNum = kCriticalDistanceFH;
+	else if(testParam == "critical_distance_BH") 	  paramNum = kCriticalDistanceBH;
+  else if(testParam == "assignment_distance_EE")  paramNum = kAssignmentDistanceEE;
+  else if(testParam == "assignment_distance_FH")  paramNum = kAssignmentDistanceFH;
+  else if(testParam == "assignment_distance_BH")  paramNum = kAssignmentDistanceBH;
+	else if(testParam == "deltac_EE") 						  paramNum = kDeltacEE;
+	else if(testParam == "deltac_FH") 						  paramNum = kDeltacFH;
+	else if(testParam == "deltac_BH") 						  paramNum = kDeltacBH;
+	else if(testParam == "kappa") 								  paramNum = kKappa;
 	else{
 		cout<<"Passed unknown param "<<testParam<<endl;
 		exit(1);

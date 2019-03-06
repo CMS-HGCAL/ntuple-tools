@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 {
   if((argc != 2) && (argc != 22)){
     cout<<"Usage: createQualityPlots path_to_config"<<endl;
-    cout<<"or createQualityPlots depend_sensor input_path output_path deltac_EE deltac_FH deltac_BH energy_threshold crit_dist_EE crit_dist_FH crit_dist_BH kappa verbosity min_n_tuple max_n_tuple min_layer max_layer events_per_tuple energy_density_function reached_EE_only matching_distance score_output_path"<<endl;
+    cout<<"or createQualityPlots depend_sensor input_path output_path deltac_EE deltac_FH deltac_BH energy_threshold crit_dist_EE crit_dist_FH crit_dist_BH assign_dist_EE assign_dist_FH assign_dist_BH kappa verbosity min_n_tuple max_n_tuple min_layer max_layer events_per_tuple energy_density_function reached_EE_only matching_distance score_output_path"<<endl;
     exit(0);
   }
   
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
     string configPath(argv[1]);
     config = ConfigurationManager::Instance(configPath);
   }
-  if(argc == 22){
+  if(argc == 25){
     config = ConfigurationManager::Instance(atoi(argv[1]),  // depend sensor
                                             argv[2],        // input path
                                             argv[3],        // output path
@@ -106,17 +106,20 @@ int main(int argc, char* argv[])
                                             atof(argv[8]),  // crit dist EE
                                             atof(argv[9]),  // crit dist FH
                                             atof(argv[10]), // crit dist BH
-                                            atof(argv[11]), // kappa
-                                            atoi(argv[12]), // verbosity
-                                            atoi(argv[13]), // min n tuple
-                                            atoi(argv[14]), // max n tuple
-                                            atoi(argv[15]), // min layer
-                                            atoi(argv[16]), // max layer
-                                            atoi(argv[17]), // events per tuple
-                                            argv[18],       // energy density function
-                                            atoi(argv[19]), // reached EE only
-                                            atof(argv[20]), // matching distance
-                                            argv[21]        // score output path
+                                            atof(argv[11]),  // assignment dist EE
+                                            atof(argv[12]),  // assignment dist FH
+                                            atof(argv[13]), // assignment dist BH
+                                            atof(argv[14]), // kappa
+                                            atoi(argv[15]), // verbosity
+                                            atoi(argv[16]), // min n tuple
+                                            atoi(argv[17]), // max n tuple
+                                            atoi(argv[18]), // min layer
+                                            atoi(argv[19]), // max layer
+                                            atoi(argv[20]), // events per tuple
+                                            argv[21],       // energy density function
+                                            atoi(argv[22]), // reached EE only
+                                            atof(argv[23]), // matching distance
+                                            argv[24]        // score output path
                                             );
   }
   
