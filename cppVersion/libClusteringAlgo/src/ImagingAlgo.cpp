@@ -24,6 +24,9 @@ configPath("")
   criticalDistanceEE = config->GetCriticalDistance(kEE);
   criticalDistanceFH = config->GetCriticalDistance(kFH);
   criticalDistanceBH = config->GetCriticalDistance(kBH);
+  assignmentDistanceEE = config->GetAssignmentDistance(kEE);
+  assignmentDistanceFH = config->GetAssignmentDistance(kFH);
+  assignmentDistanceBH = config->GetAssignmentDistance(kBH);
   deltacEE = config->GetDeltac(kEE);
   deltacFH = config->GetDeltac(kFH);
   deltacBH = config->GetDeltac(kBH);
@@ -32,6 +35,7 @@ configPath("")
   megaClusterRadiusFH = 5.0;
   megaClusterRadiusBH = 5.0;
   minClusters = 3;
+  doHalo = config->GetDoHalo();
   
   if(config->GetEnergyDensityFunction() == "step"){
     // param [0] says what's the limit to include or reject hit (critical distance)
@@ -79,10 +83,14 @@ config(nullptr)
   criticalDistanceEE = GetDoubleFromConfig(configPath, "critical_distance_EE");
   criticalDistanceFH = GetDoubleFromConfig(configPath, "critical_distance_FH");
   criticalDistanceBH = GetDoubleFromConfig(configPath, "critical_distance_BH");
+  assignmentDistanceEE = GetDoubleFromConfig(configPath, "assignment_distance_EE");
+  assignmentDistanceFH = GetDoubleFromConfig(configPath, "assignment_distance_FH");
+  assignmentDistanceBH = GetDoubleFromConfig(configPath, "assignment_distance_BH");
   deltacEE = GetDoubleFromConfig(configPath, "deltac_EE");
   deltacFH = GetDoubleFromConfig(configPath, "deltac_FH");
   deltacBH = GetDoubleFromConfig(configPath, "deltac_BH");
-
+  doHalo = GetIntFromConfig(configPath, "do_halo");
+  
   string energyFunction = GetStringFromConfig(configPath, "energy_density_function");
   
   if(energyFunction == "step"){
@@ -224,19 +232,19 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   vector<int> ds = sortIndicesDeltaInverted(nodes);
 
   double delta_c=0;
-	double criticalDistance = 0;
+  double assignmentDistance = 0;
 	
 	if(layer <= lastLayerEE){
 		delta_c = deltacEE;
-		criticalDistance = criticalDistanceEE;
+    assignmentDistance = assignmentDistanceEE;
 	}
 	else if(layer <= lastLayerFH){
 		delta_c = deltacFH;
-		criticalDistance = criticalDistanceFH;
+    assignmentDistance = assignmentDistanceFH;
 	}
 	else{
 		delta_c = deltacBH;
-		criticalDistance = criticalDistanceBH;
+    assignmentDistance = assignmentDistanceBH;
 	}
 	
   for(uint i=0; i<nodes.size();i++){
@@ -269,7 +277,7 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   // assign to clusters, using the nearestHigher set from previous step (always set except for top density hit that is skipped)...
   for(uint oi=1;oi<nodes.size();oi++){
     int ci = nodes[rs[oi]]->clusterIndex;
-		if(ci == -1 && nodes[rs[oi]]->delta < criticalDistance){
+		if(ci == -1 && nodes[rs[oi]]->delta < assignmentDistance){
 			nodes[rs[oi]]->clusterIndex = nodes[nodes[rs[oi]]->nearestHigher]->clusterIndex;
 		}
   }
@@ -284,22 +292,22 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   for(auto &iNode : nodes){
     int ci = iNode->clusterIndex;
     bool flag_isolated = true;
-    if(ci != -1){// search in a circle of radius criticalDistance or criticalDistance*sqrt(2) (not identical to search in the box criticalDistance)
+    if(ci != -1){// search in a circle of radius assignmentDistance or assignmentDistance*sqrt(2) (not identical to search in the box assignmentDistance)
 
-      auto found = queryBallPoint(points_0,points_1, iNode->x, iNode->y, criticalDistance);
+      auto found = queryBallPoint(points_0,points_1, iNode->x, iNode->y, assignmentDistance);
       for(int j : found){
         // check if the hit is not within d_c of another cluster
         if(nodes[j]->clusterIndex != -1){
           double dist2 = distanceReal2(nodes[j]->x, nodes[j]->y , iNode->x, iNode->y);
-          if(dist2 < criticalDistance * criticalDistance && nodes[j]->clusterIndex != ci){
+          if(dist2 < assignmentDistance * assignmentDistance && nodes[j]->clusterIndex != ci){
             // in which case we assign it to the border
             iNode->isBorder = true;
             break;
           }
           // because we are using two different containers, we have to make sure that we don't unflag the
-          // hit when it finds *itself* closer than criticalDistance
+          // hit when it finds *itself* closer than assignmentDistance
 
-          if(dist2 < criticalDistance * criticalDistance && dist2 != 0. && nodes[j]->clusterIndex == ci){
+          if(dist2 < assignmentDistance * assignmentDistance && dist2 != 0. && nodes[j]->clusterIndex == ci){
             // this is not an isolated hit
             flag_isolated = false;
           }
@@ -314,7 +322,7 @@ void ImagingAlgo::findAndAssignClusters(vector<vector<unique_ptr<Hexel>>> &clust
   // flag points in cluster with density < rho_b as halo points, then fill the cluster vector
   for(auto &iNode : nodes){
     int ci = iNode->clusterIndex;
-    if(ci != -1 && iNode->rho <= rho_b[ci]){
+    if(doHalo && ci != -1 && iNode->rho <= rho_b[ci]){
       iNode->isHalo = true;  // some issues to be debugged?
     }
     if(ci != -1){

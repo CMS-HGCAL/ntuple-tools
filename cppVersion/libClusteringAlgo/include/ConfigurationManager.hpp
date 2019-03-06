@@ -40,7 +40,8 @@ public:
                                                         std::string _energyDensityFunction,
                                                         bool _reachedEEonly,
                                                         double _matchingMaxDistance,
-                                                        std::string _scoreOutputPath);
+                                                        std::string _scoreOutputPath,
+                                                        bool _doHalo);
 
   /// Returns the path to the input files with ntuples
   inline std::string GetInputPath(){return inputPath;}
@@ -97,6 +98,9 @@ public:
   /// Where to store resulting algo characteristics (resolution, separation, containment)
   inline std::string GetScoreOutputPath(){return scoreOutputPath;}
   
+  /// Should marking as halo be switched on
+  inline bool GetDoHalo(){return doHalo;}
+  
   void Print();
   
   ConfigurationManager(std::string _configPath);
@@ -124,7 +128,8 @@ public:
                        std::string _energyDensityFunction,
                        bool _reachedEEonly,
                        double _matchingMaxDistance,
-                       std::string _scoreOutputPath);
+                       std::string _scoreOutputPath,
+                       bool _doHalo);
   
   ~ConfigurationManager(){};
   
@@ -159,6 +164,7 @@ private:
   bool reachedEEonly;
   double matchingMaxDistance;
   std::string scoreOutputPath;
+  bool doHalo;
 };
 
 #endif /* ConfigurationManager_h */

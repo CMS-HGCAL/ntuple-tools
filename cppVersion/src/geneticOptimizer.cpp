@@ -128,6 +128,7 @@ int scheduleClustering(shared_ptr<Chromosome> chromo)
   +to_string(reachedEE)+" "
   +to_string(chromo->GetParam(kMatchingDistance))+" "
   +chromo->GetClusteringOutputPath()+" "
+  +"0 " // do halo
   +" > /dev/null 2>&1";
   
   cout<<".";

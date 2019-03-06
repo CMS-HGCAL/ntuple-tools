@@ -83,9 +83,9 @@ const char* monitorNames2D[kNmonitors2D] = {
 
 int main(int argc, char* argv[])
 {
-  if((argc != 2) && (argc != 22)){
+  if((argc != 2) && (argc != 26)){
     cout<<"Usage: createQualityPlots path_to_config"<<endl;
-    cout<<"or createQualityPlots depend_sensor input_path output_path deltac_EE deltac_FH deltac_BH energy_threshold crit_dist_EE crit_dist_FH crit_dist_BH assign_dist_EE assign_dist_FH assign_dist_BH kappa verbosity min_n_tuple max_n_tuple min_layer max_layer events_per_tuple energy_density_function reached_EE_only matching_distance score_output_path"<<endl;
+    cout<<"or createQualityPlots depend_sensor input_path output_path deltac_EE deltac_FH deltac_BH energy_threshold crit_dist_EE crit_dist_FH crit_dist_BH assign_dist_EE assign_dist_FH assign_dist_BH kappa verbosity min_n_tuple max_n_tuple min_layer max_layer events_per_tuple energy_density_function reached_EE_only matching_distance score_output_path do_halo"<<endl;
     exit(0);
   }
   
@@ -95,7 +95,7 @@ int main(int argc, char* argv[])
     string configPath(argv[1]);
     config = ConfigurationManager::Instance(configPath);
   }
-  if(argc == 25){
+  if(argc == 26){
     config = ConfigurationManager::Instance(atoi(argv[1]),  // depend sensor
                                             argv[2],        // input path
                                             argv[3],        // output path
@@ -106,8 +106,8 @@ int main(int argc, char* argv[])
                                             atof(argv[8]),  // crit dist EE
                                             atof(argv[9]),  // crit dist FH
                                             atof(argv[10]), // crit dist BH
-                                            atof(argv[11]),  // assignment dist EE
-                                            atof(argv[12]),  // assignment dist FH
+                                            atof(argv[11]), // assignment dist EE
+                                            atof(argv[12]), // assignment dist FH
                                             atof(argv[13]), // assignment dist BH
                                             atof(argv[14]), // kappa
                                             atoi(argv[15]), // verbosity
@@ -119,7 +119,8 @@ int main(int argc, char* argv[])
                                             argv[21],       // energy density function
                                             atoi(argv[22]), // reached EE only
                                             atof(argv[23]), // matching distance
-                                            argv[24]        // score output path
+                                            argv[24],       // score output path
+                                            atoi(argv[25])  // do halo
                                             );
   }
   

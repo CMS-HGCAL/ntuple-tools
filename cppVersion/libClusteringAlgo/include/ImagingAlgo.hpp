@@ -65,6 +65,9 @@ private:
   double criticalDistanceEE;
   double criticalDistanceFH;
   double criticalDistanceBH;
+  double assignmentDistanceEE;
+  double assignmentDistanceFH;
+  double assignmentDistanceBH;
   double deltacEE;
   double deltacFH;
   double deltacBH;
@@ -72,6 +75,7 @@ private:
   double megaClusterRadiusFH;
   double megaClusterRadiusBH;
   int minClusters;
+  bool doHalo;
   
   TF1 *energyDensityFunction; ///< Function that will be used to determine energy density for each hit
   

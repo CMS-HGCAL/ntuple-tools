@@ -15,8 +15,6 @@ input_path: ../../data/_SingleGammaPt100Eta1p6_2p8_PhaseIITDRFall17DR-noPUFEVT_9
 
 output_path: ../../clusteringResultsCXX
 
-
-
 **HGCal Imaging Algo parameters**
 
 ### should detector thickness be taken into account?
@@ -57,6 +55,9 @@ max_layer: 40
 
 ### Include only events were all particles reached EE before converting
 reachedEE_only: 1
+
+### Turn on/off the logic of marking hits as halo and removing them from a cluster
+do_halo: 0
 
 **Cluster Matching parameters**
 

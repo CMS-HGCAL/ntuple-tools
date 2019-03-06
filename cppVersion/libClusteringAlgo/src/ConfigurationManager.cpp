@@ -50,7 +50,8 @@ shared_ptr<ConfigurationManager> ConfigurationManager::Instance(bool _dependSens
                                                                 std::string _energyDensityFunction,
                                                                 bool _reachedEEonly,
                                                                 double _matchingMaxDistance,
-                                                                std::string _scoreOutputPath)
+                                                                std::string _scoreOutputPath,
+                                                                bool _doHalo)
 {
   if(instance){
     cout<<"WARNING - Configuration Manager was already created!!"<<endl;
@@ -79,7 +80,8 @@ shared_ptr<ConfigurationManager> ConfigurationManager::Instance(bool _dependSens
                                                  _energyDensityFunction,
                                                  _reachedEEonly,
                                                  _matchingMaxDistance,
-                                                 _scoreOutputPath
+                                                 _scoreOutputPath,
+                                                 _doHalo
                                                  );
   }
   return instance;
@@ -143,6 +145,7 @@ configPath(_configPath)
   matchingMaxDistance = settings->GetValue("matching_max_distance",-1.0);
   
   scoreOutputPath = settings->GetValue("score_output_path","./output.txt");
+  doHalo = settings->GetValue("do_halo",0);
 }
 
 ConfigurationManager::ConfigurationManager(bool _dependSensor,
@@ -168,7 +171,8 @@ ConfigurationManager::ConfigurationManager(bool _dependSensor,
                                            std::string _energyDensityFunction,
                                            bool _reachedEEonly,
                                            double _matchingMaxDistance,
-                                           std::string _scoreOutputPath)
+                                           std::string _scoreOutputPath,
+                                           bool _doHalo)
 {
   dependSensor = _dependSensor;
 //  cout<<"depend sensor:"<<dependSensor<<endl;
@@ -197,6 +201,7 @@ ConfigurationManager::ConfigurationManager(bool _dependSensor,
   reachedEEonly = _reachedEEonly;
   matchingMaxDistance = _matchingMaxDistance;
   scoreOutputPath = _scoreOutputPath;
+  doHalo = _doHalo;
 }
 
 double ConfigurationManager::GetDeltac(EDet det)
