@@ -16,7 +16,7 @@ import sys
 
 sys.setrecursionlimit(100000)
 # noise thresholds and MIPs
-from RecHitCalibration import RecHitCalibration
+from RecHitCalibration import RecHitCalibration, RecHitCalibrationNose
 
 # definition of Hexel element
 
@@ -652,6 +652,8 @@ def recHitAboveThreshold(rHit, ecut, dependSensor=True, usePandas=False):
       layer = rHit.layer()
       thickness = rHit.thickness()
       energy = rHit.energy()
+
+    #print(rHit.eta(), layer, thickness, energy, HGCalImagingAlgo.lastLayerFH)
     
     if(dependSensor):
         thickIndex = -1
@@ -660,14 +662,29 @@ def recHitAboveThreshold(rHit, ecut, dependSensor=True, usePandas=False):
             if(thickness > 99. and thickness < 101.):     thickIndex = 0
             elif(thickness > 199. and thickness < 201.):  thickIndex = 1
             elif(thickness > 299. and thickness < 301.):  thickIndex = 2
-            else: print("ERROR - silicon thickness has a nonsensical value")
+            
+            ## adding this case to avoid warnings for now
+            elif(thickness > 119. and thickness < 121.):  thickIndex = 0
+            
+            else: 
+                print("ERROR - silicon thickness has a nonsensical value")
+                #print(rHit.eta(), layer, thickness, energy, HGCalImagingAlgo.lastLayerFH)
+
+        if abs(rHit.eta()) > 3.0 and (thickness < 119. or thickness > 121.):
+            print(rHit.eta(), layer, thickness, energy)
+                
         # determine noise for each sensor/subdetector using RecHitCalibration library
 
         RecHitCalib = RecHitCalibration()
         sigmaNoise = 0.001 * RecHitCalib.sigmaNoiseMeV(layer, thickIndex)  # returns threshold for EE, FH, BH (in case of BH thickIndex does not play a role)
+
+        # treat Nose hits
+        if abs(rHit.z()) > 1000.0:
+            RecHitCalibNose = RecHitCalibrationNose()
+            sigmaNoise = 0.001 * RecHitCalibNose.sigmaNoiseMeV(layer, thickIndex)
+            
     aboveThreshold = energy >= ecut * sigmaNoise  # this checks if rechit energy is above the threshold of ecut (times the sigma noise for the sensor, if that option is set)
     return sigmaNoise, aboveThreshold
-
 
 def getEnergy(item):
     return item.energy
