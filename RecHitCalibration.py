@@ -8,62 +8,64 @@ class RecHitCalibration:
     def __init__(self):
         """set variables used in the functions"""
         # https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/RecoLocalCalo/HGCalRecProducers/python/HGCalRecHit_cfi.py#L5
-        self.dEdX_weights = (0.0,   # there is no layer zero
-                             8.603,  # Mev
-                             8.0675,
-                             8.0675,
-                             8.0675,
-                             8.0675,
-                             8.0675,
-                             8.0675,
-                             8.0675,
-                             8.0675,
-                             8.9515,
-                             10.135,
-                             10.135,
-                             10.135,
-                             10.135,
-                             10.135,
-                             10.135,
-                             10.135,
-                             10.135,
-                             10.135,
-                             11.682,
-                             13.654,
-                             13.654,
-                             13.654,
-                             13.654,
-                             13.654,
-                             13.654,
-                             13.654,
-                             38.2005,
-                             55.0265,
-                             49.871,
-                             49.871,
-                             49.871,
-                             49.871,
-                             49.871,
-                             49.871,
-                             49.871,
-                             49.871,
-                             49.871,
-                             49.871,
-                             62.005,
-                             83.1675,
-                             92.196,
-                             92.196,
-                             92.196,
-                             92.196,
-                             92.196,
-                             92.196,
-                             92.196,
-                             92.196,
-                             92.196,
-                             92.196,
-                             46.098)
+        self.dEdX_weights = (0.0,      # there is no layer zero
+                              8.366557, # Mev
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              10.425456,  
+                              31.497849,  
+                              51.205434,  
+                              52.030486,  
+                              52.030486,  
+                              52.030486,  
+                              52.030486,  
+                              52.030486,  
+                              52.030486,  
+                              52.030486,  
+                              52.030486,  
+                              52.030486,  
+                              52.030486,  
+                              71.265149,  
+                              90.499812,  
+                              90.894274,  
+                              90.537470,  
+                              89.786205,  
+                              89.786205,  
+                              89.786205,  
+                              89.786205,  
+                              89.786205,  
+                              89.786205,  
+                              89.786205,  
+                              89.786205,  
+			      89.786205)
 
         # https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/RecoLocalCalo/HGCalRecProducers/python/HGCalRecHit_cfi.py#L86
-        self.thicknessCorrection = (1.132,1.092,1.084)  # 100, 200, 300 um
+        self.thicknessCorrection = (0.759,0.760,0.773)  #120um, 200um, 300um
+        
+        #### # understand what is should be for 120 um
 
         # Base configurations for HGCal digitizers
         # https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/SimCalorimetry/HGCalSimProducers/python/hgcalDigitizer_cfi.py#L5
@@ -96,3 +98,51 @@ class RecHitCalibration:
 
     def sigmaNoiseMeV(self, layer, thicknessIndex):
         return self.sigmaNoiseMIP(layer, thicknessIndex) * self.MeVperMIP(layer, thicknessIndex)
+
+
+class RecHitCalibrationNose:
+
+    def __init__(self):
+        """set variables used in the functions"""
+        # https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/RecoLocalCalo/HGCalRecProducers/python/HGCalRecHit_cfi.py#L5
+        self.dEdX_weights = (0.0,   # there is no layer zero                  
+                              39.500245, # Mev                                 
+                              39.756638,
+                              39.756638,
+                              39.756638,
+                              39.756638,
+                              66.020266,
+                              92.283895,
+                              92.283895)
+
+        # https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/RecoLocalCalo/HGCalRecProducers/python/HGCalRecHit_cfi.py#L86
+        
+        ### ALL sensors seem to have thickness = 120 um in NOSE 
+        self.thicknessCorrection = 0.759  # understand what is should be for 120 um
+
+        # Base configurations for HGCal digitizers
+        # https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/SimCalorimetry/HGCalSimProducers/python/hgcalDigitizer_cfi.py#L5
+        # self.eV_per_eh_pair = 3.62
+        self.fC_per_ele = 1.6020506e-4
+        self.nonAgedNoises = 2100.0  # 100,200,300 um (in electrons)
+
+        # https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/RecoLocalCalo/HGCalRecProducers/python/HGCalUncalibRecHit_cfi.py#L25
+        self.fCPerMIP = 1.25  # 100um, 200um, 300um
+
+        # https://github.com/cms-sw/cmssw/blob/CMSSW_9_3_X/SimCalorimetry/HGCalSimProducers/python/hgcalDigitizer_cfi.py#L127
+        self.noise_MIP = 1.0/7.0 #expectation based on latest SiPM performance
+
+    def MeVperMIP(self, layer, thicknessIndex):
+        return self.dEdX_weights[layer]/self.thicknessCorrection
+
+    def MIPperGeV(self, layer, thicknessIndex):
+        return 1000./MeVperMIP(layer, thicknessIndex)
+
+    def sigmaNoiseMIP(self, layer, thicknessIndex):
+        return self.fC_per_ele * self.nonAgedNoises / self.fCPerMIP
+
+    def sigmaNoiseMeV(self, layer, thicknessIndex):
+        return self.sigmaNoiseMIP(layer, thicknessIndex) * self.MeVperMIP(layer, thicknessIndex)
+        
+        
+        

@@ -204,6 +204,10 @@ class Event(object):
         """Returns generator particles object."""
         return GenParticles(self._tree, prefix)
 
+    def mcParticles(self, prefix="gen"):
+        """Returns generator particles object."""
+        return McParticles(self._tree, prefix)
+
     def primaryVertex(self, prefix="vtx"):
         """Returns PrimaryVertex object."""
         return PrimaryVertex(self._tree, prefix)
@@ -360,6 +364,32 @@ class GenParticles(_Collection):
         # self.prefix = prefix
         super(GenParticles, self).__init__(tree, prefix + "_pt", GenParticle, prefix)
 
+##########
+class McParticle(_Object):
+    """Class representing a McParticle."""
+
+    def __init__(self, tree, index, prefix):
+        """Constructor.
+
+        Arguments:
+        tree  -- TTree object
+        index -- Index of the McParticle
+        prefix -- TBranch prefix
+        """
+        super(McParticle, self).__init__(tree, index, prefix)
+
+class McParticles(_Collection):
+    """Class presenting a collection of McParticles."""
+
+    def __init__(self, tree, prefix):
+        """Constructor.
+
+        Arguments:
+        tree -- TTree object
+        prefix -- TBranch prefix
+        """
+        # self.prefix = prefix
+        super(McParticles, self).__init__(tree, prefix + "_pt", McParticle, prefix)
 
 ##########
 class LayerCluster(_Object):
